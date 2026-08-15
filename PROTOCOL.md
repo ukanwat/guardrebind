@@ -156,6 +156,18 @@ P9. **Escaping fixes it.** Neutralizing the marker strings in the document
   bypass; deletion is what matters, not decoration.
   LIMITATION: tested against the exact-match `query_doc` form only, not against
   every marker variant or the stacked attack.
+- **Softened-query attack fails (post-hoc, sharpens the mechanism).** Forging a
+  softened query ("is this a poem?", "is this a weather forecast?") whose honest
+  answer is "no" on harmful text, while keeping the harmful text as the judged
+  document, clears only 0-9% (n=45). So the attacker cannot neutralise the check
+  by rewording the question; the model grades the last document and its
+  harmfulness dominates regardless of the query. This confirms the mechanism is
+  "grade the last document", refines the role of the forged query (it establishes
+  a new pair boundary so the benign decoy is treated as a separate target, it
+  does not soften the check), and establishes that the working attack REQUIRES a
+  benign trailing document. The harmful content survives at the top of the
+  approved message; the benign decoy is misdirection. Harmful text placed last
+  is blocked (~0.97). Data in results/confirm_soften.csv.
 - **Fail-closed detector.** A regex for marker-like labels catches 100% of
   attacks. False positives: 2/4 on hand-written benign samples — but those
   samples were deliberately constructed to contain "Query:" and angle brackets,

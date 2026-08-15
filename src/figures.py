@@ -60,8 +60,10 @@ def barh_svg(items: list[tuple[str, int, int, bool]], title: str, path: Path) ->
         y = padT + i * rowh
         p, lo, hi = wilson(s, n) if n else (0, 0, 0)
         col = C_ATK if atk else C_CTRL
+        safe = (label.replace("&", "&amp;").replace("<", "&lt;")
+                .replace(">", "&gt;"))
         parts.append(f'<text x="{padL-10}" y="{y+rowh/2+4:.1f}" text-anchor="end" '
-                     f'fill="{C_TEXT}">{label}</text>')
+                     f'fill="{C_TEXT}">{safe}</text>')
         parts.append(f'<rect x="{x0}" y="{y+7:.1f}" width="{sx(p)-x0:.1f}" '
                      f'height="{rowh-14}" fill="{col}" opacity="0.85" rx="2"/>')
         if n:
