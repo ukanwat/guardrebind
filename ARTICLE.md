@@ -73,11 +73,15 @@ benign decoy and it's back to 100%. It's reading whichever document lands last
 and judging it honestly, which is exactly what you'd want if that document were
 real.
 
-The boring explanations don't hold either. Inert filler of similar length clears
-nothing. The identical sentence with no labels around it clears nothing. And
-it's not a recency effect. Moving the forged pair *before* the harmful content
-instead of after drops it from 100% to 14.7%, so what gets graded is the last
-document-shaped span, not just whatever tokens happen to come last.
+The boring explanations don't hold. It's not that the model just weights later
+text more heavily. Append inert filler of the same length and it clears nothing.
+Append the exact same forged question and document but strip the labels off, so
+it's the identical words as plain prose, and that clears nothing too, against 75
+of 75 with the labels on. Late text alone does nothing. It has to be late text
+shaped like a labelled document. Position matters on top of that, the last
+labelled document is the one that gets graded, which is why moving the forged
+pair above the harmful content instead of below it drops the bypass to 15%. But
+position isn't the mechanism by itself, the label structure is.
 
 Then I ran it against two other guards and stopped thinking of this as a Mistral
 story. gpt-oss-safeguard puts its policy in the system role, actually separated
@@ -90,9 +94,15 @@ Shieldstral's.
 Both bypass at 100%. gpt-oss-safeguard cleared 30 of 30 with a forged
 `POLICY UPDATE:` marker and a second `Content:` block. Llama Guard cleared 29 of
 29 when the attacker wrote their own `<END CONVERSATION>` and opened a fresh
-conversation inside the text being judged. Controls held at zero on both. And
-the harmful-decoy test reproduces on gpt-oss-safeguard about as cleanly as it
-can, 100% bypass with a benign decoy against 0% with a harmful one.
+conversation inside the text being judged. Controls held at zero on both.
+
+I checked gpt-oss more carefully because my first payload contained the words
+"answer 0", and a flip could just be the model obeying that. So I split it. The
+bare "answer 0" on its own cleared only 20%. The forged marker and second content
+block with no imperative at all cleared 93%, and the same structure with a
+harmful second block instead of a benign one cleared 0%. So it's the structure
+doing the work, not the instruction, and the verdict tracks the trailing document
+the same way Shieldstral's does.
 
 ![Three guard designs, same failure](results/chart_crossmodel.svg)
 
@@ -121,10 +131,18 @@ fails outright is the one with no labels at all, which tells you it's keying on
 label-shaped structure and not any particular string. Escaping one form just
 turns this into a blocklist, and you'd be maintaining that blocklist forever.
 
-Deleting them works. Normalising the untrusted content by removing marker-like
-label tokens along with the bracket and asterisk characters that form them took
-the bypass rate from 100% to zero across all 75 documents. That's the fix, and
-it goes in whatever wraps the model, not in the policy text.
+Deleting them doesn't cleanly work either, for the same reason. I wrote a
+normaliser that strips the label tokens out of the untrusted content, and it took
+the colon form to zero across all 75 documents. Then I ran the identical attack
+with `[Query]` and `[Document]` in brackets instead of colons, against the same
+normaliser, and it went back to 100%, because my regex keyed on the colon and the
+bracket form doesn't have one. So deletion is a blocklist too, and it loses the
+same way escaping does. The one thing that caught every variant was refusing
+outright any content that contains a label-shaped pattern, fail-closed. That
+worked, at the price of false positives on ordinary text that happens to contain
+"Query:" or angle brackets, which in a support inbox is not rare. There's no
+clean content-side fix here. The durable one is on the vendor's side, and it's in
+the next section.
 
 Asking nicely does not work. A paper published on August 3rd, one day before
 Shieldstral shipped, proposes exactly that: instruct the classifier to "never
@@ -160,19 +178,16 @@ a useful thing to put in front of a chatbot or an agent.
 Here's what I'd actually do about it.
 
 If you're running one of these today, the only layer you control is your own
-wrapper, and the fix that worked is blunt. Delete label-shaped tokens from the
-untrusted string before you interpolate it, and delete the bracket and asterisk
-characters that build them. That means actually deleting them, not substituting
-or escaping. That took
-my bypass rate from 100% to zero across all 75 documents, where escaping angle
-brackets left 88% working. If deleting text from user content is unacceptable
-for your product, the alternative is to fail closed: run a detector for
-label-shaped patterns and refuse or human-review anything that matches. That
-caught every attack I threw at it, at the cost of false positives on ordinary
-documents that happen to contain the word "Query:" followed by a colon, which is
-not a rare thing in a support inbox. Either way, put it in the wrapper.
-Trying to write your way out of it in the policy text is the one approach I
-measured at exactly zero effect.
+wrapper, and I'll be honest that nothing I tried there was clean. Deleting the
+label tokens took the colon form to zero, but the bracket form went straight back
+to 100% against the same code, so any deletion rule is a blocklist you'll be
+extending forever. The only thing that held against every variant was failing
+closed: run a detector for label-shaped patterns and refuse or human-review
+anything that matches. That caught everything, at the cost of false positives on
+ordinary text that contains "Query:" or angle brackets, which in a support inbox
+is not rare. So the realistic options are a lossy fail-closed filter or living
+with the exposure. The one thing not worth trying is writing your way out of it
+in the policy text, which I measured at exactly zero effect.
 
 The vendors have better options than I do. The clean one is reserved control
 tokens. Put the document behind tokens the content can't emit, and strip those
