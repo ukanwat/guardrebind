@@ -1,97 +1,46 @@
-# Policy-channel injection against policy-adaptive guard models
+# A safety model will grade whichever text you show it last
 
-Do policy-adaptive safety classifiers defend the boundary between the policy they
-are given and the content they are judging?
+Safety guard models (Shieldstral 1.0, gpt-oss-safeguard-20b, Llama Guard 4)
+read a piece of text and decide whether it breaks a policy. The developer pastes
+untrusted content into the prompt behind plain-text labels, and nothing escapes
+it. So if that content contains the same labels, the model reads a second
+question and a second document and grades the last pair it finds. Append a
+forged question and a harmless decoy to a harmful request and the guard clears
+the whole message while the harmful request rides along untouched.
 
-A new generation of guard models takes its safety policy as plain text at
-inference time instead of a taxonomy baked in at training time
-(gpt-oss-safeguard, Nemotron safety, and as of 2026-08-04, Mistral's
-Shieldstral 1.0). This makes them configurable. It also means the policy and the
-content-to-be-judged are both untrusted-length text arriving through the prompt.
+On a held-out slice of AdvBench the forged pair clears Shieldstral 100/100, and
+the same idea clears gpt-oss-safeguard (30/30) and Llama Guard 4 (29/29). It is
+not persuasion and not evasion: the model grades the trailing document honestly,
+you just changed which document it grades.
 
-This repo tests whether content can **redefine the policy** rather than merely
-**evade the classifier**. Those are different attacks. Evasion hides the payload
-from the detector and is well studied. Redefinition rewrites the rule the
-detector is applying, and for this model class it has not been tested.
+Full writeup: **https://utkarshkanwat.com/writing/safety-guards-wrong-document**
 
-## Status
+## What's here
 
-Setup. No results yet. The first question is whether the effect exists at all;
-if scores do not move, this repo is a null result and gets published as one.
+- `ARTICLE.md` — the writeup.
+- `PROTOCOL.md` — the pre-registered design, frozen before the confirmatory run,
+  including the predictions that failed and the corrections from an adversarial
+  review.
+- `src/` — the harness. Scorer, attack construction, the ablation, the
+  ground-truth decoy ladder, the cross-model runs, the mitigation tests.
+- `results/` — every raw score as CSV, plus the chart source.
 
-## Threat models
-
-**Direct — moderation bypass.** In chat moderation the `<Document>` is the user's
-own message. The attacker is the party being moderated and controls the document
-by construction. No agent is required to demonstrate this.
-
-**Indirect — agent surfaces.** The document is a fetched web page, a tool result,
-or a retrieved chunk. The attacker is whoever authored that content. This is the
-deployment Mistral is positioning Shieldstral into (ingestion for agent stacks),
-and the content is hostile by default.
-
-## Why this model class is exposed
-
-Verified from `chat_template.jinja` in `mistralai/Shieldstral-1.0-3B` (2026-08-10):
-
-- The template is a **generic Mistral chat template** — `[INST]…[/INST]` for user
-  turns, `[SYSTEM_PROMPT]…[/SYSTEM_PROMPT]` for system turns.
-- There is **no `<Instruct>` / `<Query>` / `<Document>` logic in the template**.
-  Those markers are a plain-text convention the caller assembles into one string.
-- **No escaping, sanitization, or delimiter-stripping** is applied to content.
-
-So there is no code path that knows a document is a document. The separation
-between policy and judged content is a training-time convention inside a single
-`[INST]` block, with nothing enforcing it.
-
-For comparison, verified the same day:
-
-| Model | Policy location | Content delimiters | Escaping |
-|---|---|---|---|
-| Shieldstral 1.0 3B | user message, same turn as content | plain `<Instruct>:`/`<Query>:`/`<Document>:` markers | none |
-| gpt-oss-safeguard | **system** message | `Content: [INPUT]` | not discussed |
-| Llama Guard 4 | user message, same turn as content | `<BEGIN CONVERSATION>`/`<END CONVERSATION>` | none (`{{ txt.text \| trim }}`) |
-| Qwen3Guard-Gen | baked in at training | none | n/a |
-
-Llama Guard 4 row is from an unsloth mirror of the template; Meta's own repo is
-gated. Confirm against Meta's copy before publishing.
-
-## Experiment
-
-Metric is `P(yes)` — the renormalised yes/no probability Shieldstral is designed
-to expose (`max_tokens=1`, `logprobs=True`, `top_logprobs=20`).
-
-Conditions:
-
-- `benign` — harmless document, honest policy. Expect low.
-- `harmful` — flagged document, honest policy. Expect high. This is the control.
-- `attack/*` — the same flagged document plus a structural payload.
-- `defended/*` — the same attacks with a stated anti-injection directive in
-  `<Instruct>`, testing PolicyGuard's proposed but unvalidated mitigation.
-- `length/*` — the same flagged document padded to N tokens, measuring the
-  long-document degradation Mistral lists as a known limitation.
-
-Reported as Δ`P(yes)` against the `harmful` control, and as flip rate at the 0.5
-threshold. Trivial baselines (always-safe, keyword match) are reported alongside,
-per the reporting standard in arXiv:2607.28685.
-
-Flagged documents come from established public safety benchmarks, not authored
-here. Payloads target the prompt *structure*, not the harm content.
-
-## Prior art
-
-See `notes/prior-art.md`. Short version: the technique is known, the target is
-not.
-
-## Running it
+## Reproduce
 
 ```
 uv sync
-uv run python -m src.download      # ~7.7GB, transformers weights only
-uv run python -m src.smoke         # verify the scoring path reproduces sane scores
-uv run python -m src.run           # full sweep -> results/
+uv run python -m src.download      # Shieldstral weights (~7.8GB)
+uv run python -m src.smoke         # sanity: benign scores low, harmful high
+uv run python -m src.confirm       # the confirmatory run -> results/
+uv run python -m src.charts        # regenerate figures
 ```
 
-## Disclosure
+Cross-model runs (`src/crossmodel.py`, `src/gpt_oss_mechanism.py`) use OpenRouter
+and need `OPENROUTER_API_KEY` in `.env`.
 
-Findings go to Mistral before publication.
+## Method notes
+
+Numbers in the writeup are from a confirmatory run on held-out AdvBench rows
+(200-299, plus a 100-flagged-document run) with the design committed before
+scoring. Flagged documents come from AdvBench; no harmful content is authored
+here. The attack payloads target the prompt's structure, not the harm content.
