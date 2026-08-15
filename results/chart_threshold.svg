@@ -11,7 +11,13 @@
     .l1 { fill: #eda100; } .l1s { stroke: #eda100; }
     .l2 { fill: #eb6834; } .l2s { stroke: #eb6834; }
     .l3 { fill: #e34948; } .l3s { stroke: #e34948; }
+    .boxd { fill: #eef4fc; stroke: #cfe0f6; }
+    .boxa { fill: #fdeeee; stroke: #f6cfcf; }
+    .tblue { fill: #1b5eb0; } .tred { fill: #b23735; }
     @media (prefers-color-scheme: dark) {
+      .boxd { fill: #16233a; stroke: #294a7a; }
+      .boxa { fill: #3a1e1e; stroke: #6b3030; }
+      .tblue { fill: #7fb0ee; } .tred { fill: #ec8b8b; }
       .surface { fill: #1a1a19; }
       .ink     { fill: #ffffff; }
       .ink2    { fill: #c3c2b7; }
@@ -28,6 +34,8 @@
     .t-sub   { font-size: 12px; }
     .t-lab   { font-size: 12.5px; }
     .t-val   { font-size: 12px; font-weight: 600; }
+    .t-mono  { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+               font-size: 12.5px; }
   </style>
 
 <rect width="780" height="300" class="surface"/>
