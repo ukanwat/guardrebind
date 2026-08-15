@@ -1,0 +1,16 @@
+[project]
+name = "guard-policy-injection"
+version = "0.1.0"
+description = "Does content-controlled text redefine the policy of policy-adaptive guard models?"
+requires-python = ">=3.11"
+dependencies = [
+    "torch>=2.4",
+    "transformers>=4.52",
+    "accelerate>=1.0",
+    "huggingface-hub>=0.26",
+    "sentencepiece>=0.2",
+    "pandas>=2.2",
+]
+
+[tool.setuptools]
+packages = ["src"]
