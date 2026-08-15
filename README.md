@@ -8,11 +8,6 @@ question and a second document and grades the last pair it finds. Append a
 forged question and a harmless decoy to a harmful request and the guard clears
 the whole message while the harmful request rides along untouched.
 
-On a held-out slice of AdvBench the forged pair clears Shieldstral 100/100, and
-the same idea clears gpt-oss-safeguard (30/30) and Llama Guard 4 (29/29). It is
-not persuasion and not evasion: the model grades the trailing document honestly,
-you just changed which document it grades.
-
 Full writeup: **https://utkarshkanwat.com/writing/safety-guards-wrong-document**
 
 ## What's here
