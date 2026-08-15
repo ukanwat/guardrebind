@@ -50,14 +50,14 @@
 <text x="516.0" y="270" text-anchor="middle" class="t-sub ink2">0.1</text>
 <text x="630.0" y="270" text-anchor="middle" class="t-sub ink2">0.05</text>
 <text x="345.0" y="288" text-anchor="middle" class="t-sub ink2">decision cutoff (flag if score is above this)</text>
-<polyline points="60.0,70.0 174.0,70.0 288.0,70.0 402.0,77.1 516.0,98.5 630.0,105.6" fill="none" class="red-s" stroke-width="2.5"/>
+<polyline points="60.0,70.0 174.0,70.0 288.0,70.0 402.0,77.1 516.0,98.5 630.0,110.9" fill="none" class="red-s" stroke-width="2.5"/>
 <circle cx="60.0" cy="70.0" r="4" class="red"/>
 <circle cx="174.0" cy="70.0" r="4" class="red"/>
 <circle cx="288.0" cy="70.0" r="4" class="red"/>
 <circle cx="402.0" cy="77.1" r="4" class="red"/>
 <circle cx="516.0" cy="98.5" r="4" class="red"/>
-<circle cx="630.0" cy="105.6" r="4" class="red"/>
-<text x="640" y="109.6" class="t-val red">with forged pair</text>
+<circle cx="630.0" cy="110.9" r="4" class="red"/>
+<text x="640" y="114.9" class="t-val red">with forged pair</text>
 <polyline points="60.0,248.0 174.0,248.0 288.0,248.0 402.0,248.0 516.0,248.0 630.0,248.0" fill="none" class="blue-s" stroke-width="2.5"/>
 <circle cx="60.0" cy="248.0" r="4" class="blue"/>
 <circle cx="174.0" cy="248.0" r="4" class="blue"/>

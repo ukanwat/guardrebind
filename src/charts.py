@@ -86,8 +86,8 @@ def score_strip(ss, path):
     x0, x1 = padL, W - padR
     def sx(v): return x0 + (x1 - x0) * v
     o = header(W, H, "Every document, before and after the attack",
-               "Shieldstral's score for each of the 75 harmful documents. "
-               "1 = flagged, 0 = cleared.")
+               f"Shieldstral's score for each of the {len(ctrl)} harmful "
+               "documents. 1 = flagged, 0 = cleared.")
     for g in (0, .25, .5, .75, 1):
         X = sx(g)
         o.append(f'<line x1="{X:.1f}" y1="{padT-4}" x2="{X:.1f}" y2="{H-padB+6}" class="grid"/>')
@@ -175,7 +175,9 @@ def groundtruth_lollipop(gt, path):
 
 
 def main():
-    ss = load("confirm_shieldstral.csv")
+    # Prefer the 100-flagged-document run for the headline charts; fall back to
+    # the 75-doc confirmatory slice.
+    ss = load("confirm_hundred.csv") or load("confirm_shieldstral.csv")
     gt = load("confirm_groundtruth.csv")
     if ss:
         score_strip(ss, RESULTS / "chart_scores.svg")

@@ -1,0 +1,6 @@
+python3(13605) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+n flagged = 100
+attack bypass at 0.5: 100.0% [ 96%,100%] 100/100
+attack median score : 0.0159
+attack max score     : 0.4688
+wrote 200 rows -> results/confirm_hundred.csv
