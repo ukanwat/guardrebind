@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="300" viewBox="0 0 840 300" role="img">
+
+  <style>
+    .surface { fill: #fcfcfb; }
+    .ink     { fill: #0b0b0b; }
+    .ink2    { fill: #52514e; }
+    .grid    { stroke: #e6e5e2; }
+    .axis    { stroke: #b8b7b3; }
+    .blue    { fill: #2a78d6; }  .blue-s  { stroke: #2a78d6; }
+    .red     { fill: #e34948; }  .red-s   { stroke: #e34948; }
+    .l1 { fill: #eda100; } .l1s { stroke: #eda100; }
+    .l2 { fill: #eb6834; } .l2s { stroke: #eb6834; }
+    .l3 { fill: #e34948; } .l3s { stroke: #e34948; }
+    .boxd { fill: #eef4fc; stroke: #cfe0f6; }
+    .boxa { fill: #fdeeee; stroke: #f6cfcf; }
+    .tblue { fill: #1b5eb0; } .tred { fill: #b23735; }
+    @media (prefers-color-scheme: dark) {
+      .boxd { fill: #16233a; stroke: #294a7a; }
+      .boxa { fill: #3a1e1e; stroke: #6b3030; }
+      .tblue { fill: #7fb0ee; } .tred { fill: #ec8b8b; }
+      .surface { fill: #1a1a19; }
+      .ink     { fill: #ffffff; }
+      .ink2    { fill: #c3c2b7; }
+      .grid    { stroke: #323230; }
+      .axis    { stroke: #55554f; }
+      .blue    { fill: #3987e5; }  .blue-s  { stroke: #3987e5; }
+      .red     { fill: #e66767; }  .red-s   { stroke: #e66767; }
+      .l1 { fill: #c98500; } .l1s { stroke: #c98500; }
+      .l2 { fill: #d95926; } .l2s { stroke: #d95926; }
+      .l3 { fill: #e66767; } .l3s { stroke: #e66767; }
+    }
+    text { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .t-title { font-size: 15px; font-weight: 600; }
+    .t-sub   { font-size: 12px; }
+    .t-lab   { font-size: 12.5px; }
+    .t-val   { font-size: 12px; font-weight: 600; }
+    .t-mono  { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+               font-size: 12.5px; }
+  </style>
+
+<rect width="840" height="300" class="surface"/>
+<text x="16" y="26" class="t-title ink">Different defenses, same result</text>
+<text x="16" y="45" class="t-sub ink2">Each guard defends the boundary a different way. The forged pair clears all three.</text>
+<line x1="320.0" y1="62" x2="320.0" y2="258" class="grid"/>
+<text x="320.0" y="274" text-anchor="middle" class="t-sub ink2">0%</text>
+<line x1="422.5" y1="62" x2="422.5" y2="258" class="grid"/>
+<text x="422.5" y="274" text-anchor="middle" class="t-sub ink2">25%</text>
+<line x1="525.0" y1="62" x2="525.0" y2="258" class="grid"/>
+<text x="525.0" y="274" text-anchor="middle" class="t-sub ink2">50%</text>
+<line x1="627.5" y1="62" x2="627.5" y2="258" class="grid"/>
+<text x="627.5" y="274" text-anchor="middle" class="t-sub ink2">75%</text>
+<line x1="730.0" y1="62" x2="730.0" y2="258" class="grid"/>
+<text x="730.0" y="274" text-anchor="middle" class="t-sub ink2">100%</text>
+<text x="304" y="96.0" text-anchor="end" class="t-lab ink">Shieldstral 1.0</text>
+<text x="304" y="113.0" text-anchor="end" class="t-sub ink2">policy and content share one turn, plain-text labels</text>
+<rect x="320" y="79.0" width="410.0" height="26" class="red" rx="3" opacity="0.9"/>
+<text x="740.0" y="96.0" class="t-val ink">100%</text>
+<circle cx="320.0" cy="92.0" r="4" class="blue"/>
+<text x="304" y="154.0" text-anchor="end" class="t-lab ink">gpt-oss-safeguard</text>
+<text x="304" y="171.0" text-anchor="end" class="t-sub ink2">policy sits in a separate system role</text>
+<rect x="320" y="137.0" width="410.0" height="26" class="red" rx="3" opacity="0.9"/>
+<text x="740.0" y="154.0" class="t-val ink">100%</text>
+<circle cx="320.0" cy="150.0" r="4" class="blue"/>
+<text x="304" y="212.0" text-anchor="end" class="t-lab ink">Llama Guard 4</text>
+<text x="304" y="229.0" text-anchor="end" class="t-sub ink2">fixed built-in categories, no policy in the prompt</text>
+<rect x="320" y="195.0" width="410.0" height="26" class="red" rx="3" opacity="0.9"/>
+<text x="740.0" y="212.0" class="t-val ink">100%</text>
+<circle cx="320.0" cy="208.0" r="4" class="blue"/>
+<line x1="320" y1="62" x2="320" y2="258" class="axis"/>
+<circle cx="328" cy="284" r="4" class="blue"/>
+<text x="338" y="288" class="t-sub ink2">no attack (control)</text>
+<rect x="490" y="279" width="14" height="9" class="red" rx="2"/>
+<text x="510" y="288" class="t-sub ink2">forged pair, % cleared</text>
+</svg>

@@ -221,6 +221,65 @@ def groundtruth_lollipop(gt, path):
     print("wrote", Path(path).name)
 
 
+def comparison_chart(cm, hundred, path):
+    """Three guards, three different defenses, all fall. The annotation is the
+    point: the defense each one relies on is named next to a bar that reaches
+    the same place regardless."""
+    def maj_rate(model, cond):
+        votes = {}
+        for r in cm:
+            if r["model"] == model:
+                votes.setdefault((r["document"], r["condition"]), []).append(r["verdict"])
+        m = {k: max(set(v), key=v.count) for k, v in votes.items()}
+        docs = {d for (d, c) in m if c == "clean" and m[(d, "clean")] == "1"}
+        if not docs:
+            return 0.0
+        return sum(1 for d in docs if m.get((d, cond)) == "0") / len(docs)
+
+    hrate = sum(int(r["cleared"]) for r in hundred
+                if r["condition"] == "query_doc") / \
+        max(1, sum(1 for r in hundred if r["condition"] == "query_doc"))
+
+    rows = [
+        ("Shieldstral 1.0", "policy and content share one turn, plain-text labels",
+         hrate, 0.0),
+        ("gpt-oss-safeguard", "policy sits in a separate system role",
+         maj_rate("gpt-oss-safeguard-20b", "structural"),
+         maj_rate("gpt-oss-safeguard-20b", "assertion")),
+        ("Llama Guard 4", "fixed built-in categories, no policy in the prompt",
+         maj_rate("llama-guard-4-12b", "structural"),
+         maj_rate("llama-guard-4-12b", "assertion")),
+    ]
+    W, H, padL, padR, padT, padB = 840, 300, 320, 110, 70, 48
+    x0, x1 = padL, W - padR
+    def sx(v): return x0 + (x1 - x0) * v
+    o = header(W, H, "Different defenses, same result",
+               "Each guard defends the boundary a different way. The forged "
+               "pair clears all three.")
+    for g in (0, .25, .5, .75, 1):
+        X = sx(g)
+        o.append(f'<line x1="{X:.1f}" y1="{padT-8}" x2="{X:.1f}" y2="{H-padB+6}" class="grid"/>')
+        o.append(f'<text x="{X:.1f}" y="{H-padB+22}" text-anchor="middle" class="t-sub ink2">{int(g*100)}%</text>')
+    bh = 26
+    for i, (name, defense, atk, ctrl) in enumerate(rows):
+        y = padT + 22 + i * 58
+        o.append(f'<text x="{padL-16}" y="{y+4:.1f}" text-anchor="end" class="t-lab ink">{esc(name)}</text>')
+        o.append(f'<text x="{padL-16}" y="{y+21:.1f}" text-anchor="end" class="t-sub ink2">{esc(defense)}</text>')
+        w = max(sx(atk) - x0, 0)
+        o.append(f'<rect x="{x0}" y="{y-bh/2:.1f}" width="{w:.1f}" height="{bh}" class="red" rx="3" opacity="0.9"/>')
+        o.append(f'<text x="{sx(atk)+10:.1f}" y="{y+4:.1f}" class="t-val ink">{atk*100:.0f}%</text>')
+        # control marker
+        o.append(f'<circle cx="{sx(ctrl):.1f}" cy="{y:.1f}" r="4" class="blue"/>')
+    o.append(f'<line x1="{x0}" y1="{padT-8}" x2="{x0}" y2="{H-padB+6}" class="axis"/>')
+    o.append(f'<circle cx="{x0+8}" cy="{H-16}" r="4" class="blue"/>')
+    o.append(f'<text x="{x0+18}" y="{H-12}" class="t-sub ink2">no attack (control)</text>')
+    o.append(f'<rect x="{x0+170}" y="{H-21}" width="14" height="9" class="red" rx="2"/>')
+    o.append(f'<text x="{x0+190}" y="{H-12}" class="t-sub ink2">forged pair, % cleared</text>')
+    o.append("</svg>")
+    Path(path).write_text("\n".join(o))
+    print("wrote", Path(path).name)
+
+
 def main():
     # Prefer the 100-flagged-document run for the headline charts; fall back to
     # the 75-doc confirmatory slice.
@@ -232,6 +291,10 @@ def main():
         threshold_line(ss, RESULTS / "chart_threshold.svg")
     if gt:
         groundtruth_lollipop(gt, RESULTS / "chart_groundtruth.svg")
+    cm = load("confirm_crossmodel.csv")
+    hundred = load("confirm_hundred.csv")
+    if cm and hundred:
+        comparison_chart(cm, hundred, RESULTS / "chart_comparison.svg")
 
 
 if __name__ == "__main__":
