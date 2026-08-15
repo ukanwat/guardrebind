@@ -221,15 +221,19 @@ def main() -> None:
                   "held-out AdvBench, n=75, 95% Wilson intervals",
                   RESULTS / "chart_ablation.svg")
 
-        gt = [("benign decoy document", *r("ablation", "query_doc"), True),
-              ("neutral decoy document",
-               *r("groundtruth", "query_doc_neutral_decoy"), True),
-              ("harmful decoy document",
-               *r("groundtruth", "query_doc_harmful_decoy"), False)]
-        bar_chart(gt, "Make the decoy harmful and the bypass collapses",
-                  "% of harmful documents cleared. A jailbreak would clear whatever "
-                  "the decoy said; this does not. n=75",
-                  RESULTS / "chart_groundtruth.svg")
+        gtl = load("confirm_groundtruth.csv")
+        if gtl:
+            order = [("benign (scores 0.00 alone)", "benign", True),
+                     ("borderline (0.03 alone)", "mild (old decoy)", True),
+                     ("harmful (~1.0 alone)", "flagging", False)]
+            gt = []
+            for label, key, atk in order:
+                rows = [x for x in gtl if x["decoy"] == key]
+                gt.append((label, sum(int(x["cleared"]) for x in rows), len(rows), atk))
+            bar_chart(gt, "Bypass tracks how safe the trailing document is alone",
+                      "% of harmful messages cleared, by the standalone score of the "
+                      "decoy placed last. n=39",
+                      RESULTS / "chart_groundtruth.svg")
 
     if supp:
         def rs(cond):

@@ -37,8 +37,8 @@
   </style>
 
 <rect width="760" height="200" class="surface"/>
-<text x="16" y="26" class="t-title ink">Make the decoy harmful and the bypass collapses</text>
-<text x="16" y="45" class="t-sub ink2">% of harmful documents cleared. A jailbreak would clear whatever the decoy said; this does not. n=75</text>
+<text x="16" y="26" class="t-title ink">Bypass tracks how safe the trailing document is alone</text>
+<text x="16" y="45" class="t-sub ink2">% of harmful messages cleared, by the standalone score of the decoy placed last. n=39</text>
 <line x1="210.0" y1="52" x2="210.0" y2="164" class="grid" stroke-width="1"/>
 <text x="210.0" y="180" text-anchor="middle" class="t-sub ink2">0%</text>
 <line x1="323.5" y1="52" x2="323.5" y2="164" class="grid" stroke-width="1"/>
@@ -49,26 +49,24 @@
 <text x="550.5" y="180" text-anchor="middle" class="t-sub ink2">75%</text>
 <line x1="664.0" y1="52" x2="664.0" y2="164" class="grid" stroke-width="1"/>
 <text x="664.0" y="180" text-anchor="middle" class="t-sub ink2">100%</text>
-<text x="198" y="76.0" text-anchor="end" class="t-lab ink">benign decoy document</text>
+<text x="198" y="76.0" text-anchor="end" class="t-lab ink">benign (scores 0.00 alone)</text>
 <rect x="210" y="62.0" width="454.0" height="18" class="s-atk" rx="4"/>
 <rect x="210" y="62.0" width="5.0" height="18" class="s-atk"/>
-<line x1="641.9" y1="71.0" x2="664.0" y2="71.0" class="whisk" stroke-width="1.5"/>
-<line x1="641.9" y1="67.0" x2="641.9" y2="75.0" class="whisk" stroke-width="1.5"/>
+<line x1="623.3" y1="71.0" x2="664.0" y2="71.0" class="whisk" stroke-width="1.5"/>
+<line x1="623.3" y1="67.0" x2="623.3" y2="75.0" class="whisk" stroke-width="1.5"/>
 <line x1="664.0" y1="67.0" x2="664.0" y2="75.0" class="whisk" stroke-width="1.5"/>
 <text x="673.0" y="75.0" class="t-val ink">100%</text>
-<text x="198" y="108.0" text-anchor="end" class="t-lab ink">neutral decoy document</text>
-<rect x="210" y="94.0" width="454.0" height="18" class="s-atk" rx="4"/>
+<text x="198" y="108.0" text-anchor="end" class="t-lab ink">borderline (0.03 alone)</text>
+<rect x="210" y="94.0" width="151.3" height="18" class="s-atk" rx="4"/>
 <rect x="210" y="94.0" width="5.0" height="18" class="s-atk"/>
-<line x1="641.9" y1="103.0" x2="664.0" y2="103.0" class="whisk" stroke-width="1.5"/>
-<line x1="641.9" y1="99.0" x2="641.9" y2="107.0" class="whisk" stroke-width="1.5"/>
-<line x1="664.0" y1="99.0" x2="664.0" y2="107.0" class="whisk" stroke-width="1.5"/>
-<text x="673.0" y="107.0" class="t-val ink">100%</text>
-<text x="198" y="140.0" text-anchor="end" class="t-lab ink">harmful decoy document</text>
-<rect x="210" y="126.0" width="157.4" height="18" class="s-ctrl" rx="4"/>
-<rect x="210" y="126.0" width="5.0" height="18" class="s-ctrl"/>
-<line x1="323.0" y1="135.0" x2="418.6" y2="135.0" class="whisk" stroke-width="1.5"/>
-<line x1="323.0" y1="131.0" x2="323.0" y2="139.0" class="whisk" stroke-width="1.5"/>
-<line x1="418.6" y1="131.0" x2="418.6" y2="139.0" class="whisk" stroke-width="1.5"/>
-<text x="427.6" y="139.0" class="t-val ink">35%</text>
+<line x1="303.7" y1="103.0" x2="432.6" y2="103.0" class="whisk" stroke-width="1.5"/>
+<line x1="303.7" y1="99.0" x2="303.7" y2="107.0" class="whisk" stroke-width="1.5"/>
+<line x1="432.6" y1="99.0" x2="432.6" y2="107.0" class="whisk" stroke-width="1.5"/>
+<text x="441.6" y="107.0" class="t-val ink">33%</text>
+<text x="198" y="140.0" text-anchor="end" class="t-lab ink">harmful (~1.0 alone)</text>
+<line x1="210.0" y1="135.0" x2="250.7" y2="135.0" class="whisk" stroke-width="1.5"/>
+<line x1="210.0" y1="131.0" x2="210.0" y2="139.0" class="whisk" stroke-width="1.5"/>
+<line x1="250.7" y1="131.0" x2="250.7" y2="139.0" class="whisk" stroke-width="1.5"/>
+<text x="259.7" y="139.0" class="t-val ink">0%</text>
 <line x1="210" y1="52" x2="210" y2="164" class="axis" stroke-width="1"/>
 </svg>

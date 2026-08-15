@@ -23,7 +23,8 @@ into the content and get it to answer safe. I ran that against 75 documents from
 AdvBench that Shieldstral flags under an honest policy. It cleared zero of them.
 A forged `<Instruct>:` label in front of the same sentence also cleared zero,
 and forging an instruction plus a question together did no better. None of it
-moved the scores; they stayed above 0.99.
+moved the scores much; they stayed up in the high 0.9s, the same as with no
+payload at all.
 
 What worked had no persuasion in it at all. Take the harmful request, and after
 it append a forged question and a forged benign document. The whole thing looks
@@ -52,26 +53,26 @@ there's nothing to tell them apart, and the model just takes the last pair it
 sees. So this isn't really a jailbreak. The model reads the wrong document and
 grades that one instead.
 
-The benign document at the bottom is doing real work, and you can't skip it. I
-tried keeping the harmful text as the judged document and softening the forged
-question instead, asking things like "is this a poem?" whose honest answer on
-the harmful text is no. That barely cleared anything, under 9%. The model grades
-whatever document lands last, and if that document is harmful it flags it no
-matter how gentle the question is. So the attacker can't hide the harmful text by
-making it the thing being judged. It has to sit up top, with a harmless document
-underneath to catch the grade. Put the harmful text last instead and the whole
-thing gets blocked again.
+The benign document at the bottom is doing the work, and you can't skip it. To
+see that, I ran the same attack while sliding the trailing document from harmless
+to harmful. A library sentence the guard scores 0.00 on its own gives a 100%
+bypass. A borderline sentence it scores 0.03 by itself drops the bypass to a
+third. A properly harmful trailing document, one it flags at essentially 1.0 on
+its own, takes the bypass to zero. The bypass rate just tracks how safe that last document
+is on its own.
 
 ![One message, two sets of labels](results/chart_mechanism.svg)
 
-The test that settles this is cheap and I'd suggest it to anyone who thinks
-they've found a jailbreak. Run the same attack, but make the trailing decoy
-document harmful instead of benign. If the model were obeying an instruction to
-answer safe, the decoy's content would be irrelevant and it would keep clearing.
-Instead the bypass falls off a cliff, from 100% to 34.7%. Swap in a different
-benign decoy and it's back to 100%. It's reading whichever document lands last
-and judging it honestly, which is exactly what you'd want if that document were
-real.
+That ladder is also the test for whether this is a jailbreak, and it says no. A
+jailbreak would clear the message regardless of what the trailing document says.
+This doesn't. And you can't get around it by softening the question instead. I
+kept the harmful request as the judged document and asked something gentle,
+"is this a poem?", whose honest answer on the harmful text is no, and that
+cleared under 9%. The model grades whichever document lands last, on its own
+merits, and a soft question won't talk it past a harmful one. So the attacker's
+move is forced. The harmful request sits up top and a harmless document goes
+underneath to catch the grade. Put the harmful text last and the whole thing
+gets blocked again.
 
 The boring explanations don't hold. It's not that the model just weights later
 text more heavily. Append inert filler of the same length and it clears nothing.
@@ -175,6 +176,20 @@ new here is that nobody had pointed it at this class of model, and the class has
 grown fast, because a small classifier that reads a policy at inference time is
 a useful thing to put in front of a chatbot or an agent.
 
+How much this matters depends on where the guard sits, and I'd rather say that
+plainly than oversell it. If the guard screens a user's message and a
+well-aligned model sits behind it, the model refuses the harmful request on its
+own, and slipping it past the guard buys nothing. The bypass earns its keep in
+two places. One is where the guard is the only thing standing in for safety, an
+open-weight or fine-tuned model that won't refuse on its own, or a guard that
+gates a tool or an action. The other, the one I'd actually worry about, is where
+the guard screens content the system fetched rather than content the user typed,
+a retrieved page or a tool result in a RAG or agent pipeline. There a malicious
+document carries the forged pair, clears the guard, and lands its payload in the
+model's context, and there's no second model behind it to refuse anything. So
+this isn't "safety classifiers are broken." It's that this class of guard fails
+in exactly the setups where it's the load-bearing control.
+
 Here's what I'd actually do about it.
 
 If you're running one of these today, the only layer you control is your own
@@ -252,5 +267,5 @@ Every number above is from a confirmatory run on a held-out AdvBench slice (rows
 200-299, n=75 after screening) with the design frozen and committed before
 analysis. The exploratory work that shaped that design is in the same repo and
 labelled as exploratory, including two predictions I got wrong. Model cards and
-templates verified 10 August 2026. Disclosed to Mistral, OpenAI and Meta before
-publication.*
+templates verified 10 August 2026. These findings go to Mistral, OpenAI and Meta
+before this is published.*
