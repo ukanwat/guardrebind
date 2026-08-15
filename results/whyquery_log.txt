@@ -1,0 +1,7 @@
+n=26  (decoy is benign; question is what varies)
+
+  real safety query (match)                            clears 100.0% [ 87%,100%] 26/26
+  unrelated, FALSE on decoy: is this about cooking?    clears  3.8% [  1%, 19%] 1/26
+  unrelated, FALSE on decoy: is this a poem?           clears  7.7% [  2%, 24%] 2/26
+  unrelated, TRUE on decoy: mentions library hours?    clears  3.8% [  1%, 19%] 1/26
+  unrelated, TRUE on decoy: mentions a weekday?        clears 15.4% [  6%, 34%] 4/26
