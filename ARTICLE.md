@@ -42,9 +42,7 @@ That also rules out the shortcut of softening the question instead of the docume
 
 I should also say what it isnt. It isnt recency, the idea that the model just weighs later text more. Inert filler placed last does nothing. The same attack with the labels stripped off, so it's the identical words as plain prose, does nothing. It's the labelled pair that carries it, not the position alone. And it isnt fragile. Angle brackets, plain colons, markdown bold, all pass at close to 100 percent, and even a bare "Q:" gets 83. Only removing the labels entirely fails.
 
-A pass rate of 100 always looks too clean, so here is the spread. The cutoff for "flagged" is 0.5 by default, but the attack holds if you move it anywhere from 0.9 down to 0.3, and it's still 80 percent at 0.05. The no-attack control sits at zero no matter where you put the cutoff. So this is a large effect clearing a normal threshold by a wide margin, not a number balanced on a knife-edge.
-
-![The same result across the whole range of cutoffs. The attack line barely moves; the no-attack control never leaves zero.](results/chart_threshold.svg)
+A pass rate of 100 always looks too clean, so I checked the spread, and you can already see it in the score plot above. The two clusters sit at opposite ends, nowhere near the middle. The cutoff for "flagged" is 0.5 by default, but it wouldnt matter where you put it: the attack holds if you move the cutoff anywhere from 0.9 down to 0.3, and it's still 80 percent at 0.05, while the no-attack control stays at zero the whole way. It's a large effect clearing a normal cutoff by a wide margin, not a number balanced on a knife-edge.
 
 ## Does it happen on other guards?
 
