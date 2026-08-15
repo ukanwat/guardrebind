@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="300" viewBox="0 0 780 300" role="img">
+
+  <style>
+    .surface { fill: #fcfcfb; }
+    .ink     { fill: #0b0b0b; }
+    .ink2    { fill: #52514e; }
+    .grid    { stroke: #e6e5e2; }
+    .axis    { stroke: #b8b7b3; }
+    .blue    { fill: #2a78d6; }  .blue-s  { stroke: #2a78d6; }
+    .red     { fill: #e34948; }  .red-s   { stroke: #e34948; }
+    .l1 { fill: #eda100; } .l1s { stroke: #eda100; }
+    .l2 { fill: #eb6834; } .l2s { stroke: #eb6834; }
+    .l3 { fill: #e34948; } .l3s { stroke: #e34948; }
+    @media (prefers-color-scheme: dark) {
+      .surface { fill: #1a1a19; }
+      .ink     { fill: #ffffff; }
+      .ink2    { fill: #c3c2b7; }
+      .grid    { stroke: #323230; }
+      .axis    { stroke: #55554f; }
+      .blue    { fill: #3987e5; }  .blue-s  { stroke: #3987e5; }
+      .red     { fill: #e66767; }  .red-s   { stroke: #e66767; }
+      .l1 { fill: #c98500; } .l1s { stroke: #c98500; }
+      .l2 { fill: #d95926; } .l2s { stroke: #d95926; }
+      .l3 { fill: #e66767; } .l3s { stroke: #e66767; }
+    }
+    text { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .t-title { font-size: 15px; font-weight: 600; }
+    .t-sub   { font-size: 12px; }
+    .t-lab   { font-size: 12.5px; }
+    .t-val   { font-size: 12px; font-weight: 600; }
+  </style>
+
+<rect width="780" height="300" class="surface"/>
+<text x="16" y="26" class="t-title ink">The 100% is not a knife-edge</text>
+<text x="16" y="45" class="t-sub ink2">Bypass rate as the flag/clear cutoff moves. The attack holds across the whole range; the control never moves off zero.</text>
+<line x1="60" y1="248.0" x2="630" y2="248.0" class="grid"/>
+<text x="52" y="252.0" text-anchor="end" class="t-sub ink2">0%</text>
+<line x1="60" y1="203.5" x2="630" y2="203.5" class="grid"/>
+<text x="52" y="207.5" text-anchor="end" class="t-sub ink2">25%</text>
+<line x1="60" y1="159.0" x2="630" y2="159.0" class="grid"/>
+<text x="52" y="163.0" text-anchor="end" class="t-sub ink2">50%</text>
+<line x1="60" y1="114.5" x2="630" y2="114.5" class="grid"/>
+<text x="52" y="118.5" text-anchor="end" class="t-sub ink2">75%</text>
+<line x1="60" y1="70.0" x2="630" y2="70.0" class="grid"/>
+<text x="52" y="74.0" text-anchor="end" class="t-sub ink2">100%</text>
+<text x="60.0" y="270" text-anchor="middle" class="t-sub ink2">0.9</text>
+<text x="174.0" y="270" text-anchor="middle" class="t-sub ink2">0.7</text>
+<text x="288.0" y="270" text-anchor="middle" class="t-sub ink2">0.5</text>
+<text x="402.0" y="270" text-anchor="middle" class="t-sub ink2">0.3</text>
+<text x="516.0" y="270" text-anchor="middle" class="t-sub ink2">0.1</text>
+<text x="630.0" y="270" text-anchor="middle" class="t-sub ink2">0.05</text>
+<text x="345.0" y="288" text-anchor="middle" class="t-sub ink2">decision cutoff (flag if score is above this)</text>
+<polyline points="60.0,70.0 174.0,70.0 288.0,70.0 402.0,77.1 516.0,98.5 630.0,105.6" fill="none" class="red-s" stroke-width="2.5"/>
+<circle cx="60.0" cy="70.0" r="4" class="red"/>
+<circle cx="174.0" cy="70.0" r="4" class="red"/>
+<circle cx="288.0" cy="70.0" r="4" class="red"/>
+<circle cx="402.0" cy="77.1" r="4" class="red"/>
+<circle cx="516.0" cy="98.5" r="4" class="red"/>
+<circle cx="630.0" cy="105.6" r="4" class="red"/>
+<text x="640" y="109.6" class="t-val red">with forged pair</text>
+<polyline points="60.0,248.0 174.0,248.0 288.0,248.0 402.0,248.0 516.0,248.0 630.0,248.0" fill="none" class="blue-s" stroke-width="2.5"/>
+<circle cx="60.0" cy="248.0" r="4" class="blue"/>
+<circle cx="174.0" cy="248.0" r="4" class="blue"/>
+<circle cx="288.0" cy="248.0" r="4" class="blue"/>
+<circle cx="402.0" cy="248.0" r="4" class="blue"/>
+<circle cx="516.0" cy="248.0" r="4" class="blue"/>
+<circle cx="630.0" cy="248.0" r="4" class="blue"/>
+<text x="640" y="252.0" class="t-val blue">no attack</text>
+</svg>
