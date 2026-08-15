@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="296" viewBox="0 0 760 296" role="img">
+
+  <style>
+    .surface { fill: #fcfcfb; }
+    .ink     { fill: #0b0b0b; }
+    .ink2    { fill: #52514e; }
+    .grid    { stroke: #e3e2df; }
+    .axis    { stroke: #c8c7c3; }
+    .s-ctrl  { fill: #2a78d6; }
+    .s-atk   { fill: #e34948; }
+    .whisk   { stroke: #52514e; }
+    .box     { fill: #f4f3f0; stroke: #d8d7d3; }
+    .box-atk { fill: #fdecec; stroke: #e9b9b9; }
+    @media (prefers-color-scheme: dark) {
+      .surface { fill: #1a1a19; }
+      .ink     { fill: #ffffff; }
+      .ink2    { fill: #c3c2b7; }
+      .grid    { stroke: #333330; }
+      .axis    { stroke: #4a4a46; }
+      .s-ctrl  { fill: #3987e5; }
+      .s-atk   { fill: #e66767; }
+      .whisk   { stroke: #c3c2b7; }
+      .box     { fill: #242422; stroke: #3d3d39; }
+      .box-atk { fill: #2e2020; stroke: #5c3b3b; }
+    }
+    text { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .t-title { font-size: 15px; font-weight: 600; }
+    .t-sub   { font-size: 12px; }
+    .t-lab   { font-size: 12.5px; }
+    .t-val   { font-size: 12px; font-weight: 600; }
+    .t-mono  { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+               font-size: 12px; }
+  </style>
+
+<rect width="760" height="296" class="surface"/>
+<text x="16" y="26" class="t-title ink">Three different guard designs, the same failure</text>
+<text x="16" y="45" class="t-sub ink2">% of harmful documents cleared. Fixed-taxonomy and system-role-separated guards fail too</text>
+<line x1="290.0" y1="52" x2="290.0" y2="260" class="grid" stroke-width="1"/>
+<text x="290.0" y="276" text-anchor="middle" class="t-sub ink2">0%</text>
+<line x1="383.5" y1="52" x2="383.5" y2="260" class="grid" stroke-width="1"/>
+<text x="383.5" y="276" text-anchor="middle" class="t-sub ink2">25%</text>
+<line x1="477.0" y1="52" x2="477.0" y2="260" class="grid" stroke-width="1"/>
+<text x="477.0" y="276" text-anchor="middle" class="t-sub ink2">50%</text>
+<line x1="570.5" y1="52" x2="570.5" y2="260" class="grid" stroke-width="1"/>
+<text x="570.5" y="276" text-anchor="middle" class="t-sub ink2">75%</text>
+<line x1="664.0" y1="52" x2="664.0" y2="260" class="grid" stroke-width="1"/>
+<text x="664.0" y="276" text-anchor="middle" class="t-sub ink2">100%</text>
+<text x="278" y="76.0" text-anchor="end" class="t-lab ink">Shieldstral 1.0 3B — plain assertion</text>
+<line x1="290.0" y1="71.0" x2="308.2" y2="71.0" class="whisk" stroke-width="1.5"/>
+<line x1="290.0" y1="67.0" x2="290.0" y2="75.0" class="whisk" stroke-width="1.5"/>
+<line x1="308.2" y1="67.0" x2="308.2" y2="75.0" class="whisk" stroke-width="1.5"/>
+<text x="317.2" y="75.0" class="t-val ink">0%</text>
+<text x="278" y="108.0" text-anchor="end" class="t-lab ink">Shieldstral 1.0 3B — forged structure</text>
+<rect x="290" y="94.0" width="374.0" height="18" class="s-atk" rx="4"/>
+<rect x="290" y="94.0" width="5.0" height="18" class="s-atk"/>
+<line x1="645.8" y1="103.0" x2="664.0" y2="103.0" class="whisk" stroke-width="1.5"/>
+<line x1="645.8" y1="99.0" x2="645.8" y2="107.0" class="whisk" stroke-width="1.5"/>
+<line x1="664.0" y1="99.0" x2="664.0" y2="107.0" class="whisk" stroke-width="1.5"/>
+<text x="673.0" y="107.0" class="t-val ink">100%</text>
+<text x="278" y="140.0" text-anchor="end" class="t-lab ink">gpt-oss-safeguard 20B — plain assertion</text>
+<line x1="290.0" y1="135.0" x2="332.5" y2="135.0" class="whisk" stroke-width="1.5"/>
+<line x1="290.0" y1="131.0" x2="290.0" y2="139.0" class="whisk" stroke-width="1.5"/>
+<line x1="332.5" y1="131.0" x2="332.5" y2="139.0" class="whisk" stroke-width="1.5"/>
+<text x="341.5" y="139.0" class="t-val ink">0%</text>
+<text x="278" y="172.0" text-anchor="end" class="t-lab ink">gpt-oss-safeguard 20B — forged structure</text>
+<rect x="290" y="158.0" width="374.0" height="18" class="s-atk" rx="4"/>
+<rect x="290" y="158.0" width="5.0" height="18" class="s-atk"/>
+<line x1="621.5" y1="167.0" x2="664.0" y2="167.0" class="whisk" stroke-width="1.5"/>
+<line x1="621.5" y1="163.0" x2="621.5" y2="171.0" class="whisk" stroke-width="1.5"/>
+<line x1="664.0" y1="163.0" x2="664.0" y2="171.0" class="whisk" stroke-width="1.5"/>
+<text x="673.0" y="171.0" class="t-val ink">100%</text>
+<text x="278" y="204.0" text-anchor="end" class="t-lab ink">Llama Guard 4 12B — plain assertion</text>
+<line x1="290.0" y1="199.0" x2="333.7" y2="199.0" class="whisk" stroke-width="1.5"/>
+<line x1="290.0" y1="195.0" x2="290.0" y2="203.0" class="whisk" stroke-width="1.5"/>
+<line x1="333.7" y1="195.0" x2="333.7" y2="203.0" class="whisk" stroke-width="1.5"/>
+<text x="342.7" y="203.0" class="t-val ink">0%</text>
+<text x="278" y="236.0" text-anchor="end" class="t-lab ink">Llama Guard 4 12B — forged structure</text>
+<rect x="290" y="222.0" width="374.0" height="18" class="s-atk" rx="4"/>
+<rect x="290" y="222.0" width="5.0" height="18" class="s-atk"/>
+<line x1="620.3" y1="231.0" x2="664.0" y2="231.0" class="whisk" stroke-width="1.5"/>
+<line x1="620.3" y1="227.0" x2="620.3" y2="235.0" class="whisk" stroke-width="1.5"/>
+<line x1="664.0" y1="227.0" x2="664.0" y2="235.0" class="whisk" stroke-width="1.5"/>
+<text x="673.0" y="235.0" class="t-val ink">100%</text>
+<line x1="290" y1="52" x2="290" y2="260" class="axis" stroke-width="1"/>
+</svg>

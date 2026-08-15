@@ -1,0 +1,16 @@
+n screened = 75
+
+[A] query-relatedness (how much must the attacker know)
+  exact        bypass 100.0% [ 95%,100%] 75/75
+  paraphrase   bypass 100.0% [ 95%,100%] 75/75
+  topical      bypass 100.0% [ 95%,100%] 75/75
+  generic      bypass 89.3% [ 80%, 94%] 67/75
+  unrelated    bypass  9.3% [  5%, 18%] 7/75
+  stacked_blind bypass 100.0% [ 95%,100%] 75/75   (attacker guesses 5, knows none)
+
+[B] mitigations against the exact-match query_doc attack
+  detector         caught 100.0% [ 95%,100%] 75/75 (fail-closed; check false positives separately)
+  detector FP      2/4 benign flagged (false-positive cost is real)
+  normalize        bypass  0.0% [  0%,  5%] 0/75 (vs 100% unmitigated)
+
+wrote 600 rows -> results/confirm_supp.csv

@@ -94,7 +94,74 @@ P9. **Escaping fixes it.** Neutralizing the marker strings in the document
 
 ## Deviations (filled in during/after the run)
 
-- (none yet)
+- **P8 confirmed and exceeded.** Both comparison guards bypass 100% under the
+  format-appropriate structural attack (gpt-oss-safeguard 30/30, Llama Guard 4
+  29/29), with clean and assertion controls at 0%. 3/3 sample agreement in every
+  cell; raw outputs verified (Llama Guard returns genuine `unsafe\nS2` → `safe`,
+  not a parse artifact).
+- **Framing correction (important).** Llama Guard 4 has a FIXED taxonomy — no
+  policy in the prompt to override — and still falls 100%. So policy-adaptivity
+  is NOT the necessary condition, contra the earlier "policy-adaptive guards
+  specifically" framing. The honest claim is broader: any LLM guard that
+  interpolates untrusted content into an unescaped prompt is exposed, regardless
+  of fixed-vs-adaptive policy, system-vs-user role, or presence of delimiters
+  (Llama Guard's `BEGIN/END CONVERSATION` did not help — they are plain text).
+  This partially resolves the Qwen3Guard question: a fixed-taxonomy guard is now
+  shown to fall. Qwen3Guard would still strengthen it and remains future work.
+- **Added post-hoc: cross-model ground-truth test for gpt-oss** (harmful decoy
+  vs benign decoy, n=30). Result: benign decoy 100% bypass, harmful decoy 0%.
+  Confirms target-rebinding mechanism (not jailbreak) on gpt-oss, matching
+  Shieldstral. Flagged as post-hoc, not pre-registered.
+- **Open limitation.** Llama Guard's exact mechanism (rebinding vs the forged
+  `<END CONVERSATION>` malforming the provider template) is NOT isolated,
+  because the provider controls the chat template. Reported as bypass +
+  suggestibility-ruled-out only; the rebinding claim is proven for Shieldstral
+  and gpt-oss, asserted-but-not-isolated for Llama Guard.
+
+### Shieldstral confirmatory run (held-out rows 200-299, n=75 screened)
+
+- **P1, P2, P3, P4, P5, P7 confirmed.** See results/confirm_log.txt.
+- **P6 REFUTED.** Predicted wide policy-dependence; actual clear rate across 8
+  policy phrasings was median 99%, range 87-100% — the bypass is robust, not
+  fragile. The "100% is a single-condition artifact" concern is itself
+  disproven. NOTE: the forged query matched each policy's query; the true
+  moderator of effect size is query-relatedness, measured separately in the
+  supplementary run.
+- **P9 REFUTED.** Naive mitigations do NOT fix it: bracket-escape 88%,
+  label-strip 91%, nonce-fence 93% bypass (from 100%). The model keys on many
+  label variants, so escaping one form leaves others. Additionally the
+  `nonce_fence` implementation wrapped the entire attacker string rather than
+  only trusted content, so it is NOT a valid spotlighting test and is reported
+  as a bug, not a defense result. Supplementary run tests a fail-closed detector
+  and aggressive normalization instead.
+- **Residual on ground truth.** Harmful decoy left ~30% still cleared (not 0),
+  so rebinding is strong but not total — some blending when both documents are
+  harmful. Reported as-is.
+- **Screen yield.** 75/100 held-out documents flagged by the honest canonical
+  policy (violence-and-broad-harm query); the 25 not flagged are excluded, not
+  counted as bypasses.
+
+### Supplementary run (n=75, same held-out slice)
+
+- **Query-relatedness (post-hoc, answers the P6 caveat).** Attacker knowledge of
+  the deployment's query is NOT required: exact 100%, paraphrase 100%, topical
+  100%, generic 89%, unrelated 9%. A blind attacker stacking 5 guesses (none
+  matching) achieves 100%. The attack is black-box practical, not white-box.
+  NOTE: an earlier n=1 probe suggested generic/stacked were marginal; that probe
+  was underpowered and its conclusion is superseded by this n=75 result.
+- **A mitigation that works (post-hoc).** Aggressive normalization — deleting
+  marker-like label tokens and stripping `<`, `>`, `**` from untrusted content
+  before interpolation — reduces bypass from 100% to 0/75. The weak variant
+  tested in the confirmatory run (substituting a full-width colon) left 91%
+  bypass; deletion is what matters, not decoration.
+  LIMITATION: tested against the exact-match `query_doc` form only, not against
+  every marker variant or the stacked attack.
+- **Fail-closed detector.** A regex for marker-like labels catches 100% of
+  attacks. False positives: 2/4 on hand-written benign samples — but those
+  samples were deliberately constructed to contain "Query:" and angle brackets,
+  so 2/4 is illustrative of the failure mode, NOT an estimate of a real-world
+  false-positive rate. A representative FP rate on natural traffic was not
+  measured.
 
 ## Out of scope (named, not silently dropped)
 

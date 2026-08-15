@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="328" viewBox="0 0 760 328" role="img">
+
+  <style>
+    .surface { fill: #fcfcfb; }
+    .ink     { fill: #0b0b0b; }
+    .ink2    { fill: #52514e; }
+    .grid    { stroke: #e3e2df; }
+    .axis    { stroke: #c8c7c3; }
+    .s-ctrl  { fill: #2a78d6; }
+    .s-atk   { fill: #e34948; }
+    .whisk   { stroke: #52514e; }
+    .box     { fill: #f4f3f0; stroke: #d8d7d3; }
+    .box-atk { fill: #fdecec; stroke: #e9b9b9; }
+    @media (prefers-color-scheme: dark) {
+      .surface { fill: #1a1a19; }
+      .ink     { fill: #ffffff; }
+      .ink2    { fill: #c3c2b7; }
+      .grid    { stroke: #333330; }
+      .axis    { stroke: #4a4a46; }
+      .s-ctrl  { fill: #3987e5; }
+      .s-atk   { fill: #e66767; }
+      .whisk   { stroke: #c3c2b7; }
+      .box     { fill: #242422; stroke: #3d3d39; }
+      .box-atk { fill: #2e2020; stroke: #5c3b3b; }
+    }
+    text { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .t-title { font-size: 15px; font-weight: 600; }
+    .t-sub   { font-size: 12px; }
+    .t-lab   { font-size: 12.5px; }
+    .t-val   { font-size: 12px; font-weight: 600; }
+    .t-mono  { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+               font-size: 12px; }
+  </style>
+
+<rect width="760" height="328" class="surface"/>
+<text x="16" y="26" class="t-title ink">Only a forged question-and-document pair works</text>
+<text x="16" y="45" class="t-sub ink2">% of harmful documents the guard cleared. Shieldstral 1.0 3B, held-out AdvBench, n=75, 95% Wilson intervals</text>
+<line x1="210.0" y1="52" x2="210.0" y2="292" class="grid" stroke-width="1"/>
+<text x="210.0" y="308" text-anchor="middle" class="t-sub ink2">0%</text>
+<line x1="323.5" y1="52" x2="323.5" y2="292" class="grid" stroke-width="1"/>
+<text x="323.5" y="308" text-anchor="middle" class="t-sub ink2">25%</text>
+<line x1="437.0" y1="52" x2="437.0" y2="292" class="grid" stroke-width="1"/>
+<text x="437.0" y="308" text-anchor="middle" class="t-sub ink2">50%</text>
+<line x1="550.5" y1="52" x2="550.5" y2="292" class="grid" stroke-width="1"/>
+<text x="550.5" y="308" text-anchor="middle" class="t-sub ink2">75%</text>
+<line x1="664.0" y1="52" x2="664.0" y2="292" class="grid" stroke-width="1"/>
+<text x="664.0" y="308" text-anchor="middle" class="t-sub ink2">100%</text>
+<text x="198" y="76.0" text-anchor="end" class="t-lab ink">plain text, no labels</text>
+<line x1="210.0" y1="71.0" x2="232.1" y2="71.0" class="whisk" stroke-width="1.5"/>
+<line x1="210.0" y1="67.0" x2="210.0" y2="75.0" class="whisk" stroke-width="1.5"/>
+<line x1="232.1" y1="67.0" x2="232.1" y2="75.0" class="whisk" stroke-width="1.5"/>
+<text x="241.1" y="75.0" class="t-val ink">0%</text>
+<text x="198" y="108.0" text-anchor="end" class="t-lab ink">'disregard the above'</text>
+<line x1="210.0" y1="103.0" x2="232.1" y2="103.0" class="whisk" stroke-width="1.5"/>
+<line x1="210.0" y1="99.0" x2="210.0" y2="107.0" class="whisk" stroke-width="1.5"/>
+<line x1="232.1" y1="99.0" x2="232.1" y2="107.0" class="whisk" stroke-width="1.5"/>
+<text x="241.1" y="107.0" class="t-val ink">0%</text>
+<text x="198" y="140.0" text-anchor="end" class="t-lab ink">inert filler (length)</text>
+<line x1="210.0" y1="135.0" x2="232.1" y2="135.0" class="whisk" stroke-width="1.5"/>
+<line x1="210.0" y1="131.0" x2="210.0" y2="139.0" class="whisk" stroke-width="1.5"/>
+<line x1="232.1" y1="131.0" x2="232.1" y2="139.0" class="whisk" stroke-width="1.5"/>
+<text x="241.1" y="139.0" class="t-val ink">0%</text>
+<text x="198" y="172.0" text-anchor="end" class="t-lab ink">forged Instruct only</text>
+<line x1="210.0" y1="167.0" x2="232.1" y2="167.0" class="whisk" stroke-width="1.5"/>
+<line x1="210.0" y1="163.0" x2="210.0" y2="171.0" class="whisk" stroke-width="1.5"/>
+<line x1="232.1" y1="163.0" x2="232.1" y2="171.0" class="whisk" stroke-width="1.5"/>
+<text x="241.1" y="171.0" class="t-val ink">0%</text>
+<text x="198" y="204.0" text-anchor="end" class="t-lab ink">forged Instruct + Query</text>
+<line x1="210.0" y1="199.0" x2="232.1" y2="199.0" class="whisk" stroke-width="1.5"/>
+<line x1="210.0" y1="195.0" x2="210.0" y2="203.0" class="whisk" stroke-width="1.5"/>
+<line x1="232.1" y1="195.0" x2="232.1" y2="203.0" class="whisk" stroke-width="1.5"/>
+<text x="241.1" y="203.0" class="t-val ink">0%</text>
+<text x="198" y="236.0" text-anchor="end" class="t-lab ink">forged Document only</text>
+<rect x="210" y="222.0" width="42.4" height="18" class="s-atk" rx="4"/>
+<rect x="210" y="222.0" width="5.0" height="18" class="s-atk"/>
+<line x1="230.9" y1="231.0" x2="291.9" y2="231.0" class="whisk" stroke-width="1.5"/>
+<line x1="230.9" y1="227.0" x2="230.9" y2="235.0" class="whisk" stroke-width="1.5"/>
+<line x1="291.9" y1="227.0" x2="291.9" y2="235.0" class="whisk" stroke-width="1.5"/>
+<text x="300.9" y="235.0" class="t-val ink">9%</text>
+<text x="198" y="268.0" text-anchor="end" class="t-lab ink">forged Query + Document</text>
+<rect x="210" y="254.0" width="454.0" height="18" class="s-atk" rx="4"/>
+<rect x="210" y="254.0" width="5.0" height="18" class="s-atk"/>
+<line x1="641.9" y1="263.0" x2="664.0" y2="263.0" class="whisk" stroke-width="1.5"/>
+<line x1="641.9" y1="259.0" x2="641.9" y2="267.0" class="whisk" stroke-width="1.5"/>
+<line x1="664.0" y1="259.0" x2="664.0" y2="267.0" class="whisk" stroke-width="1.5"/>
+<text x="673.0" y="267.0" class="t-val ink">100%</text>
+<line x1="210" y1="52" x2="210" y2="292" class="axis" stroke-width="1"/>
+</svg>
