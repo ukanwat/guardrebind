@@ -221,6 +221,46 @@ def groundtruth_lollipop(gt, path):
     print("wrote", Path(path).name)
 
 
+def attack_anatomy(ss, path):
+    """Which part of the payload does the work. Real range, unlike the
+    cross-model result, so it earns a bar chart. Bars that clear the guard are
+    red; bars that don't are blue, so colour carries the works/fails split."""
+    def rate(cond):
+        v = [float(r["score"]) for r in ss if r["exp"] == "ablation"
+             and r["condition"] == cond and r["defended"] == "0"]
+        return sum(1 for x in v if x < 0.5) / len(v) if v else 0.0
+    rows = [
+        ('just "disregard the above"', "authority_note"),
+        ("a forged Instruct line only", "instruct_only"),
+        ("a forged Document only", "doc_only"),
+        ("a forged Query + Document", "query_doc"),
+        ("all three forged", "full_triple"),
+    ]
+    W, H, padL, padR, padT, padB = 820, 306, 250, 96, 66, 54
+    x0, x1 = padL, W - padR
+    def sx(v): return x0 + (x1 - x0) * v
+    o = header(W, H, "Only a forged question-and-document pair works",
+               "Percent of 75 harmful requests the guard cleared, by what the "
+               "attacker appends. A lone forged document barely moves it.")
+    for g in (0, .25, .5, .75, 1):
+        X = sx(g)
+        o.append(f'<line x1="{X:.1f}" y1="{padT-8}" x2="{X:.1f}" y2="{H-padB+6}" class="grid"/>')
+        o.append(f'<text x="{X:.1f}" y="{H-padB+22}" text-anchor="middle" class="t-sub ink2">{int(g*100)}%</text>')
+    bh = 26
+    for i, (lab, cond) in enumerate(rows):
+        r = rate(cond)
+        y = padT + 20 + i * 40
+        cls = "red" if r >= 0.5 else "blue"
+        o.append(f'<text x="{padL-14}" y="{y+4:.1f}" text-anchor="end" class="t-lab ink">{esc(lab)}</text>')
+        w = max(sx(r) - x0, 1.5)
+        o.append(f'<rect x="{x0}" y="{y-bh/2:.1f}" width="{w:.1f}" height="{bh}" class="{cls}" rx="3"/>')
+        o.append(f'<text x="{sx(r)+10:.1f}" y="{y+4:.1f}" class="t-val ink">{r*100:.0f}%</text>')
+    o.append(f'<line x1="{x0}" y1="{padT-8}" x2="{x0}" y2="{H-padB+6}" class="axis"/>')
+    o.append("</svg>")
+    Path(path).write_text("\n".join(o))
+    print("wrote", Path(path).name)
+
+
 def comparison_chart(cm, hundred, path):
     """Three guards, three different defenses, all fall. The annotation is the
     point: the defense each one relies on is named next to a bar that reaches
@@ -291,10 +331,9 @@ def main():
         threshold_line(ss, RESULTS / "chart_threshold.svg")
     if gt:
         groundtruth_lollipop(gt, RESULTS / "chart_groundtruth.svg")
-    cm = load("confirm_crossmodel.csv")
-    hundred = load("confirm_hundred.csv")
-    if cm and hundred:
-        comparison_chart(cm, hundred, RESULTS / "chart_comparison.svg")
+    full = load("confirm_shieldstral.csv")
+    if full:
+        attack_anatomy(full, RESULTS / "chart_anatomy.svg")
 
 
 if __name__ == "__main__":
