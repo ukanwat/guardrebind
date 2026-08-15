@@ -132,6 +132,43 @@ new here is that nobody had pointed it at this class of model, and the class has
 grown fast, because a small classifier that reads a policy at inference time is
 a useful thing to put in front of a chatbot or an agent.
 
+Before the takeaway, the thing I'd actually do about it, since a finding with no
+fix is just complaining.
+
+If you're running one of these today, the only layer you control is your own
+wrapper, and the fix that worked is blunt. Delete label-shaped tokens from the
+untrusted string before you interpolate it, and delete the bracket and asterisk
+characters that build them. Not substitution, not escaping, deletion. That took
+my bypass rate from 100% to zero across all 75 documents, where escaping angle
+brackets left 88% working. If deleting text from user content is unacceptable
+for your product, the alternative is to fail closed: run a detector for
+label-shaped patterns and refuse or human-review anything that matches. That
+caught every attack I threw at it, at the cost of false positives on ordinary
+documents that happen to contain the word "Query:" followed by a colon, which is
+not a rare thing in a support inbox. Either way, do it in the wrapper. Do not
+try to write your way out of it in the policy text, because that's the one
+approach with a measured zero effect.
+
+The vendors have better options than I do. The clean one is reserved control
+tokens: put the document behind tokens the content cannot emit, and strip those
+tokens from user input at tokenization time. Llama Guard already gestures at
+this with `<BEGIN CONVERSATION>`, but those are ordinary characters, which is
+why writing them yourself works. Real special tokens would close it. Short of a
+retrain, shipping an official SDK helper that does the interpolation and the
+stripping would fix most of this by making the safe path the default path, since
+right now every integrator hand-rolls the same f-string and inherits the same
+bug. And the model cards should say so. Warning about obfuscated inputs while
+saying nothing about content that imitates the format is the gap that made this
+worth writing up.
+
+The deeper fix needs a training run. The root cause is that policy tokens and
+content tokens are the same kind of thing in one flat sequence, with no type
+distinction between them. You could teach the distinction with adversarial
+examples, documents containing forged sections, labelled so the model learns to
+honour only the first pair. Or you could build it into the architecture with
+segment boundaries that mark which span is the document, enforced rather than
+suggested. Both are more work than an escaping helper and both are more durable.
+
 Which is the part I keep chewing on. Every one of these systems takes a string
 an adversary controls, splices it into a structured prompt, and then trusts the
 structure it just finished building. The boundary everyone assumes exists

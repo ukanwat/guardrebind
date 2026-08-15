@@ -22,6 +22,8 @@
       .whisk   { stroke: #c3c2b7; }
       .box     { fill: #242422; stroke: #3d3d39; }
       .box-atk { fill: #2e2020; stroke: #5c3b3b; }
+      .t-dev   { fill: #6da7ec; }
+      .t-atk   { fill: #e66767; }
     }
     text { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
     .t-title { font-size: 15px; font-weight: 600; }
@@ -30,6 +32,8 @@
     .t-val   { font-size: 12px; font-weight: 600; }
     .t-mono  { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
                font-size: 12px; }
+    .t-dev   { fill: #2a78d6; }
+    .t-atk   { fill: #c0392f; }
   </style>
 
 <rect width="760" height="200" class="surface"/>
