@@ -1,4 +1,4 @@
-# Nothing to See Here: Fooling LLM Safety Guards into Judging the Wrong Text
+# Fooling LLM Safety Guards into Judging the Wrong Text
 
 Code, data and every raw score for the paper (`paper/main.pdf`, source in `paper/`).
 

@@ -4,7 +4,7 @@ Paste these into the arXiv submission form. The source to upload is `arxiv-sourc
 
 ## Title
 
-Nothing to See Here: Fooling LLM Safety Guards into Judging the Wrong Text
+Fooling LLM Safety Guards into Judging the Wrong Text
 
 ## Authors
 
