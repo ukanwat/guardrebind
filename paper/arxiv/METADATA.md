@@ -21,13 +21,14 @@ Safety guards check content before an LLM application acts on it, and most paste
 ## Comments
 
 ```
-21 pages (13 main body), 2 figures, 8 tables
+21 pages (13 main body), 2 figures, 8 tables. Code: https://github.com/ukanwat/guardrebind ; model: https://huggingface.co/ukanwat/shieldstral-1.0-3b-rebinding-fix
 ```
 
 ## Categories
 
-- Primary: cs.CR (Cryptography and Security)
-- Cross-lists: cs.CL (Computation and Language), cs.LG (Machine Learning)
+- Primary: cs.LG (Machine Learning)
+- Cross-lists: cs.CR (Cryptography and Security), cs.CL (Computation and Language)
+- (Primary is cs.LG because the endorser available, a co-author, can endorse cs.LG; cross-lists need no endorsement.)
 
 ## License
 
