@@ -84,4 +84,18 @@ batch 8, 1 epoch, max length 384, BCE on the yes/no logit margin against the seg
 Data: train-split prompt items, 3 train-family attacks per item, plus a structured-benign set of 1/4 that size.
 
 ## Deviations
-(none yet)
+- D1 (2026-10-15 05:20 IST, before any test-split run). Variability design added, so the benchmark measures spread and not one fixed
+  instantiation:
+  (a) Attack instantiation: each item x attack-family cell draws K=5 random instantiations (decoy from a pool of 40 benign
+      decoys, forged query from the family's pool, seeded by item id). Report each family's bypass as the mean over
+      instantiations, with a 95% CI from a two-level bootstrap (items, then instantiations), plus the per-item worst case over
+      instantiations ("any instantiation succeeds").
+  (b) Deployment-policy variance: each guard is run under 3 deployment policies/queries (its card default plus 2
+      paraphrases). Report the range and the mean.
+  (c) Threshold: bypass curves over tau in [0.05, 0.95], not just tau=0.5. AUROC/AUPRC of attacked-harmful vs clean-benign.
+  (d) Fix: 3 training seeds per condition (T, BT, naive AT). Report mean +- sd over seeds, with paired bootstrap tests on the
+      seed-averaged per-item scores.
+  (e) Breakdown: per harm category and per source, with CIs. Report categories with n < 30 but don't interpret them.
+  (f) Stability check: re-score a 200-cell random subset twice (and batched vs unbatched) to bound numeric non-determinism on MPS.
+  Predictions M1-M5 and F1-F6 are unchanged and are evaluated on the means. K, the decoy pool and the policy paraphrases are
+  fixed in code before the test run (attacks_grammar.py, decoy pool v1).

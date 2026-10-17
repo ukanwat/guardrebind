@@ -25,6 +25,7 @@ while pgrep -f "src.fix.distill build" > /dev/null; do sleep 30; done
 [ -f results/fix/pilot_T.json ] || run eval_T uv run --frozen python -m src.fix.evaluate --cond T --adapter models/fix/t_pilot --split dev --out results/fix/pilot_T.json
 [ -f results/fix/pilot_BT.json ] || run eval_BT uv run --frozen python -m src.fix.evaluate --cond BT --adapter models/fix/bt_pilot --split dev --out results/fix/pilot_BT.json
 
-# 5. GuardRebind core panel (resumable per guard)
+# 5. GuardRebind core panel: moved to scripts/queue_bench.sh (variability design, PROTOCOL_v2 deviation D1)
+exit 0
 run bench_core uv run --frozen python -m src.bench.run_bench --guards shieldstral,llama_guard_3_1b,shieldgemma_2b --attacks core --items core --n 600 --out results/bench/core
 echo "$(date '+%H:%M:%S') QUEUE DONE" >> $L/queue.log
