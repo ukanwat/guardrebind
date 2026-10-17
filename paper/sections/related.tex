@@ -22,4 +22,4 @@ We apply this line of defenses to a classifier's content slot: the output is one
 
 \paragraph{Adaptive-attack norms.}
 Fine-tuning defenses that report near-zero attack success are broken by attention-aware attacks~\citep{pandya2025may}, checkpoint-GCG~\citep{yang2025auditing}, RL red-teaming~\citep{yin2026pismith} and scaled adaptive attacks~\citep{nasr2025attacker}, under the evaluation standards of \citet{carlini2019evaluating,tramer2020adaptive,athalye2018obfuscated,jia2025critical}.
-\Cref{sec:adaptive} adopts these: the attacker knows the defense, attacks run end to end, and we report the per-item worst case over all attacks.
+\Cref{sec:adaptive} adopts these: the attacker knows the defense, attacks run end to end, and we report the per-item worst case; the defense holds against structural attacks but not against GCG, which also clears the undefended guard with no forged pair (\cref{app:gcg}).

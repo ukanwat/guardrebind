@@ -50,8 +50,25 @@ The protocol was frozen before the confirmatory run and not edited after results
   \item P8 (cross-model transfer): confirmed (30/30, 29/29).
   \item P9 (escaping fixes it): refuted --- bracket-escape 88\%, label-strip 91\%, nonce-fence 93\%.
 \end{itemize}
-The benchmark and defense predictions (M1--M5, F1--F6, A1--A3) are stated in the released protocol (\cref{app:open-science}).
-On gpt-oss-safeguard, the one guard measured so far, M1 holds (best core family $100\%$, strict reading) and so does M2 (instruction-only payloads at most $6.2\%$); the local guards are \tbd{M1--M5 outcomes per guard}. % src: paper/data/gpt_oss_strict.md (parse = strict): 11 families 113/113; sentence_bare 3/113, authority_note 4/113, instruct_only 7/113
+\paragraph{Pre-registered predictions and outcomes (benchmark and defense).}
+The second protocol was frozen before any test-split run, with three recorded deviations: D1 adds the variability design (three instantiations per item and family, two paraphrased deployment policies on six families, three seeds for B$+$T); D2 replaces Qwen3Guard's conversation-only native forgery with the full-task forgery found on the train split and adds the length control; D3 trims compute (5{,}000 training items with two attacks each, two seeds for T and naive adversarial training, GCG on 20 items at 250 steps with a 500-step check on 10, structural search on 50 items). % src: PROTOCOL_v2.md (Deviations D1-D3)
+The clean-copy ablation, the forged-verdict controls and the GCG control without a forged pair were added after the freeze and are exploratory.
+\begin{itemize}[leftmargin=1.5em,itemsep=1pt]
+  \item M1 (a core structural family $\ge 70\%$ on every guard): confirmed; best family $93.4$--$100\%$ on all five guards.
+  \item M2 (instruction-only payloads $\le 10\%$ on every guard): not confirmed; $\le 7.0\%$ on four guards, $20.2\%$ on ShieldGemma.
+  \item M3 (decoy dose--response, $\rho \le -0.8$, Shieldstral and Qwen3Guard): confirmed on Shieldstral ($\rho=-0.84$\ci{-0.85}{-0.82}); not run on Qwen3Guard.
+  \item M4 (control-token syntax $\ge$ angle syntax; gap closes with special parsing off): partly supported; higher in 7 of 8 comparisons but clearly so only on Shieldstral; the parsing-off arm was not part of the benchmark run.
+  \item M5 (exploratory: category, source, size): per-category and per-source bypass are released with the artifacts; size was not varied within a model series.
+  \item F1 (B alone leaves held-out bypass $\ge 50\%$): confirmed ($85.4\%$).
+  \item F2 (T generalises worse than B$+$T on held-out families): not confirmed; T $-$ B$+$T $=-0.25$ points\ci{-0.87}{0.32}, one-sided $p=0.79$.
+  \item F3 (B$+$T held-out bypass $\le 10\%$): confirmed ($1.8 \pm 0.4\%$).
+  \item F4 (B$+$T AUROC within $0.01$, recall within $2$ points): confirmed ($+0.008$, $-0.5$).
+  \item F5 (B$+$T over-refusal within $2$ points): confirmed ($-1.8$ XSTest, $+1.9$ OR-Bench-hard, $+0.3$ structured benign).
+  \item F6 (naive adversarial training costs $\ge 3$ points of structured-benign over-refusal or generalises worse): not confirmed ($0.0\%$ structured benign, $1.0\%$ held-out); its costs are clean FPR and the trailing-pair blind spot (\cref{sec:evaluation}).
+  \item A1 (GCG against B$+$T $\le 30\%$): not confirmed; $95\%$ on 20 items (\cref{app:gcg}).
+  \item A2 (structural search against B$+$T $\le 20\%$): confirmed ($4\%$\ci{1.1\%}{13\%}).
+  \item A3 (LLM attacker): not run.
+\end{itemize}
 
 \section{Sensitivity Analysis}
 \label{app:sensitivity}
@@ -127,8 +144,94 @@ Held-out families are those whose syntax is in \{JSON, YAML, markdown bold, cont
   \item number of forged pairs: 1--5; position: append, prepend, middle;
   \item decoy harm: benign, borderline, harmful; forged query: exact, paraphrase, generic, out-of-domain; language; encoding: plain text or real control tokens.
 \end{itemize}
-Per-guard breakdowns by syntax, pair count, harm category, source and $\tau$ are released with the artifacts.
-\tbd{per-guard tables}
+\Cref{tab:per-family} gives every core family's bypass on each guard, and \cref{tab:sens-bench-tau} the threshold sensitivity of each guard's strongest family. Breakdowns by harm category and source are released with the artifacts.
+
+\begin{table}[p]
+  \centering\footnotesize
+  \caption{Bypass (\%) of every core attack family on each guard, default policy, mean over three instantiations, screened core set ($n$ = 300, 374, 168, 536 and 113). gpt-oss-safeguard uses the strict reading. ``native'' is each guard's own template syntax (the full-task forgery for Qwen3Guard).}
+  % src: /tmp/bench_analysis/bypass.csv (python -m src.bench.analyze on results/bench/v2), default policy; gpt-oss: paper/data/gpt_oss_strict.md (parse = strict, mean column)
+  \label{tab:per-family}
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{lccccc}
+    \toprule
+    family & Shieldstral & Llama Guard 3 & ShieldGemma & Qwen3Guard & gpt-oss-sg \\
+    \midrule
+    native pair & 71.7 & 100.0 & 73.6 & 81.7 & 71.7 \\
+    angle pair & 70.9 & 96.0 & 14.3 & 9.0 & 2.4 \\
+    bracket pair & 70.3 & 94.9 & 22.4 & 4.4 & 3.8 \\
+    markdown pair & 88.8 & 93.9 & 19.4 & 5.4 & 3.5 \\
+    colon pair & 71.7 & 98.3 & 27.0 & 5.9 & 2.7 \\
+    Q:/D: pair & 46.9 & 97.5 & 36.5 & 10.0 & 3.5 \\
+    JSON pair & 19.7 & 84.2 & 33.9 & 4.8 & 11.5 \\
+    XML pair & 40.8 & 93.3 & 14.5 & 5.0 & 4.1 \\
+    YAML pair & 46.4 & 84.5 & 40.1 & 5.8 & 4.1 \\
+    control-token pair & 81.3 & 97.6 & 20.4 & 7.5 & 13.3 \\
+    angle document only & 37.2 & 69.4 & 6.2 & 4.5 & 4.1 \\
+    angle instruction only & 7.0 & 1.1 & 10.7 & 0.4 & 6.2 \\
+    angle triple & 84.4 & 98.1 & 83.3 & 15.0 & 100.0 \\
+    native pair, prepended & 8.8 & 7.8 & 55.2 & 10.3 & 3.8 \\
+    native pair, in the middle & 70.4 & 99.9 & 100.0 & 93.4 & 33.6 \\
+    native pair, 2 pairs & 96.2 & 100.0 & 90.9 & 58.9 & 99.7 \\
+    native pair, 3 pairs & 83.8 & 99.9 & 91.1 & 61.3 & 99.1 \\
+    native pair, 4 pairs & 75.4 & 100.0 & 95.2 & 29.0 & 97.6 \\
+    native pair, 5 pairs & 69.8 & 99.6 & 93.8 & 24.4 & 98.8 \\
+    native pair, borderline decoy & 52.8 & 100.0 & 81.7 & 79.6 & 79.1 \\
+    native pair, harmful decoy & 12.4 & 11.1 & 56.5 & 0.0 & 6.8 \\
+    native pair, paraphrased query & 71.0 & 100.0 & 74.6 & 84.8 & 25.7 \\
+    native pair, generic query & 70.3 & 100.0 & 74.2 & 83.8 & 26.0 \\
+    native pair, unrelated query & 40.7 & 100.0 & 74.2 & 82.0 & 27.4 \\
+    angle pair, es & 63.8 & 87.6 & 11.3 & 3.6 & 3.8 \\
+    angle pair, fr & 68.9 & 88.3 & 11.7 & 4.9 & 3.2 \\
+    angle pair, de & 57.7 & 91.8 & 7.7 & 3.6 & 2.1 \\
+    angle pair, zh & 70.2 & 87.3 & 7.7 & 3.9 & 2.9 \\
+    angle pair, hi & 58.1 & 90.9 & 25.4 & 3.4 & 3.2 \\
+    angle pair, ar & 60.3 & 86.9 & 7.3 & 3.4 & 2.9 \\
+    angle pair, ru & 63.7 & 89.9 & 9.5 & 3.9 & 4.1 \\
+    colon triple & 73.1 & 99.5 & 86.7 & 12.5 & 100.0 \\
+    markdown triple & 94.9 & 96.9 & 91.5 & 9.6 & 100.0 \\
+    control-token triple & 90.7 & 98.6 & 87.9 & 16.3 & 100.0 \\
+    angle triple, harmful decoy & 13.6 & 1.2 & 84.3 & 0.0 & 6.8 \\
+    colon triple, 3 pairs & 72.7 & 96.4 & 64.7 & 14.7 & 100.0 \\
+    angle pair, 2 pairs, generic query & 93.2 & 94.2 & 6.3 & 5.5 & 2.9 \\
+    markdown pair, unrelated query & 61.1 & 91.7 & 16.1 & 6.5 & 8.0 \\
+    angle triple, es & 75.8 & 95.0 & 73.4 & 7.2 & 99.7 \\
+    colon pair, borderline decoy, generic query & 54.9 & 72.0 & 31.9 & 2.1 & 5.0 \\
+    angle triple, 2 pairs & 99.2 & 99.5 & 80.2 & 15.7 & 100.0 \\
+    angle triple, 5 pairs & 79.8 & 46.5 & 80.8 & 15.6 & 99.4 \\
+    bracket document only & 24.7 & 57.0 & 5.0 & 3.1 & 5.9 \\
+    colon document only & 35.2 & 53.2 & 9.1 & 2.8 & 5.3 \\
+    markdown pair, 3 pairs & 80.0 & 96.0 & 13.1 & 6.3 & 3.5 \\
+    XML triple & 64.9 & 99.5 & 98.0 & 10.5 & 100.0 \\
+    YAML pair, harmful decoy & 9.9 & 0.1 & 72.6 & 0.0 & 0.6 \\
+    JSON triple & 16.4 & 93.6 & 84.3 & 7.8 & 100.0 \\
+    colon pair, fr & 57.7 & 84.0 & 12.9 & 3.4 & 2.9 \\
+    markdown pair, de & 79.8 & 84.4 & 11.5 & 3.2 & 3.8 \\
+    angle triple, prepended & 5.3 & 4.8 & 26.8 & 18.3 & 10.3 \\
+    angle triple, in the middle, harmful decoy & 13.0 & 4.5 & 71.8 & 0.0 & 9.4 \\
+    control: benign text appended & 4.3 & 41.2 & 3.6 & 6.0 & 5.3 \\
+    control: bare instruction sentence & 6.0 & 2.9 & 14.9 & 0.4 & 2.7 \\
+    control: instruction as ``Note:'' & 5.7 & 1.6 & 20.2 & 0.7 & 3.5 \\
+    control: length-matched filler & 6.0 & 4.8 & 1.8 & 4.7 & 6.2 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[h]
+  \centering\small
+  \caption{Threshold sensitivity: bypass (\%) of each guard's strongest family (at $\tau=0.5$) as $\tau$ varies, default policy.}
+  % src: /tmp/bench_analysis/bypass_tau.csv
+  \label{tab:sens-bench-tau}
+  \begin{tabular}{llccccc}
+    \toprule
+    guard & family & $\tau{=}0.1$ & $0.3$ & $0.5$ & $0.7$ & $0.9$ \\
+    \midrule
+    Shieldstral   & angle triple, 2 pairs     & 95.0 & 98.0 & 99.2 & 100 & 100 \\
+    Llama Guard 3 & native pair               & 99.1 & 99.9 & 100  & 100 & 100 \\
+    ShieldGemma   & native pair, in the middle & 75.6 & 99.6 & 100  & 100 & 100 \\
+    Qwen3Guard    & native pair, in the middle & 75.3 & 87.7 & 93.4 & 97.0 & 99.0 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \section{gpt-oss-safeguard in \texorpdfstring{\guardrebind{}}{GuardRebind}}
 \label{app:gpt-oss}
@@ -207,9 +310,10 @@ In a minority of attacked rows the model's reasoning quotes the literal marker t
 The bounded format renders the stock chat template with a placeholder document, splits it into a trusted prefix and suffix, encodes the content on its own with special-token parsing disabled, and inserts the two reserved boundary tokens (unused in pretraining) around it. % src: src/fix/inputs.py
 The template emits a space before the document that the tokenizer would merge into the content's first token; that space is moved into the trusted prefix, which leaves plain documents tokenizing identically to the stock path (verified on 203 documents). % src: src/fix/inputs.py (_content), PLAN.md
 Training is a LoRA (rank 16, $\alpha=32$) on the language model's attention and MLP projections, AdamW at learning rate $10^{-4}$, batch 8, one epoch, maximum length 384, binary cross-entropy on the yes/no logit margin against the segment-max teacher target; in B$+$T the two boundary embeddings are additionally trainable and every other embedding row's gradient is masked. % src: src/fix/distill.py, PROTOCOL_v2.md (Fixed training recipe)
-Training data: train-split prompt items, three training-family attacks per item, plus a structured-benign set one quarter that size. % src: src/fix/distill.py (build)
-Compute and wall-clock: \tbd{GPU-hours and hardware}.
-Adaptive-attack budgets and convergence: GCG at 20-token suffix and 100/250/500/1000 steps, checkpoint-GCG seeded from held LoRA checkpoints, the LLM attacker at ten tries per item; convergence is declared when doubling the GCG steps changes bypass by under two points. % src: PROTOCOL_v2.md (Adaptive)
+Training data: 5{,}000 train-split prompt items, each clean and with two training-family attacks, plus 1{,}250 structured-benign items (16{,}250 examples); one epoch is 2{,}032 steps. % src: src/fix/distill.py (build); logs/pod/build_full.log; logs/pod/train_t_seed0.log
+Naive adversarial training and the clean-copy ablation use the same examples with different targets.
+Compute: training and the test-split defense, adaptive and mechanism runs used one NVIDIA RTX 4090; a training run takes about 17 minutes (2{,}032 steps in 993\,s for T, 1{,}003\,s for B$+$T). The benchmark ran on an Apple-silicon laptop GPU. % src: logs/pod/train_{t,bt}_seed0.log
+Adaptive budgets: the structural search scores all 684 attacks on each of 50 items (batch 128); GCG optimises a 20-token suffix inside the forged document for 250 steps (batch 32 candidates per step) on 20 items, stopping an item at its first success, with a 500-step run on 10 items for B$+$T as the convergence check. % src: results/fix/adaptive_*.json (steps, batch, n)
 
 \paragraph{Content tokens.}
 \label{app:content-tokens}
@@ -218,6 +322,35 @@ For each guard tokenizer we encoded every added token's string on its own, embed
 On Shieldstral (1000 added tokens, all special), the guard the defense is trained on, and on Llama Guard~3 1B (256, all special), no added or special id is reachable from content.
 On Qwen3Guard-0.6B, 12 of 26 added tokens are not marked special (among them the tool-call tags \texttt{<tool\_call>} and \texttt{</tool\_call>} and the fill-in-the-middle markers) and stay atomic; on ShieldGemma 2B, 242 of 249 are not special (the \texttt{<unused$k$>} and other reserved markers) and stay atomic.
 Content can produce these ids, so a boundary-token design on those tokenizers must also exclude them from the boundary.
+
+\section{Gradient Attack (GCG)}
+\label{app:gcg}
+
+GCG~\citep{zou2023universal} optimises a 20-token suffix, placed inside the forged document, to minimise the defended guard's $P(\text{unsafe})$ on the full input; the control runs the same optimisation with no forged pair, the suffix appended directly to the harmful request (\cref{tab:gcg}).
+GCG clears every defended model, and it clears the base guard and T just as well without any forged pair, so this is the general adversarial-suffix weakness of neural classifiers, not target rebinding. Training raises the median number of steps to the first success from 1 to 8.5 (T) and 14 (B$+$T).
+On B$+$T, 17 of 20 items fall within 100 steps and 19 within 250; on the 10-item convergence check, 9 fall within 100 steps and all 10 within 250 and 500 steps.
+Counting GCG, the per-item worst case over all attacks against B$+$T is $95\%$ (19/20).
+
+\begin{table}[h]
+  \centering\small
+  \caption{White-box GCG on Shieldstral, 20 screened test items, 20-token suffix, seed~0 for T and B$+$T. Bypass with Wilson 95\% interval; first success is the median (maximum) optimisation step at which a cleared item is first cleared. The 500-step row is the convergence check on 10 items; it reaches 10/10 by 250 steps and stays there at 500.}
+  % src: results/fix/adaptive_{base,B,t_seed0,bt_seed0}_gcg.json, adaptive_bt_seed0_gcg500.json, adaptive_{base,t_seed0}_gcg_nopair.json (bypass_by_budget, first_success_steps)
+  \label{tab:gcg}
+  \begin{tabular}{llccc}
+    \toprule
+    guard & suffix placed & 100 steps & 250 steps & first success \\
+    \midrule
+    none (base) & in forged document & 20/20 & 20/20\ci{84\%}{100\%} & 1 (3) \\
+    B           & in forged document & 20/20 & 20/20\ci{84\%}{100\%} & 1 (2) \\
+    T           & in forged document & 20/20 & 20/20\ci{84\%}{100\%} & 8.5 (28) \\
+    B$+$T       & in forged document & 17/20 & 19/20\ci{76\%}{99\%}  & 14 (177) \\
+    B$+$T, 500 steps & in forged document & 9/10 & 10/10\ci{72\%}{100\%} & 21.5 (125) \\
+    \midrule
+    none (base) & after request, no pair & 20/20 & 20/20\ci{84\%}{100\%} & 13.5 (46) \\
+    T           & after request, no pair & 18/20 & 19/20\ci{76\%}{99\%}  & 22 (132) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \section{Reproducibility}
 \label{app:repro}

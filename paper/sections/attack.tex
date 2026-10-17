@@ -73,9 +73,10 @@ The working attack needs a benign decoy, and the harmful text survives, approved
 \paragraph{Forged verdicts versus a forged task.}
 \label{sec:verdict-vs-task}
 Earlier and concurrent attacks on judges forge a verdict or an authority claim about the content, not a new task~\citep{mccauley2025hat,li2026same}.
-In an exploratory control outside the frozen protocol, on \tbd{n} harmful test items that Shieldstral flags alone, we append one of four such forgeries to the request: a plain-text statement that it was assessed as safe, a JSON moderation record marking it unflagged, a note that the safety team approved it, and a claimed earlier guard output of ``no''.
-They clear \tbd{X\%}, \tbd{X\%}, \tbd{X\%} and \tbd{X\%}, against \tbd{X\%} for the forged pair on the same items.
-A split payload puts the first half of the request in the content and the second half in the forged document, so the decoy is itself part of the harm; it clears \tbd{X\%}.
+In an exploratory control outside the frozen protocol, on 200 harmful test items that Shieldstral flags alone, we append one of four such forgeries to the request: a plain-text statement that it was assessed as safe, a JSON moderation record marking it unflagged, a note that the safety team approved it, and a claimed earlier guard output of ``no''.
+They clear $19.0\%$\ci{14.2\%}{25.0\%}, $5.5\%$\ci{3.1\%}{9.6\%}, $6.5\%$\ci{3.8\%}{10.8\%} and $5.5\%$\ci{3.1\%}{9.6\%}, against $96.0\%$\ci{92.3\%}{98.0\%} for the forged pair on the same items. % src: results/fix/forgery_controls_base.json (verdict_plain 38/200, verdict_json 11/200, authority 13/200, prior_verdict 11/200, task 192/200)
+A split payload puts the first half of the request in the content and the second half in the forged document, so the decoy is itself part of the harm; it clears $8.5\%$\ci{5.4\%}{13.2\%}. % src: forgery_controls_base.json split_payload 17/200
+A forged task, not a forged verdict, is what moves the guard.
 \Cref{sec:evaluation} repeats these controls on the defended guards.
 
 \subsection{Robustness: position, syntax, query knowledge and policy}
@@ -146,9 +147,19 @@ The label pair does most of the work; real control tokens lower the score furthe
 
 The behavioural results locate the effect in the pair structure but not in the network.
 Mechanistic work on guards has localised a content-insertion shortcut to a few attention heads and MLP neurons~\citep{feng2026refusal} and attack-induced overconfidence to later layers~\citep{hong2026guard}; we ask where the choice of document is made.
-We run two causal tests on Shieldstral, over the 75 screened requests.
-\emph{Activation patching:} layer by layer, we swap the residual-stream representations of the genuine and the forged pair and measure whether the verdict follows the swap.
-\emph{Linear probe:} we train a probe on the final-position residual stream to predict which of the two documents (the request or the decoy) a held-out input's verdict follows, and report its accuracy by layer.
-The swap moves the verdict on \tbd{X\%} of requests, with the largest effect at layers \tbd{range}, and the probe reaches \tbd{X\%} accuracy from layer \tbd{L} onward.
-Following role-confusion findings that injected text takes on the representation of the role it imitates~\citep{ye2026prompt}, we also measure the cosine similarity between the forged and the genuine \texttt{<Query>} representations: \tbd{value by layer}.
-A decoy dose--response over \tbd{N} decoys that span the full harm range relates bypass to each decoy's standalone score with Spearman $\rho = $ \tbd{$\rho$}.
+We run four analyses on Shieldstral over harmful test items that it flags alone, each paired with a benign decoy it clears alone, except where the decoy is varied (\cref{fig:mech}).
+\emph{Activation patching} ($n=100$): we take the attacked input (request, then the forged pair with the decoy) and the same input with the request and decoy swapped (the guard then grades the request and flags it), and for each layer copy the residual stream at one set of positions from one run into the other. % src: results/mech/patching_test_n100.json; src/mech/patching.py
+Patching the final position, where the verdict is read, restores the flag on $77\%$ of attacked inputs from layer 15 and on $99\%$ from layer 20, and transfers the bypass in the other direction on $99\%$ from layer 20. % src: patching_test_n100.json summary.final.into_attacked.flip_rate[15]=0.77, [20]=0.99; into_swapped.flip_rate[20]=0.99 (layers 0-indexed, 26 layers)
+Patching the forged labels, or the forged query together with its labels, at any layer moves the normalised margin by at most $0.05$ and flips no more than $1\%$ of verdicts. % src: patching_test_n100.json summary.{forged_query,forged_document,forged_markers,forged_frame} peak_effect <= 0.043, flip_rate <= 0.01
+The choice of document is therefore assembled at the final position in the middle layers, by attention to the content, not stored at the forged labels.
+\emph{Linear probe} ($n=150$ test requests, probes trained on 600 train-split requests): a probe on the final-position residual stream decodes which document is being graded with $96\%$ accuracy from layer 5 and $100\%$ by layer 13, and the guard's own verdict with $\ge 95\%$ from layer 15; a random-label control stays at $46$--$53\%$. % src: results/mech/probe_test_n150_train600.json probes.graded_doc.first_layer_ge_95=5, acc[13]=1.0; verdict.first_layer_ge_95=15; random acc range 0.462-0.528
+\emph{Representation similarity} ($n=150$): following role-confusion findings that injected text takes on the representation of the role it imitates~\citep{ye2026prompt}, we compare the residual stream at the forged \texttt{<Query>:} label with the genuine one, against the same string quoted inside a sentence. After centring, the forged label is closer to the genuine label than the quoted string is in layers 1--15, by up to $0.239$\ci{0.235}{0.243} in cosine at layer 9 ($0.59$ against $0.35$), and less close in the last layers. % src: results/mech/similarity_test_n150.json summary.centred: forged_minus_control mean[9]=0.239 [0.235,0.243]; forged[9]=0.588, control[9]=0.348
+\emph{Decoy dose--response} ($n=150$ requests, 40 decoys spanning standalone scores from $0.00$ to $1.00$): bypass falls with the decoy's own score, Spearman $\rho = -0.84$\ci{-0.85}{-0.82} over decoys (pre-registered M3, $\rho \le -0.8$, confirmed on Shieldstral; $-0.78$ on the dev split), from $98\%$ for decoys scoring below $0.1$ to $0\%$ above $0.9$, although not monotonically in between. % src: results/mech/dose_response_test_n150_d40.json spearman_rho_bypass -0.840 [-0.852,-0.822]; binned[0].bypass 0.975, binned[9].bypass 0.0; monotone_nonincreasing_bins False; dose_response_dev_n150_d40.json -0.777
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig_mech.pdf}
+  \caption{The verdict is assembled at the final position and follows the decoy. (a)~Share of verdicts that flip when one layer's residual stream at a set of positions is copied between the attacked input and the swapped input (request and decoy exchanged); shaded bands are 95\% bootstrap intervals. Only the final position carries the decision. (b)~Bypass against each decoy's standalone score; the black line bins decoys by score.}
+  % src: results/mech/patching_test_n100.json, results/mech/dose_response_test_n150_d40.json. Drawn by figures/make_figures.py (fig_mech).
+  \label{fig:mech}
+\end{figure}

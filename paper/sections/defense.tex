@@ -37,6 +37,6 @@ Training also includes benign text that carries label-like structure: FAQs, form
 Their targets come from the teacher, so the model learns that structure alone is not a reason to flag, in the spirit of NotInject/InjecGuard~\citep{li2024injecguard}. % src: src/fix/distill.py (structured_benign)
 
 \paragraph{Training data.}
-Segments are known at training time because the training attacks are generated: each train-split harmful or benign item is paired with three attacks sampled from the training attack families, plus a structured-benign set one quarter the size. % src: PROTOCOL_v2.md (Fixed training recipe); src/fix/distill.py (build)
+Segments are known at training time because the training attacks are generated: each of 5{,}000 train-split harmful or benign items appears clean and with two attacks sampled from the training attack families, plus 1{,}250 structured-benign items, for 16{,}250 examples. % src: PROTOCOL_v2.md (Fixed training recipe, D3: 5000 items x 2 attacks); src/fix/distill.py (build); build_full log: 16,250 examples
 No test item and no held-out attack family is seen in training.
 At inference the defended guard needs no segmentation: it reads the bounded content once.
