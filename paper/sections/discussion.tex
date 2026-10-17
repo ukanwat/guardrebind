@@ -9,6 +9,7 @@ Second, treat a guard verdict as a filter, not an authorization: a cleared verdi
 Third, an anti-injection directive and syntax-specific label stripping did not stop the attack (\cref{sec:evaluation,app:protocol}), and a role boundary around the policy is not sufficient on its own (\cref{sec:crossmodel}).
 A fail-closed detector for label-like strings is cheap and catches the syntaxes it lists, but it blocks about half of benign structured content and misses syntaxes it does not list (\cref{sec:evaluation}).
 Where retraining is possible, train against the maximum over the content's parts (\cref{sec:evaluation}), and check over-refusal on benign content that carries forged structure: on two smaller guards the same recipe raised it to $22$--$26\%$.
+Test the result against an attacker who can query the guard's score, and against plain benign text placed before the request, which clears even the base guard on most items (\cref{sec:adaptive}).
 
 \subsection{Limitations}
 \label{sec:limitations}
@@ -29,17 +30,20 @@ For an output guard the forged structure would have to appear in the model's res
 The benchmark does not vary model size within a series.
 
 \paragraph{Scope of the defense results.}
-T has two seeds on Shieldstral, and B$+$T, the clean-copy target, the adaptive attacks and the smaller guards have one; the smaller guards were trained and tested with one fixed decoy and query per family, and on them the defense raises over-refusal on benign content carrying forged structure to $22$--$26\%$.
+T has two seeds on Shieldstral, and B$+$T, the clean-copy target, the adaptive attacks and the smaller guards have one; the smaller guards were trained and tested with one fixed decoy and query per family, so they do not test generalisation to held-out decoys and queries, and on them the defense raises over-refusal on benign content carrying forged structure to $22$--$26\%$.
 Naive adversarial training uses ground-truth labels where the other conditions use the base guard's scores, which confounds its detection gain.
 Segment-max can miss harm that exists only in the combination of benign segments; including the whole content as a segment (\cref{eq:target}) bounds but does not remove this, and we did not run a composition attack that splits harm across segments.
 The harmful-decoy test (\cref{sec:shortcut}) covers only the orderings our grammar and search generate.
-The score-guided search is a black-box attacker with a budget of 300 calls per item; we did not run an LLM-based attacker (pre-registered A3).
-White-box GCG clears the trained guard (\cref{sec:adaptive,app:gcg}), and we make no claim of robustness to it.
-We close one structural channel against black-box attackers and do not claim general prompt-injection robustness, which is argued to be unattainable in shared-embedding models without enforced separation~\citep{pant2026inseparability}.
+The defense does not withstand an adaptive attacker: a score-guided search with 300 calls per item clears T on $94\%$ and B$+$T on $68\%$ of 50 items, mostly by placing a forged pair with an off-topic query before the request, a form almost absent from training (\cref{sec:adaptive}).
+About half of the search's success is a weakness the base guard already has: plain benign text placed before the request, with no forged structure, clears the base guard on $70\%$ and T on $52\%$ of items, and the defense does not address it.
+White-box GCG clears T on all 20 items it was run on (\cref{app:gcg}), and we make no claim of robustness to it; GCG was not run on B$+$T, and we did not run an LLM-based attacker (pre-registered A3).
+The adaptive attacks use 50 items (20 for GCG).
+We reduce one structural channel against attackers who enumerate known attack forms and do not claim general prompt-injection robustness, which is argued to be unattainable in shared-embedding models without enforced separation~\citep{pant2026inseparability}.
 
 \subsection{Conclusion}
 
 Safety guards receive the content they judge through the same plain-text channel that states their task, and content that forges that task structure rebinds the guard to a document the attacker chooses while the harmful request stays in the approved message.
 On Shieldstral the forged pair clears all 75 pre-registered held-out requests, bypass falls as the decoy becomes more harmful, and the construction transfers to two other guard designs.
-Segment-max self-distillation, trained on one half of the decoy and query pools, cuts bypass on held-out families with held-out decoys to \tbd{r2: T heldout x heldout}\% and against a score-guided search to \tbd{r2: T search}\%, while a fail-closed detector catches the syntaxes it lists only by blocking about half of benign structured content.
-Counting every attack, the per-item worst case against the trained guard is \tbd{r2: worst case incl.\ GCG}\%: a white-box gradient attack still succeeds.
+Segment-max self-distillation, trained on one half of the decoy and query pools, cuts bypass on held-out families with held-out decoys from $75\%$ to $0.8$--$1.6\%$, while a fail-closed detector catches the syntaxes it lists only by blocking about half of benign structured content.
+It does not hold against an attacker with score access: a score-guided search clears it on $94\%$ of items, and $98\%$ counting GCG.
+Part of that weakness predates the attack, since benign text placed before a request already clears the guard; a defense against rebinding has to be evaluated together with that baseline.

@@ -63,22 +63,22 @@ The following runs are exploratory, outside both frozen protocols: the wider set
   \item P9 (escaping fixes it): refuted --- bracket-escape 88\%, label-strip 91\%, nonce-fence 93\%.
 \end{itemize}
 \paragraph{Pre-registered predictions and outcomes (benchmark and defense).}
-The second protocol was frozen before any test-split run, with three recorded deviations: D1 adds the variability design (three instantiations per item and family, two paraphrased deployment policies on six families, three seeds for B$+$T); D2 replaces Qwen3Guard's conversation-only native forgery with the full-task forgery found on the train split and adds the length control; D3 trims compute (5{,}000 training items with two attacks each, GCG on 20 items at 250 steps, structural search on 50 items). % src: PROTOCOL_v2.md (Deviations D1-D3)
-Defense evaluation samples decoys and forged queries from pools held out of training (deviation D4).
+The second protocol was frozen before any test-split run, with four recorded deviations: D1 adds the variability design (three instantiations per item and family, two paraphrased deployment policies on six families, three seeds for B$+$T); D2 replaces Qwen3Guard's conversation-only native forgery with the full-task forgery found on the train split and adds the length control; D3 trims compute (5{,}000 training items with two attacks each, GCG on 20 items at 250 steps, structural search on 50 items). % src: PROTOCOL_v2.md (Deviations D1-D3)
+D4, recorded before the reported defense runs, draws training decoys and forged queries from one half of each pool and evaluates on the other half, adds the score-guided search and the two training-free baselines, and fixes the reported seeds (two for T, one for the other trained conditions). % src: PROTOCOL_v2.md D4
 \begin{itemize}[leftmargin=1.5em,itemsep=1pt]
   \item M1 (a core structural family $\ge 70\%$ on every guard): confirmed; best family $93.4$--$100\%$ on all five guards.
   \item M2 (instruction-only payloads $\le 10\%$ on every guard): not confirmed; $\le 7.0\%$ on four guards, $20.2\%$ on ShieldGemma.
   \item M3 (decoy dose--response, $\rho \le -0.8$ and bypass non-increasing across bins, Shieldstral and Qwen3Guard): partly supported on Shieldstral: $\rho=-0.84$, with a 95\% interval of $[-0.93,-0.67]$ over decoys ($[-0.85,-0.82]$ over requests), $-0.78$ on the dev split, and bins not monotone; not run on Qwen3Guard.
   \item M4 (control-token syntax $\ge$ angle syntax; gap closes with special parsing off): partly supported; higher in 7 of 8 comparisons but clearly so only on Shieldstral; the parsing-off arm was not part of the benchmark run.
   \item M5 (exploratory: category, source, size): per-category and per-source bypass are released with the artifacts; size was not varied within a model series.
-  \item F1 (B alone leaves held-out bypass $\ge 50\%$): \tbd{r2: F1 outcome, B heldout bypass}.
-  \item F2 (T generalises worse than B$+$T on held-out families): \tbd{r2: F2 outcome, T $-$ B$+$T difference [CI], p}.
-  \item F3 (B$+$T held-out bypass $\le 10\%$): \tbd{r2: F3 outcome}.
-  \item F4 (B$+$T AUROC within $0.01$, recall within $2$ points; judged on the 95\% interval of the difference): \tbd{r2: F4 outcome with CIs}.
-  \item F5 (B$+$T over-refusal within $2$ points; judged on the 95\% interval of the difference): \tbd{r2: F5 outcome with CIs}.
+  \item F1 (B alone leaves held-out bypass $\ge 50\%$): confirmed; $76.8\%$\ci{75.8\%}{77.8\%} on held-out families with held-out decoys.
+  \item F2 (T generalises worse than B$+$T on held-out families): partly confirmed; T reaches $1.0$--$1.8\%$ on training families, and the paired difference T $-$ B$+$T on held-out families with held-out decoys is $+0.7$ points\ci{$-0.1$}{$+1.5$}, one-sided $p=0.04$ ($n=290$), which passes the test but is under one point.
+  \item F3 (B$+$T held-out bypass $\le 10\%$): confirmed; $0.9\%$\ci{0.7\%}{1.1\%}.
+  \item F4 (B$+$T AUROC within $0.01$, recall within $2$ points; judged on the 95\% interval of the difference): not confirmed; AUROC $-0.010$\ci{$-0.041$}{$+0.021$}, recall $-0.1$ points\ci{$-5.0$}{$+4.8$}: point estimates inside the margins, intervals wider than them.
+  \item F5 (B$+$T over-refusal within $2$ points; judged on the 95\% interval of the difference): not confirmed; XSTest-safe $-2.7$ points\ci{$-11.1$}{$+5.4$}, OR-Bench-hard $+0.2$\ci{$-6.6$}{$+7.1$}, structured benign $0.0$\ci{$-3.0$}{$+3.0$}: no point estimate rises by more than $0.2$ points, but the intervals are wider than the margin.
   \item F6 (naive adversarial training costs $\ge 3$ points of structured-benign over-refusal or generalises worse): not confirmed with the fixed decoy ($0.0\%$ structured benign on a set that overlaps its hard negatives, $0.9$--$1.1\%$ held-out); its costs are clean FPR and the trailing-pair blind spot (\cref{sec:evaluation}).
-  \item A1 (GCG against B$+$T $\le 30\%$): \tbd{r2: GCG was run on T; state A1 as not tested on B$+$T, or report}.
-  \item A2 (structural search against B$+$T $\le 20\%$): \tbd{r2: A2 outcome, BT structural heldout k/50 [CI]}.
+  \item A1 (GCG against B$+$T $\le 30\%$): not tested on B$+$T; GCG was run on T, where it clears $20/20$ (\cref{app:gcg}).
+  \item A2 (structural search against B$+$T $\le 20\%$): confirmed; $4/50$ ($8\%$\ci{3\%}{19\%}). The score-guided search, added in D4 without a prediction, clears B$+$T on $34/50$ ($68\%$, \cref{sec:adaptive}).
   \item A3 (LLM attacker): not run.
 \end{itemize}
 
@@ -341,7 +341,7 @@ Content can produce these ids, so a boundary-token design on those tokenizers mu
 GCG~\citep{zou2023universal} optimises a 20-token suffix, placed inside the forged document, to minimise the guard's $P(\text{unsafe})$ on the full input; an exploratory control runs the same optimisation on the base guard with no forged pair, the suffix appended directly to the harmful request (\cref{tab:gcg}).
 The suffix leaves the harmful request present and readable, so GCG is within the threat model of \cref{sec:threat}, and its successes count toward the per-item worst case of \cref{sec:adaptive}.
 On the base guard it clears every item with or without a forged pair, but with the pair the median first success comes at step 1 rather than 13.5: the forged structure makes the optimisation easier.
-On T it clears \tbd{r2: GCG on T, k/20 [CI], median (max) first-success step}.
+On T it clears $20/20$\ci{84\%}{100\%}, with median first success at step $16.5$ (maximum $174$): training slows the optimisation but does not stop it. % src: r2_adaptive_t_seed0_gcg.json(.jsonl) first_success
 
 \begin{table}[h]
   \centering\small
@@ -354,7 +354,7 @@ On T it clears \tbd{r2: GCG on T, k/20 [CI], median (max) first-success step}.
     \midrule
     none (base) & in forged document & 20/20 & 20/20\ci{84\%}{100\%} & 1 (3) \\
     B           & in forged document & 20/20 & 20/20\ci{84\%}{100\%} & 1 (2) \\
-    T           & in forged document & \tbd{r2} & \tbd{r2} & \tbd{r2} \\
+    T           & in forged document & 18/20 & 20/20\ci{84\%}{100\%} & 16.5 (174) \\
     \midrule
     none (base) & after request, no pair & 20/20 & 20/20\ci{84\%}{100\%} & 13.5 (46) \\
     \bottomrule

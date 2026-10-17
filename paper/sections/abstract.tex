@@ -1,10 +1,9 @@
 \begin{abstract}
 Content that imitates an LLM safety guard's prompt format can make the guard grade a forged, harmless \emph{decoy} document instead of the real content, which is approved unchanged; we call this \emph{target rebinding}.
-It is possible because most guards receive content by string interpolation into a plain-text prompt that also states the grading task.
-Appending a forged query--document pair with a benign decoy to a flagged harmful request clears Shieldstral-1.0-3B on all 75 pre-registered held-out AdvBench requests, and the harmful text stays in the approved message. % src: results/confirm_log.txt
-Format-adapted versions clear 30/30 flagged AdvBench requests on gpt-oss-safeguard-20B, which puts the policy behind a role boundary, and 29/29 on Llama Guard~4, which uses a fixed taxonomy. % src: results/confirm_crossmodel.csv (first 30 AdvBench rows 200-229)
-Our benchmark, \guardrebind{}, runs 50 grammar-generated attack families against five guards; on every guard the strongest family clears $93$--$100\%$ of the items the guard flags with no attack. % src: results/bench/v2/bypass.csv, paper/data/gpt_oss_strict.md
-Training the guard to score content at least as high as its most harmful part cuts bypass on attack families and decoys held out of training from \tbd{r2: base heldout-family x heldout-decoy bypass}\% to \tbd{r2: T heldout x heldout bypass}\%, and the share of items cleared by a score-guided search attacker from \tbd{r2: base search}\% to \tbd{r2: T search}\%, with detection AUROC \tbd{r2: AUROC change}.
-Counting every attack, the per-item worst case against the trained guard is \tbd{r2: worst case over all attacks incl.\ GCG}\%: a white-box gradient attack (GCG) still clears it, as it clears the undefended guard with no forged pair at all.
-We release the benchmark, harness, adapters and every raw score.
+It works because most guards receive content by string interpolation into the prompt that states the grading task.
+Appending a forged query--document pair clears Shieldstral-1.0-3B on all 75 pre-registered held-out AdvBench requests it flags, and format-adapted versions clear 30/30 on gpt-oss-safeguard-20B and 29/29 on Llama Guard~4. % src: results/confirm_log.txt; results/confirm_crossmodel.csv (first 30 AdvBench rows 200-229)
+Our benchmark, \guardrebind{}, runs 50 attack families against five guards; on every guard the strongest family clears $93$--$100\%$ of flagged items. % src: results/bench/v2/bypass.csv, paper/data/gpt_oss_strict.md
+Training the guard to score content at least as high as its most harmful part cuts bypass on attack families, decoys and queries held out of training from $75\%$ to $0.8$--$1.6\%$, with detection AUROC within $0.01$. % src: results/fix/r2_test_{base,t_seed0,t_seed1}.json
+An adaptive attacker with score access still breaks it: a score-guided search clears the trained guard on $94\%$ of items ($68\%$ with a trained input boundary), and the per-item worst case including GCG is $98\%$. % src: results/fix/r2_adaptive_*.json
+About half of this is a weakness the guard already had: benign text placed before the request clears it on $52\%$ of items.
 \end{abstract}

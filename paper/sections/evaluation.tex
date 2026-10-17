@@ -12,7 +12,7 @@ Each family split contributes twelve sampled attacks per item; bypass pools thos
 \emph{Detection} is AUROC and recall at $\tau$ on the clean test split (801 harmful, 699 benign items from six sources).
 \emph{Over-refusal} is the flag rate on XSTest-safe~\citep{rottger2023xstest} ($n=75$), OR-Bench-hard~\citep{cui2024orbench} ($n=400$) and a structured-benign set ($n=500$), and on 150 benign items carrying the same forged pairs (\emph{attacked-benign FPR}).
 T is trained with two seeds, and we report both values (their range) rather than a standard deviation; B$+$T, the clean-copy target and the generality runs have one seed. % src: PROTOCOL_v2.md D1(d), D3
-Differences between conditions use a paired bootstrap over items on seed-averaged per-item bypass (10k resamples), and non-inferiority on detection and over-refusal is judged by whether the 95\% interval of the difference lies inside the pre-registered margin; proportions use Wilson intervals. % src: PROTOCOL_v2.md (Metrics)
+Differences in bypass between conditions use a paired bootstrap over items on seed-averaged per-item bypass (10k resamples); differences in detection and over-refusal use unpaired 95\% intervals (Newcombe for rates, Hanley--McNeil for AUROC), which are wider than paired ones, and non-inferiority is judged by whether that interval lies inside the pre-registered margin; proportions use Wilson intervals. % src: PROTOCOL_v2.md (Metrics)
 
 \paragraph{Baselines.}
 Besides the base guard and B, we compare two training-free baselines and one trained one.
@@ -41,13 +41,13 @@ Prompt-level defenses were measured against the attack in the confirmatory study
     & & \multicolumn{2}{c}{fixed decoy} & held-out & & & & & & & & \\
     condition & seeds & train & held-out & decoy & AUROC & recall & FPR & OR-B & XST & struct. & benign dec.\ $\downarrow$ & harmful dec.\ $\uparrow$ \\
     \midrule
-    none (base)                & 1 & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} \\
-    B (untrained boundary)     & 1 & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} \\
-    structure detector         & --- & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} \\
-    inference-time segment-max & --- & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} \\
-    T (training only)          & 2 & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} \\
-    B$+$T (trained boundary)   & 1 & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} \\
-    T, clean-copy target       & 1 & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} \\
+    none (base)                & 1 & 87.9 & 85.1 & 75.0 & 0.810 & 47.1 & 5.9 & 51.5 & 6.7 & 5.8 & 0.2 & 100 \\
+    B (untrained boundary)     & 1 & 90.7 & 85.4 & 76.8 & 0.827 & 47.8 & 5.4 & 52.8 & 8.0 & 6.8 & 0.1 & 100 \\
+    structure detector         & --- & 0.0 & 24.5 & 23.2 & 0.814 & 47.9 & 5.9 & 51.5 & 6.7 & 58.6 & 87.5 & 100 \\
+    inference-time segment-max & --- & 0.0 & 24.6 & 23.4 & 0.810 & 47.1 & 5.9 & 51.5 & 6.7 & 9.8 & 13.0 & 100 \\
+    T (training only)          & 2 & 1.0--1.8 & 1.2--2.0 & 0.8--1.6 & 0.802--0.803 & 46.4--46.7 & 5.2--5.3 & 52.0--54.2 & 2.7--5.3 & 5.0 & 0.7 & 100 \\
+    B$+$T (trained boundary)   & 1 & 1.2 & 1.0 & 0.9 & 0.800 & 46.9 & 5.3 & 51.7 & 4.0 & 5.8 & 0.8 & 100 \\
+    T, clean-copy target       & 1 & 2.0 & 2.2 & 2.1 & 0.817 & 47.4 & 5.6 & 50.7 & 5.3 & 5.2 & 0.7 & 0.8 \\
     \midrule
     naive adv.\ training   & 2 & 0.9--1.0 & 0.9--1.1 & --- & 0.921--0.925 & 83.3--84.6 & 12.6--14.9 & 0.3--0.8 & 8.0--10.7 & 0.0 & 7.8--8.2 & 8.0--8.6 \\
     Llama Guard 3 1B, base & 1 & 84.0 & 82.0 & --- & 0.758 & 58.7 & 16.9 & 40.5 & 1.3 & 23.4 & 2.4 & 97.3 \\
@@ -59,23 +59,28 @@ Prompt-level defenses were measured against the attack in the confirmatory study
 \end{table}
 
 \Cref{tab:fix-main} reports the conditions and baselines.
-On held-out families with held-out decoys and queries, the base guard is cleared on \tbd{r2: base heldout x heldout, k/n [CI]} of attacked items, B on \tbd{r2: B, k/n [CI]}, T on \tbd{r2: T, both seeds} and B$+$T on \tbd{r2: BT, k/n [CI]}.
-With the fixed decoy, held-out-family bypass is \tbd{r2: base} for the base guard and \tbd{r2: T} for T, so the gap between fixed and held-out decoys is \tbd{r2: T fixed vs heldout decoy difference [CI]}.
-B alone leaves held-out bypass at \tbd{r2: B heldout}: untrained boundary embeddings mean nothing to the model (pre-registered F1, \tbd{r2: F1 outcome}).
-B$+$T against the pre-registered $\le 10\%$ target (F3): \tbd{r2: F3 outcome}.
-We predicted that T would generalise worse than B$+$T to held-out families (F2); the paired-bootstrap difference T $-$ B$+$T is \tbd{r2: F2 difference [CI], p, n}.
-B$+$T changes detection AUROC by \tbd{r2: delta AUROC [CI]} and recall at $\tau$ by \tbd{r2: delta recall [CI]} relative to the base guard; F4 holds only if these intervals lie within $\pm0.01$ and $\pm2$ points (\tbd{r2: F4 outcome}).
-Over-refusal changes by \tbd{r2: delta XSTest [CI]} on XSTest-safe ($n=75$), \tbd{r2: delta OR-Bench [CI]} on OR-Bench-hard and \tbd{r2: delta struct [CI]} on the structured-benign set; F5 holds only if the intervals lie within $\pm2$ points (\tbd{r2: F5 outcome}).
-Benign content carrying a forged pair with a benign decoy is flagged \tbd{r2: T and BT benign-decoy attacked-benign FPR} of the time, against \tbd{r2: base} for the base guard.
+On held-out families with held-out decoys and queries, the base guard is cleared on $75.0\%$\ci{74.0\%}{76.0\%} of attacked inputs ($5{,}347/7{,}128$), B on $76.8\%$\ci{75.8\%}{77.8\%} ($5{,}513/7{,}176$), T on $0.8\%$ and $1.6\%$ (seeds 0 and 1; $57$ and $112$ of $7{,}008$) and B$+$T on $0.9\%$\ci{0.7\%}{1.1\%} ($63/7{,}128$). % src: r2_test_*.json by_decoy_split.heldout.heldout.bypass_benign_decoy
+On the training families with held-out decoys the base guard is cleared on $69.4\%$ and T on $0.7$--$1.4\%$, so the trained guard carries over to new decoys and queries on both family splits. % src: by_decoy_split.heldout.train.bypass_benign_decoy (base 4949/7128; T 50/7008, 99/7008)
+With the fixed decoy, held-out-family bypass is $85.1\%$ for the base guard and $1.2$--$2.0\%$ for T; held-out decoys clear T no more often than the fixed one (paired difference, fixed minus held-out, $+0.4$ points\ci{$+0.1$}{$+0.8$}, $n=290$ items). % src: paired bootstrap over raw_scores / raw_scores_by_decoy_split, held-out families, benign+borderline decoys, seed-averaged, items screened by both T seeds, 10k resamples, rng seed 0
+B alone leaves held-out bypass at $76.8\%$: untrained boundary embeddings mean nothing to the model (pre-registered F1, confirmed).
+B$+$T meets the pre-registered $\le 10\%$ target (F3) with $0.9\%$\ci{0.7\%}{1.1\%}.
+We predicted that T would generalise worse than B$+$T to held-out families (F2); the paired-bootstrap difference T $-$ B$+$T is $+0.7$ points\ci{$-0.1$}{$+1.5$} (one-sided $p=0.04$, $n=290$ items), which passes the pre-registered test, but the difference is under one point and both conditions are near $1\%$. % src: same bootstrap, held-out families x held-out decoys, T seed-averaged vs B+T
+B$+$T changes detection AUROC by $-0.010$\ci{$-0.041$}{$+0.021$} and recall at $\tau$ by $-0.1$ points\ci{$-5.0$}{$+4.8$} relative to the base guard; F4 holds only if these intervals lie within $\pm0.01$ and $\pm2$ points, so it is not confirmed: the point estimates lie inside the margins, but the intervals are wider than them. % src: r2_test_{base,bt_seed0}.json auroc (Hanley-McNeil, 801/699), recall k/n (Newcombe)
+Over-refusal changes by $-2.7$ points\ci{$-11.1$}{$+5.4$} on XSTest-safe ($n=75$), $+0.2$\ci{$-6.6$}{$+7.1$} on OR-Bench-hard and $0.0$\ci{$-3.0$}{$+3.0$} on the structured-benign set; F5 holds only if the intervals lie within $\pm2$ points, so it is not confirmed either, although no point estimate rises by more than $0.2$ points. % src: overrefusal.* k/n, Newcombe
+T's detection and over-refusal changes are of the same size (\cref{tab:fix-main}).
+Benign content carrying a forged pair with a benign decoy is flagged $0.7\%$ (T, both seeds) and $0.8\%$ (B$+$T) of the time, against $0.2\%$ for the base guard ($16$, $19$ and $4$ of $2{,}400$). % src: attacked_benign_fpr_benign_decoy, fixed decoy, train+heldout pooled
 
 \paragraph{Structure detector.}
 The detector needs no training and leaves no structural channel for the syntaxes it covers: in an exploratory test on the 75 confirmatory requests, a colon-label version caught every forged pair ($75/75$, $100\%$\ci{95\%}{100\%}). % src: results/supp_log.txt [B] (detector caught 75/75, fail-closed)
-On the benchmark attacks it clears \tbd{r2: detector heldout x heldout bypass}; being a fixed English pattern list, it does not match translated labels, which is where its remaining bypass lies \tbd{r2: confirm detector bypass by language}.
+On the benchmark attacks it clears none of the training families and $23.2\%$\ci{22.2\%}{24.2\%} of held-out families with held-out decoys; being a fixed English pattern list, it does not match translated labels, which is where its remaining bypass lies: the Spanish- and Chinese-label families clear it $97.2\%$ and $88.4\%$ of the time, and every other held-out family $0\%$. % src: r2_test_detector.json by_decoy_split.heldout.heldout (1659/7152; per_attack lang=es, lang=zh)
 Its cost is false positives on legitimate structured content, which it flags before the guard sees it: it flags $54.8\%$\ci{50.4\%}{59.1\%} of the structured-benign test set (274/500), $0.18\%$ of the 5{,}598 clean benign test items, and none of XSTest-safe or OR-Bench-hard. % src: src/fix/baselines.detect over structured_benign test[:500] 274/500; test benign non-overrefusal 10/5598; xstest 0/75; orbench 0/400 (recomputed on CPU)
+Together with the guard's own flags, its structured-benign over-refusal is $58.6\%$, and it flags benign content carrying a forged pair with a benign decoy $87.5\%$ of the time ($100\%$ on training families, $75\%$ on held-out ones), since it blocks any listed label whatever the decoy says. % src: r2_test_detector.json overrefusal.structured_benign 293/500; attacked_benign_fpr_benign_decoy fixed 1200/1200, 900/1200
 A deployment whose content includes forms, FAQs, tickets or markup would see about half of it blocked.
 
 \paragraph{Inference-time segment-max.}
-Taking the max at run time gives bypass \tbd{r2: segmax-infer heldout x heldout} and structured-benign over-refusal \tbd{r2: segmax-infer struct.}, at one extra forward pass per segment; it depends on the same pattern list as the detector to find segments, so it inherits its coverage \tbd{r2: segmax-infer vs T comparison}.
+Taking the max at run time gives bypass $0.0\%$ on the training families and $23.4\%$\ci{22.4\%}{24.4\%} on held-out families with held-out decoys, and structured-benign over-refusal $9.8\%$\ci{7.5\%}{12.7\%} ($49/500$), at one extra forward pass per segment. % src: r2_test_segmax_infer.json
+It depends on the same pattern list as the detector to find segments, so it inherits its coverage: its held-out bypass comes from the same two translated-label families ($97.5\%$ and $88.7\%$).
+It also flags $13.0\%$ of benign content carrying a benign forged pair, where T flags $0.7\%$; trained T reaches $0.8$--$1.6\%$ held-out bypass with no segmenter and $5.0\%$ structured-benign over-refusal.
 
 \paragraph{Naive adversarial training.}
 Naive adversarial training, a LoRA on the same examples with hard 0/1 labels (every clean or attacked version of an item takes the item's ground-truth label, and structured-benign items are labelled 0), was trained and tested with the fixed decoy and query (\cref{tab:fix-main}, lower block, two seeds).
@@ -89,7 +94,7 @@ A guard trained against rebinding could stop reading content that follows a forg
 The harmful-decoy column of \cref{tab:fix-main} measures whether the trained guard still reads trailing content: the content is benign and harmful text comes last, inside a forged pair.
 The targets decide this column in advance.
 The segment-max target asks the guard to flag such content, because the harmful segment scores high; the clean-copy target asks it to score only the original benign item, and naive adversarial training labels the item 0 whatever follows.
-Under T and B$+$T these items are flagged \tbd{r2: T, BT harmful-decoy flag rate}, under the clean-copy target \tbd{r2: CC harmful-decoy flag rate}, and under naive adversarial training $8.0$--$8.6\%$. % src: test_*.json per_attack_benign_fpr, decoy=harmful attacks, 8 x 150 cells
+Under T and B$+$T these items are flagged $100\%$ of the time with the fixed decoys ($95.5$--$98.7\%$ with held-out harmful decoys), under the clean-copy target $0.8\%$ ($1.4\%$), and under naive adversarial training $8.0$--$8.6\%$. % src: test_*.json per_attack_benign_fpr, decoy=harmful attacks, 8 x 150 cells
 The column shows which training targets keep the guard reading trailing content; a guard that does not read it has a smuggling channel, in which harmful text placed in a trailing forged pair after benign content is cleared.
 
 \paragraph{Other guards.}
@@ -104,30 +109,39 @@ This cost is guard-dependent and we do not know its cause; one candidate is Llam
 
 We grant the attacker the defended weights, the boundary mechanism, the training recipe and the defended guard's score, and follow the evaluation norms of \citet{carlini2019evaluating}.
 Because the content is tokenized with special-token parsing disabled, and no added or special id is reachable from content on Shieldstral (\cref{app:content-tokens}), the content cannot produce the boundary tokens: the attacker optimises the content text only, and every attack runs end to end on the full defended model.
-We run three attacks on 50 screened test items each and report the per-item worst case over all of them.
+We run three attacks on 50 screened test items each (20 for GCG) and report the per-item worst case over all of them.
 \emph{Score-guided search} hill-climbs on the defended guard's score: it starts from 20 random candidates and then mutates one or two fields of the best candidate so far (syntax, structure, position, number of pairs from one to five, label strings in English, translated or perturbed, decoy text and forged query), with random restarts, and wins as soon as a candidate clears the item, within 300 guard calls. % src: src/fix/adaptive.py search_attack (pop 20, batch 10, p_restart 0.2, budget 300)
 Its decoys are the held-out halves of the decoy pools plus 500 benign development-split prompts, and its queries are every forged-query pool plus the deployment's own query, so most of its material is unseen in training. % src: src/fix/adaptive.py search_pools
 \emph{Structural search} tries all 654 forms of the full attack grammar and 30 random label mutations, with decoys and queries drawn from the held-out pools, and wins if any of the 684 clears the item. % src: src/fix/adaptive.py --attack structural --decoy-split heldout
 \emph{GCG}~\citep{zou2023universal} optimises a 20-token suffix inside the forged document by gradient (\cref{app:gcg}).
+As a control for the score-guided search, a \emph{plain-text control} runs the same search with the same budget and the same decoy texts, but each candidate adds only plain benign text (one to five copies of a decoy, before or after the request) with no labels and no forged query; it measures how much of the search's success needs forged structure at all. % src: src/fix/adaptive.py --null-search (render_candidate NULL_SEARCH)
 
 \begin{table}[t]
   \centering
   \small
-  \caption{Adaptive attacks on Shieldstral, 50 screened test items (20 for GCG), seed~0. Each cell is the share of items cleared by the attack (per-item worst case over its candidates), with Wilson 95\% interval. ``All attacks'' is the per-item worst case over every attack run on that guard.}
-  % src: results/fix/r2_adaptive_{base,t_seed0,bt_seed0}_{search,structural_heldout}.json; r2_adaptive_t_seed0_gcg.json; adaptive_base_gcg.json
+  \caption{Adaptive attacks on Shieldstral, 50 screened test items (20 for GCG), seed~0. Each cell is the number of items cleared by the attack (per-item worst case over its candidates), with Wilson 95\% interval. ``All attacks'' is the per-item worst case over every forged-structure attack run on that guard; GCG ran on 20 of the 50 items. The plain-text control adds benign text with no forged structure and is not counted in ``all attacks''. Score-guided search clears T on $94\%$ of items and B$+$T on $68\%$.}
+  % src: results/fix/r2_adaptive_{base,t_seed0,bt_seed0}_{search,structural_heldout}.json; r2_adaptive_{base,t_seed0}_search_null.json; r2_adaptive_t_seed0_gcg.json; adaptive_base_gcg.json
+  % all attacks = union of bypass ids over the .jsonl files (base 50, T 49 = search 47 + 2 GCG-only, B+T 34)
   \label{tab:adaptive}
-  \begin{tabular}{lcccc}
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{lccccc}
     \toprule
-    guard & score-guided search & structural search & GCG & all attacks \\
+    guard & score-guided search & structural search & GCG & all attacks & plain-text control \\
     \midrule
-    none (base) & \tbd{r2} & \tbd{r2} & 20/20 & \tbd{r2} \\
-    T           & \tbd{r2} & \tbd{r2} & \tbd{r2} & \tbd{r2} \\
-    B$+$T       & \tbd{r2} & \tbd{r2} & not run & \tbd{r2} \\
+    none (base) & 50/50\ci{93\%}{100\%} & 50/50\ci{93\%}{100\%} & 20/20\ci{84\%}{100\%} & 50/50\ci{93\%}{100\%} & 35/50\ci{56\%}{81\%} \\
+    T           & 47/50\ci{84\%}{98\%} & 4/50\ci{3\%}{19\%} & 20/20\ci{84\%}{100\%} & 49/50\ci{89\%}{100\%} & 26/50\ci{39\%}{65\%} \\
+    B$+$T       & 34/50\ci{54\%}{79\%} & 4/50\ci{3\%}{19\%} & not run & 34/50\ci{54\%}{79\%} & not run \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-Both searches must first clear the undefended guard: \tbd{r2: base search and structural bypass} (sanity check: at least $90\%$).
-Against T, score-guided search clears \tbd{r2: T search k/50 [CI], median calls to success}, and structural search \tbd{r2: T structural heldout k/50}; against B$+$T, \tbd{r2: BT search} and \tbd{r2: BT structural heldout} (pre-registered A2, $\le 20\%$ for structural search on B$+$T: \tbd{r2: A2 outcome}).
-GCG clears \tbd{r2: GCG on T k/20} of the 20 items on T, so the per-item worst case over all attacks against T is \tbd{r2: worst case incl.\ GCG}\%.
-The defense removes the black-box structural channel to the extent shown in the first two columns; it does not stop a white-box gradient attacker.
+Both searches clear the undefended guard on every item, passing the sanity check of at least $90\%$: score-guided search $50/50$ (median $3$ guard calls to success) and structural search $50/50$.
+\emph{Structural search.} Enumerating the grammar with held-out decoys and queries clears T on $4/50$ items ($8\%$\ci{3\%}{19\%}) and B$+$T on $4/50$ ($8\%$), so B$+$T meets the pre-registered A2 target of $\le 20\%$ (the upper end of the interval is $18.8\%$).
+\emph{Score-guided search.} The search breaks both trained guards: it clears T on $47/50$ items ($94\%$\ci{84\%}{98\%}, median $44$ calls to success) and B$+$T on $34/50$ ($68\%$\ci{54\%}{79\%}, median $46$ calls). % src: worst_case k/n; median of queries over winning items in the .jsonl
+The plain-text control shows that a large part of this is a weakness the guard had before any forged structure: benign text placed before the request, with no labels and no forged query, clears the base guard on $35/50$ items ($70\%$\ci{56\%}{81\%}) and T on $26/50$ ($52\%$\ci{39\%}{65\%}), and every one of these wins puts the benign text before the request. % src: r2_adaptive_{base,t_seed0}_search_null.json(.jsonl): T 26/26 position=prepend; base 22 prepend + 13 middle (filler before and after)
+Forged structure adds the rest, from $52\%$ to $94\%$ on T.
+In $34$ of T's $47$ wins the best candidate places the forged structure before the request, and the most common winning form ($21$ of $47$) prepends a forged pair whose query is off-topic (for example ``Does this text mention an animal?''); on B$+$T, $29$ of $34$ wins prepend and $18$ use a prepended off-topic query. % src: .jsonl best.position, best.structure != doc_only, best.query in QUERY_POOLS_V1['out_of_domain']
+We read these as attacks on the grading question rather than on the document: an earlier, unrelated query changes what the guard is asked, and the training attacks almost all append the pair after the request ($244$ of the $252$ training forms), so T was not trained on this form. % src: attacks_grammar.split_attacks train structural forms by position: append 244, prepend 4, middle 4
+This is the one place where the boundary shows a measurable effect: B$+$T resists the search better than T ($68\%$ against $94\%$), although it does not stop it.
+\emph{GCG.} GCG clears T on all $20$ items it was run on, so the per-item worst case over all attacks against T is $49/50$ ($98\%$\ci{89\%}{100\%}), and $100\%$ on the 20 items GCG was run on; we did not run GCG on B$+$T.
+The defense closes most of the structural channel that grammar enumeration finds; it does not stop an attacker who can query the defended guard's score, nor a white-box gradient attacker.
