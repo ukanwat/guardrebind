@@ -5,7 +5,7 @@ set -u
 cd /workspace/gpi
 export PATH=/workspace/bin:$PATH UV_CACHE_DIR=/workspace/.uvcache UV_PROJECT_ENVIRONMENT=/workspace/venv
 export HF_HOME=/workspace/hf HF_HUB_OFFLINE=1 PART=main OFF=0 TRIES=3
-MAX_HOURS=${MAX_HOURS:-15}   # Secure 4090 at $0.89/h within the $15 budget
+MAX_HOURS=${MAX_HOURS:-14}   # Secure 4090 at $0.89/h: 14h = $12.5, inside the $15 budget
 START=$(cat logs/queue/POD_START 2>/dev/null || date +%s | tee logs/queue/POD_START)
 stop_pod() { echo "$(date '+%F %T') stopping pod: $1" >> logs/queue/queue.log; sleep 5
   runpodctl stop pod "$RUNPOD_POD_ID" || runpodctl pod stop "$RUNPOD_POD_ID"; }
@@ -17,6 +17,6 @@ for pass in 1 2 3 4 5; do
   sleep 60
 done
 [ -f logs/queue/FIX_DONE ] || touch logs/queue/FIX_GAVE_UP
-# wait up to 3h for the Mac's final sync, then stop
-for i in $(seq 1 36); do [ -f logs/queue/SYNCED ] && break; sleep 300; done
+# wait up to 30 min for the Mac's final sync, then stop
+for i in $(seq 1 6); do [ -f logs/queue/SYNCED ] && break; sleep 300; done
 stop_pod "queue finished (synced=$([ -f logs/queue/SYNCED ] && echo yes || echo no))"
