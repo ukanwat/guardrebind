@@ -177,10 +177,14 @@ class HFGuard:
         batch_size: int = 16,
         load_model: bool = True,
         policy: Policy | None = None,
+        dtype: torch.dtype | None = None,
     ):
         from transformers import AutoTokenizer
 
         self.set_policy(policy)
+        # bf16 everywhere by default; fp32 is for CPU smoke tests (CPU bf16 matmul backward is a slow
+        # single-threaded fallback). Shieldstral ignores it (ShieldstralScorer._load is bf16).
+        self.dtype = dtype or torch.bfloat16
         self.parse_special_in_content = parse_special_in_content
         self.device = device or default_device()
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
@@ -233,7 +237,7 @@ class HFGuard:
     def _load_model(self):
         from transformers import AutoModelForCausalLM
 
-        kwargs = {"dtype": torch.bfloat16, "device_map": self.device}
+        kwargs = {"dtype": self.dtype, "device_map": self.device}
         if self.attn_implementation:
             kwargs["attn_implementation"] = self.attn_implementation
         return AutoModelForCausalLM.from_pretrained(self.model_id, **kwargs).eval()
@@ -607,4 +611,20 @@ def load_guard(name: str, parse_special_in_content: bool = True, **kwargs) -> HF
         # fallback once it lands on `paper`.
         GUARD_SPECS = {}
     guard.spec = GUARD_SPECS.get(name)
+    return guard
+
+
+def load_fixed_guard(name: str, adapter: str | None = None, **kwargs) -> HFGuard:
+    """`load_guard(name)` with a T adapter (src/fix/distill.py train_guard)
+    merged into its model; scoring, rendering and label tokens are the guard's
+    own. `adapter=None` is the base guard. Shieldstral goes through
+    ShieldstralFixed instead (it also has the bounded format)."""
+    guard = load_guard(name, **kwargs)
+    if adapter:
+        from peft import PeftModel
+
+        backend = guard.backend
+        model = PeftModel.from_pretrained(backend.model, adapter).merge_and_unload().eval()
+        guard.backend = HFBackend(model, backend.pad_id, backend.batch_size)
+        guard.name = f"{name}_fix[T]"
     return guard

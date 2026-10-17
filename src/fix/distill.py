@@ -18,6 +18,10 @@ src/fix/inputs.py). B alone is the base model with the bounded format.
 
     uv run python -m src.fix.distill build --out data/fix/train.jsonl
     uv run python -m src.fix.distill train --data data/fix/train.jsonl --fmt bounded --out models/fix/bt
+
+Other guards (T only): `build --guard llama_guard_3_1b` scores segments with that
+guard and writes the attacks in its syntax; `train --guard llama_guard_3_1b
+--fmt stock` trains its own model on its own rendering and label tokens.
 """
 
 from __future__ import annotations
@@ -99,10 +103,12 @@ def label_targets(examples: list[Example], guard, cache_path: Path, batch: int =
 
 
 def build_examples(per_item: int, max_items: int | None, seed: int, max_chars: int,
-                   mode: str) -> list[Example]:
+                   mode: str, guard: str = "shieldstral") -> list[Example]:
     """Construct the (unlabeled for segment_max, hard-labeled for naive_at)
     examples. No model is loaded here; segment_max targets are filled later by
-    label_targets. Identical example structure across modes (checked in tests)."""
+    label_targets. Identical example structure across modes (checked in tests).
+    Attacks are written in `guard`'s own syntax (GUARD_SPECS[guard]); the item
+    sample and attack draws do not depend on the guard."""
     from ..bench.attacks_grammar import grammar, split_attacks
     from ..bench.data import load_all, structured_benign
     from ..bench.attacks_grammar import GUARD_SPECS
@@ -119,7 +125,7 @@ def build_examples(per_item: int, max_items: int | None, seed: int, max_chars: i
 
     examples: list[Example] = []
     for item in items:
-        examples += _variants(item, train_attacks, GUARD_SPECS["shieldstral"], rng, per_item, mode)
+        examples += _variants(item, train_attacks, GUARD_SPECS[guard], rng, per_item, mode)
     for j, sb in enumerate(structured_benign(len(items) // 4)):
         text = sb.text
         ex = Example(f"structured_benign:{j}", text, [text], variant="hard_negative")
@@ -130,16 +136,17 @@ def build_examples(per_item: int, max_items: int | None, seed: int, max_chars: i
 
 
 def build(out: Path, per_item: int = 3, max_items: int | None = None, seed: int = 0,
-          max_chars: int = 1200, mode: str = "segment_max", cache: Path | None = None) -> None:
+          max_chars: int = 1200, mode: str = "segment_max", cache: Path | None = None,
+          guard: str = "shieldstral", device: str | None = None) -> None:
     if mode not in BUILD_MODES:
         raise ValueError(f"mode must be one of {BUILD_MODES}")
-    examples = build_examples(per_item, max_items, seed, max_chars, mode)
+    examples = build_examples(per_item, max_items, seed, max_chars, mode, guard)
 
     if mode in ("segment_max", "clean_copy"):
         from ..bench.guards import load_guard
         # Teacher scores live in a cache keyed by text; pass --cache to reuse another build's
         # forward passes (clean_copy segments are a subset of segment_max's).
-        label_targets(examples, load_guard("shieldstral", batch_size=16),
+        label_targets(examples, load_guard(guard, batch_size=16, device=device),
                       cache or out.with_suffix(".teacher_cache.jsonl"), batch=16)
     # naive_at targets are hard labels, already set in build_examples (no teacher).
 
@@ -168,6 +175,142 @@ def _batches(rows, tokenizer, fmt, batch: int, max_len: int, rng):
 
 
 CKPT_EVERY = int(__import__("os").environ.get("CKPT_EVERY", 50))
+
+
+class GuardStudent:
+    """Any HF guard but Shieldstral as the student (T, stock format only): its
+    model + LoRA, its own rendering (guard.build_ids, the ids its scorer reads)
+    and its own label tokens (guard.unsafe_ids vs guard.safe_ids). The margin is
+    computed exactly as HFGuard.score_ids does, from the decoder's last hidden
+    state and only the label rows of the head, in fp32, so at init (LoRA B = 0)
+    sigmoid(margin) is the guard's own score (src/fix/test_generality.py)."""
+
+    def __init__(self, guard: str, device: str | None = None, dtype: torch.dtype | None = None):
+        from ..bench.guards import load_guard
+
+        self.guard = load_guard(guard, device=device, dtype=dtype)
+        self.model = self.guard.backend.model
+        self.device = self.model.device
+        self.yes_ids, self.no_ids = self.guard.unsafe_ids, self.guard.safe_ids
+        self.pad_id = self.guard.backend.pad_id
+
+    def ids(self, document: str) -> list[int]:
+        return self.guard.build_ids([document], kind="prompt")[0]
+
+    def margin(self, model, ids, mask, last) -> torch.Tensor:
+        """unsafe-vs-safe logit margin at each row's last real token. `model` is
+        the (possibly peft-wrapped) model whose decoder and head are used."""
+        base = model.get_base_model() if hasattr(model, "get_base_model") else model
+        hidden = base.get_decoder()(input_ids=ids, attention_mask=mask).last_hidden_state
+        h = hidden[torch.arange(len(last), device=ids.device), last.to(ids.device)]
+        cand = torch.tensor(self.yes_ids + self.no_ids, device=ids.device)
+        logits = self.guard.backend._label_logits(h, cand)  # fp32, + bias / softcap if the model has them
+        k = len(self.yes_ids)
+        return torch.logsumexp(logits[:, :k], -1) - torch.logsumexp(logits[:, k:], -1)
+
+
+def _guard_batches(rows, student: GuardStudent, batch: int, rng):
+    """_batches for a GuardStudent on rows with precomputed "ids": same seeded
+    shuffle and right padding, no truncation."""
+    rng.shuffle(rows)
+    for i in range(0, len(rows), batch):
+        chunk = rows[i:i + batch]
+        seqs = [r["ids"] for r in chunk]
+        width = max(len(s) for s in seqs)
+        ids = torch.full((len(seqs), width), student.pad_id, dtype=torch.long)
+        mask = torch.zeros((len(seqs), width), dtype=torch.long)
+        for j, s in enumerate(seqs):
+            ids[j, :len(s)] = torch.tensor(s)
+            mask[j, :len(s)] = 1
+        last = torch.tensor([len(s) - 1 for s in seqs])
+        target = torch.tensor([r["target"] for r in chunk], dtype=torch.float32)
+        yield ids, mask, last, target
+
+
+def train_guard(data: Path, guard: str, out: Path, epochs: int = 1, batch: int = 8, lr: float = 1e-4,
+                rank: int = 16, max_len: int = 2048, seed: int = 0, device: str | None = None,
+                max_steps: int | None = None, dtype: torch.dtype | None = None) -> None:
+    """T (stock format, LoRA) for a guard other than Shieldstral. Same loss,
+    schedule, LoRA config, checkpoint/resume and DONE marker as train()."""
+    from peft import LoraConfig, get_peft_model, get_peft_model_state_dict, set_peft_model_state_dict
+
+    torch.manual_seed(seed)
+    random.seed(seed)
+
+    rows = [json.loads(line) for line in data.open()]
+    student = GuardStudent(guard, device=device, dtype=dtype)
+    # The guard's prompt starts with its template and ends in its answer prefix, so ids are never
+    # truncated (a cut would drop part of what the scorer reads). Checked up front, not mid-run.
+    for r in rows:
+        r["ids"] = student.ids(r["document"])
+    longest = max(len(r["ids"]) for r in rows)
+    if longest > max_len:
+        raise SystemExit(f"{sum(len(r['ids']) > max_len for r in rows)} rows over --max-len {max_len} tokens "
+                         f"(longest {longest})")
+    print(f"{len(rows)} rows, longest {longest} tokens", flush=True)
+    model = get_peft_model(student.model, LoraConfig(
+        r=rank, lora_alpha=2 * rank, lora_dropout=0.0,
+        target_modules=r".*\.(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)",
+    ))
+    model.gradient_checkpointing_enable()
+    model.enable_input_require_grads()
+    model.train()
+
+    params = [p for p in model.parameters() if p.requires_grad]
+    opt = torch.optim.AdamW(params, lr=lr, weight_decay=0.0)
+    steps = epochs * math.ceil(len(rows) / batch)
+    if max_steps:
+        steps = min(steps, max_steps)
+    sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / 50) * max(0.0, 1 - s / steps))
+    device = student.device
+    rng = random.Random(seed)
+    out.mkdir(parents=True, exist_ok=True)
+    log = (out / "train_log.jsonl").open("a")
+
+    ckpt_path = out / "ckpt.pt"
+    done = 0
+    if ckpt_path.exists():
+        ck = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+        set_peft_model_state_dict(model, ck["lora"])
+        opt.load_state_dict(ck["opt"])
+        sched.load_state_dict(ck["sched"])
+        done = ck["step"]
+        print(f"resumed from step {done}", flush=True)
+
+    def save_ckpt(at: int) -> None:
+        tmp = out / "ckpt.tmp"
+        torch.save({"lora": get_peft_model_state_dict(model), "opt": opt.state_dict(),
+                    "sched": sched.state_dict(), "step": at, "guard": guard}, tmp)
+        tmp.replace(ckpt_path)
+
+    step, t0 = 0, time.time()
+    for epoch in range(epochs):
+        for ids, mask, last, target in _guard_batches(rows, student, batch, rng):
+            if step >= steps:
+                break
+            if step < done:
+                step += 1
+                continue
+            ids, mask, target = ids.to(device), mask.to(device), target.to(device)
+            margin = student.margin(model, ids, mask, last)
+            loss = torch.nn.functional.binary_cross_entropy_with_logits(margin, target)
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(params, 1.0)
+            opt.step()
+            sched.step()
+            opt.zero_grad()
+            step += 1
+            if step % 10 == 0 or step == steps:
+                rec = {"step": step, "of": steps, "loss": round(loss.item(), 5), "s": round(time.time() - t0)}
+                log.write(json.dumps(rec) + "\n")
+                log.flush()
+                print(rec, flush=True)
+            if step % CKPT_EVERY == 0 or step == steps:
+                save_ckpt(step)
+    model.save_pretrained(out)
+    # Written last: the queue treats a model as trained only when this marker exists.
+    atomic_write_text(out / "DONE", f"{step} steps\n")
+    print(f"saved -> {out}")
 
 
 def train(data: Path, fmt: str, out: Path, epochs: int = 1, batch: int = 8, lr: float = 1e-4,
@@ -293,6 +436,8 @@ def main() -> None:
                    help="segment_max (self-distillation), naive_at (hard labels, PROTOCOL_v2 F6) or clean_copy "
                         "(teacher on the original item only; ablation)")
     b.add_argument("--cache", type=Path, help="teacher score cache (default: next to --out)")
+    b.add_argument("--guard", default="shieldstral", help="teacher and attack syntax (a load_guard name)")
+    b.add_argument("--device", help="default: cuda, then mps, then cpu")
     t = sub.add_parser("train")
     t.add_argument("--data", type=Path, required=True)
     t.add_argument("--fmt", choices=list(FORMATS), required=True)
@@ -301,11 +446,23 @@ def main() -> None:
     t.add_argument("--batch", type=int, default=8)
     t.add_argument("--lr", type=float, default=1e-4)
     t.add_argument("--seed", type=int, default=0)
+    t.add_argument("--guard", default="shieldstral",
+                   help="student guard; other than shieldstral only --fmt stock (T) is supported")
+    t.add_argument("--device", help="non-shieldstral guards only (default: cuda, then mps, then cpu)")
+    t.add_argument("--max-len", type=int, default=2048,
+                   help="non-shieldstral guards only: longest input in tokens (never truncated)")
+    t.add_argument("--max-steps", type=int, help="non-shieldstral guards only: stop after this many steps")
+    t.add_argument("--fp32", action="store_true", help="non-shieldstral guards only: fp32 weights (CPU tests)")
     a = ap.parse_args()
     if a.cmd == "build":
-        build(a.out, a.per_item, a.max_items, mode=a.mode, cache=a.cache)
-    else:
+        build(a.out, a.per_item, a.max_items, mode=a.mode, cache=a.cache, guard=a.guard, device=a.device)
+    elif a.guard == "shieldstral":
         train(a.data, a.fmt, a.out, a.epochs, a.batch, a.lr, seed=a.seed)
+    else:
+        if a.fmt != "stock":
+            raise SystemExit(f"--guard {a.guard}: only --fmt stock (condition T) is supported")
+        train_guard(a.data, a.guard, a.out, a.epochs, a.batch, a.lr, max_len=a.max_len, seed=a.seed,
+                    device=a.device, max_steps=a.max_steps, dtype=torch.float32 if a.fp32 else None)
 
 
 if __name__ == "__main__":

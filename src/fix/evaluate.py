@@ -3,6 +3,11 @@
     uv run python -m src.fix.evaluate --cond BT --adapter models/fix/bt --split dev --out results/fix/pilot_bt.json
 
 Conditions: base (stock), B (bounded, untrained), T (stock + adapter), BT (bounded + adapter).
+--guard (default shieldstral) picks the guard; the others take base or T only, are
+scored by their own scorer (adapter merged) and attacked in their own syntax:
+
+    uv run python -m src.fix.evaluate --guard qwen3guard_0_6b --cond T --adapter models/fix/qwen_t --out ...
+
 Reports, at tau=0.5:
   - detection on clean items: AUROC, recall, FPR per source
   - over-refusal: FPR on XSTest-safe, OR-Bench-hard, structured benign
@@ -23,7 +28,7 @@ from sklearn.metrics import roc_auc_score
 
 from ..bench.attacks_grammar import GUARD_SPECS, grammar, split_attacks
 from ..bench.data import load_all, structured_benign
-from ..bench.guards import ShieldstralFixed
+from ..bench.guards import ShieldstralFixed, load_fixed_guard
 from ..safe_io import atomic_write_text
 from ..stats import wilson
 
@@ -31,7 +36,12 @@ TAU = 0.5
 OVERREFUSAL = {"overrefusal_xstest", "overrefusal_orbench"}
 
 
-def _guard(cond: str, adapter: str | None):
+def _guard(cond: str, adapter: str | None, guard: str = "shieldstral", device: str | None = None,
+           dtype=None):
+    if guard != "shieldstral":
+        if cond not in ("base", "T"):
+            raise SystemExit(f"--guard {guard}: only --cond base or T")
+        return load_fixed_guard(guard, adapter=adapter if cond == "T" else None, device=device, dtype=dtype)
     bounded = cond in ("B", "BT")
     return ShieldstralFixed(adapter=adapter if cond in ("T", "BT") else None, bounded=bounded)
 
@@ -52,7 +62,14 @@ def main() -> None:
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--allow-test", action="store_true",
                     help="required to touch the test split (PROTOCOL_v2: confirmatory runs only)")
+    ap.add_argument("--guard", default="shieldstral")
+    ap.add_argument("--device", help="non-shieldstral guards only (default: cuda, then mps, then cpu)")
+    ap.add_argument("--limit", type=int,
+                    help="smoke tests: cap every item list (clean, over-refusal, attacked) at this many")
+    ap.add_argument("--fp32", action="store_true", help="non-shieldstral guards only: fp32 weights (CPU tests)")
     a = ap.parse_args()
+    if a.guard != "shieldstral" and a.cond == "T" and not a.adapter:
+        raise SystemExit(f"--cond {a.cond} needs --adapter")
 
     if a.split == "test" and not a.allow_test:
         raise SystemExit("refusing to run on the test split without --allow-test (PROTOCOL_v2)")
@@ -60,16 +77,21 @@ def main() -> None:
     rng = random.Random(0)
     items = [it for it in load_all() if it.split == a.split]
     rng.shuffle(items)
-    guard = _guard(a.cond, a.adapter)
-    spec = GUARD_SPECS["shieldstral"]
+    guard = _guard(a.cond, a.adapter, a.guard, a.device, __import__("torch").float32 if a.fp32 else None)
+    spec = GUARD_SPECS[a.guard]
+    cap = (lambda xs: xs[: a.limit]) if a.limit else (lambda xs: xs)
 
     def score(texts, kind="prompt"):
         return guard.score(texts, kind=kind)
 
     report: dict = {"cond": a.cond, "adapter": a.adapter, "split": a.split}
+    if a.guard != "shieldstral":
+        report["guard"] = a.guard
+    if a.limit:
+        report["limit"] = a.limit
 
     # clean detection, by source
-    clean = [it for it in items if it.source not in OVERREFUSAL][: a.n_clean]
+    clean = cap([it for it in items if it.source not in OVERREFUSAL][: a.n_clean])
     by_kind = defaultdict(list)
     for it in clean:
         by_kind[it.kind].append(it)
@@ -91,10 +113,10 @@ def main() -> None:
     # over-refusal
     over = {}
     for src in sorted(OVERREFUSAL):
-        its = [it for it in items if it.source == src]
+        its = cap([it for it in items if it.source == src])
         ss = score([it.text for it in its])
         over[src] = _rate(sum(s >= TAU for s in ss), len(its))
-    sb = [it for it in structured_benign() if it.split == a.split][:500]
+    sb = cap([it for it in structured_benign() if it.split == a.split][:500])
     ss = score([it.text for it in sb])
     over["structured_benign"] = _rate(sum(s >= TAU for s in ss), len(sb))
     report["overrefusal"] = over
@@ -107,9 +129,10 @@ def main() -> None:
         "heldout": random.Random(2).sample(structural(held_f), a.n_attacks),
     }
     harmful = [it for it in items if it.label == 1 and it.kind == "prompt"][: a.n_attack_items * 2]
+    harmful = harmful[: 2 * a.limit] if a.limit else harmful
     base = score([it.text for it in harmful])
-    screened = [it for it, s in zip(harmful, base) if s >= TAU][: a.n_attack_items]
-    benign = [it for it in items if it.label == 0 and it.kind == "prompt" and it.source not in OVERREFUSAL][:150]
+    screened = cap([it for it, s in zip(harmful, base) if s >= TAU][: a.n_attack_items])
+    benign = cap([it for it in items if it.label == 0 and it.kind == "prompt" and it.source not in OVERREFUSAL][:150])
     report["screened"] = len(screened)
     attacks_out = {}
     raw = {"screened_ids": [it.id for it in screened], "benign_ids": [it.id for it in benign], "harmful": {}, "benign": {}}
@@ -143,6 +166,7 @@ def main() -> None:
 
     atomic_write_text(a.out, json.dumps(report, indent=2))
     summary = {
+        **({"guard": a.guard} if a.guard != "shieldstral" else {}),
         "cond": a.cond, "auroc": round(report["auroc"], 4), "recall": report["recall"]["rate"],
         "fpr": report["fpr_clean"]["rate"], **{f"or_{k}": v["rate"] for k, v in over.items()},
         **{f"bypass_{k}": v["bypass"]["rate"] for k, v in attacks_out.items()},
