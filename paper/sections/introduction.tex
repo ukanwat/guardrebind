@@ -58,4 +58,5 @@ More than half of these wins need no forged structure: benign user prompts place
   \item[\textbf{C3}] \textbf{Training generalises to held-out attacks but not to an adaptive attacker.} Segment-max self-distillation (T), with or without trained boundary tokens, closes the structural channel on appended attack families, decoys and forged queries held out of training, where a fail-closed structure detector and inference-time segment-max (taking the max over the content's parts at run time) both let $23\%$ of these attacks through and the detector also blocks about half of benign structured content. It does not hold against a score-guided search or GCG, and a plain-text control shows that more than half of the search's wins need no forged structure (\cref{sec:defense,sec:evaluation}).
 \end{itemize}
 Pre-registered predictions are labelled P1--P9 (confirmatory study), M1--M5 (benchmark), F1--F6 and A1--A3 (defense); \cref{app:protocol} lists each with its outcome.
-We release the benchmark, the harness, the trained adapters and every raw score behind every number (\cref{app:open-science}).
+% ADAPTERS: pending author decision
+We release the code (benchmark, harness and defense), the training commands and the result files behind every number (\cref{app:open-science}).

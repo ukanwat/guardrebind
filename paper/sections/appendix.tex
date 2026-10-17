@@ -161,7 +161,7 @@ Held-out families are those whose syntax is in \{JSON, YAML, markdown bold, cont
 \begin{table}[p]
   \centering\footnotesize
   \caption{Bypass (\%) of every core attack family on each guard, default policy, mean over three instantiations, screened core set ($n$ = 300, 374, 168, 536 and 113). gpt-oss-safeguard uses the strict reading. ``native'' is the guard-native form, written in each guard's own template syntax (the full-task forgery for Qwen3Guard). Two-letter suffixes are ISO 639-1 language codes (es Spanish, fr French, de German, zh Chinese, hi Hindi, ar Arabic, ru Russian).}
-  % src: /tmp/bench_analysis/bypass.csv (python -m src.bench.analyze on results/bench/v2), default policy; gpt-oss: paper/data/gpt_oss_strict.md (parse = strict, mean column)
+  % src: results/bench/v2/bypass.csv (python -m src.bench.analyze on results/bench/v2), default policy; gpt-oss: paper/data/gpt_oss_strict.md (parse = strict, mean column)
   \label{tab:per-family}
   \setlength{\tabcolsep}{4pt}
   \renewcommand{\arraystretch}{0.88}
@@ -232,7 +232,7 @@ Held-out families are those whose syntax is in \{JSON, YAML, markdown bold, cont
 \begin{table}[ht]
   \centering\small
   \caption{Threshold sensitivity: bypass (\%) of each guard's strongest family (at $\tau=0.5$) as $\tau$ varies, default policy.}
-  % src: /tmp/bench_analysis/bypass_tau.csv
+  % src: results/bench/v2/bypass_tau.csv
   \label{tab:sens-bench-tau}
   \begin{tabular}{llccccc}
     \toprule
@@ -323,9 +323,9 @@ In a minority of attacked rows the model's reasoning quotes the literal marker t
 The bounded format renders the stock chat template with a placeholder document, splits it into a trusted prefix and suffix, encodes the content on its own with special-token parsing disabled, and inserts the two reserved boundary tokens (unused in pretraining) around it. % src: src/fix/inputs.py
 The template emits a space before the document that the tokenizer would merge into the content's first token; that space is moved into the trusted prefix, which leaves plain documents tokenizing identically to the stock path (verified on 203 documents). % src: src/fix/inputs.py (_content); the 203-document check output is not stored in results/
 Training is a LoRA (rank 16, $\alpha=32$) on the language model's attention and MLP projections, AdamW at learning rate $10^{-4}$, batch 8, one epoch, maximum length 384, binary cross-entropy on the yes/no logit margin against the segment-max teacher target. LoRA does not touch the embeddings; in B$+$T a trainable two-row offset, initialised at zero, is added to the embeddings of the two boundary tokens (ids 36 and 37), and every other embedding stays frozen. % src: src/fix/distill.py (boundary_delta) % src: src/fix/distill.py, PROTOCOL_v2.md (Fixed training recipe)
-Training data: 5{,}000 train-split prompt items, each clean and with two training-family attacks, plus 1{,}250 structured-benign items (16{,}250 examples); one epoch is 2{,}032 steps (the last batch partial). Each attacked example's decoy and forged query are a seeded draw from the training halves of the pools; the hard negatives are train-split structured-benign items. % src: src/fix/distill.py (build); logs/pod/build_full.log; logs/pod/train_t_seed0.log
+Training data: 5{,}000 train-split prompt items, each clean and with two training-family attacks, plus 1{,}250 structured-benign items (16{,}250 examples); one epoch is 2{,}032 steps (the last batch partial). Each attacked example's decoy and forged query are a seeded draw from the training halves of the pools; the hard negatives are train-split structured-benign items. % src: src/fix/distill.py (build); logs/pod/build_r2.log (wrote 16250 examples); logs/pod/train_r2_t_seed0.log (2032 steps)
 Naive adversarial training and the clean-copy ablation use the same examples with different targets.
-Compute: training and the test-split defense, adaptive and mechanism runs used one NVIDIA RTX 4090; a training run takes about 17 minutes (2{,}032 steps in 993\,s for T, 1{,}003\,s for B$+$T). The benchmark ran on an Apple-silicon laptop GPU. % src: logs/pod/train_{t,bt}_seed0.log
+Compute: training and the test-split defense, adaptive and mechanism runs used one NVIDIA RTX 4090; a training run takes about 17 minutes (1{,}028\,s for T and 1{,}037\,s for B$+$T at the last logged step, 2{,}030 of 2{,}032). The benchmark ran on an Apple-silicon laptop GPU. % src: logs/pod/train_r2_t_seed0.log, logs/pod/train_r2_bt_seed0.log (last line before 'saved': step 2030, s 1028 / 1037)
 Adaptive budgets: the score-guided search has 300 guard calls per item (20 random candidates, then batches of 10 children with restart probability 0.2) on 50 items; the structural search scores all 684 attacks on each of 50 items (batch 128); GCG optimises a 20-token suffix inside the forged document for 250 steps (batch 32 candidates per step) on 20 items, stopping an item at its first success. % src: src/fix/adaptive.py; scripts/queue_round2.sh
 
 \paragraph{Fixed-decoy conditions.}
@@ -392,13 +392,14 @@ On T it clears $20/20$\ci{84\%}{100\%}, with median first success at step $16.5$
 \section{Reproducibility}
 \label{app:repro}
 
-Models and revisions (Hugging Face commit): Shieldstral-1.0-3B \texttt{003ec7e}, Llama Guard~3 1B \texttt{acf7aaf}, Qwen3Guard-Gen-0.6B \texttt{fada3b2}, ShieldGemma 2B \texttt{d1dffc9}. Local guards are scored from a single forward pass (no sampling): the score is the probability of the unsafe label renormalised over the guard's label tokens, computed in fp32 from bf16 hidden states; the API-served gpt-oss-safeguard was reached through OpenRouter at temperature 0. % src: src/crossmodel.py, src/gpt_oss_mechanism.py
+The runs used these Hugging Face revisions: Shieldstral-1.0-3B \texttt{003ec7e}, Llama Guard~3 1B \texttt{acf7aaf}, Qwen3Guard-Gen-0.6B \texttt{fada3b2}, ShieldGemma 2B \texttt{d1dffc9}. Local guards are scored from a single forward pass (no sampling): the score is the probability of the unsafe label renormalised over the guard's label tokens, computed in fp32 from bf16 hidden states; the API-served gpt-oss-safeguard was reached through OpenRouter at temperature 0. % src: src/crossmodel.py, src/gpt_oss_mechanism.py; revisions = local HF cache refs/main, equal to the Hub main sha on 2026-10-17 (unchanged since before the runs); the code loads main and does not pin revisions
 Dataset sources and licenses: AdvBench, HarmBench, Aegis~2.0, BeaverTails, the OpenAI moderation evaluation and ToxicChat, with XSTest and OR-Bench as over-refusal sources; the non-commercial sets (ToxicChat, BeaverTails) are used for research only. % src: src/bench/data.py load_all() sources
 All hyperparameters, splits and the full protocol are in \cref{app:protocol,app:defense-impl}.
 
 \section{Open Science}
 \label{app:open-science}
 
-We release the \guardrebind{} benchmark and harness, the attack grammar, the trained LoRA adapters (B, T and B$+$T), the training-data recipe and every raw score behind every number in this paper, at \url{https://github.com/ukanwat/guard-policy-injection}.
-Withheld: nothing beyond what the source benchmarks already withhold; harmful content is referenced through those benchmarks rather than redistributed.
+% ADAPTERS: pending author decision
+We release the \guardrebind{} benchmark and harness, the attack grammar, the defense code, the training commands and data recipe, and the result files behind every number in this paper, at \url{https://github.com/ukanwat/guard-policy-injection}.
+The released results contain item ids and scores, plus text only from the public benchmarks we used (such as the AdvBench requests of the confirmatory run and the benign development-split prompts that won as search decoys) and model outputs that quote it; we release no new harmful content.
 The pre-registered protocol and its deviations are included so that predictions can be checked against outcomes.
