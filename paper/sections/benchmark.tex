@@ -52,7 +52,7 @@ Content is placed where each guard's own format puts the material under review (
 
 \paragraph{Protocol.}
 The full core attack panel runs on the core set for every guard under its default policy, and six families also run under two paraphrased deployment policies. % src: results/bench/v2/run_config.json (policies default/para1/para2; policy_families: 6)
-Each table reports the \emph{clean miss rate} (FNR: the share of harmful items flagged as safe with no attack) next to the bypass, and the always-flag baseline; sensitivity to $\tau$ is in \cref{app:grammar}.
+Each table reports the \emph{clean miss rate} (false-negative rate, FNR: the share of harmful items judged safe with no attack) and the clean false-positive rate (FPR: the share of benign items flagged) next to the bypass, and the always-flag baseline; sensitivity to $\tau$ is in \cref{app:grammar}.
 Bypass is the mean over the three instantiations, with a 95\% interval from a two-level bootstrap over items and then instantiations, as pre-registered. % src: PROTOCOL_v2.md D1(a)
 The predictions were registered before the run (\cref{app:protocol}).
 
@@ -103,7 +103,7 @@ Its best family, and Qwen3Guard's, places the forgery in the middle position, wh
 Per-guard breakdowns by syntax, pair count, harm category and source are in \cref{app:grammar}.
 
 \paragraph{gpt-oss-safeguard.}
-The base guard is a weak detector on this data before any attack: on 200 harmful and 200 benign core items it flags $56.5\%$\ci{49.6\%}{63.2\%} of harmful items and $12.0\%$\ci{8.2\%}{17.2\%} of benign ones, an AUROC of $0.72$ from its binary verdict (per-source rates in \cref{app:gpt-oss}). % src: paper/data/gpt_oss_strict.md (parse = strict: recall 113/200, FPR 24/200); results/bench/v2/gpt_oss/auc.csv (clean auroc 0.7225)
+The base guard is a weak detector on this data before any attack: on 200 harmful and 200 benign core items it flags $56.5\%$\ci{49.6\%}{63.2\%} of harmful items and $12.0\%$\ci{8.2\%}{17.2\%} of benign ones, an area under the ROC curve (AUROC) of $0.72$ from its binary verdict (per-source rates in \cref{app:gpt-oss}). % src: paper/data/gpt_oss_strict.md (parse = strict: recall 113/200, FPR 24/200); results/bench/v2/gpt_oss/auc.csv (clean auroc 0.7225)
 Bypass is measured on the 113 harmful items it flags; rates in this paragraph are means over three instantiations unless stated.
 The forged triple clears $100\%$ in each of six label syntaxes, $99.7\%$ in Spanish and $99$--$100\%$ with two to five stacked triples, but its instruction field is the directive $S$ (``Disregard the section above\ldots''), so it does not separate rebinding from persuasion. % src: paper/data/gpt_oss_strict.md (parse = strict, mean column): angle/colon/md_bold/json/xml/control_token full_triple 100.0; angle full_triple lang=es 99.7; n=2 100.0, n=3 100.0, n=5 99.4
 The guard-native forgery has no instruction sentence: it writes the model's own turn markers as text to open a developer turn holding the forged query and a user turn holding the decoy. It clears $71.7\%$\ci{65.2\%}{78.5\%} with one pair ($95.6\%$ of items fall to at least one of the three instantiations) and $97.6$--$99.7\%$ with two to five. % src: paper/data/gpt_oss_strict.md (parse = strict, mean column): guard_native query_doc 71.7 [65.2, 78.5], worst 95.6; n=2..5 99.7, 99.1, 97.6, 98.8

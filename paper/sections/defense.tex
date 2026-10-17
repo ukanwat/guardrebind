@@ -12,7 +12,7 @@ The content is tokenized on its own with special-token parsing disabled, so any 
 The flag applies only to tokens the tokenizer declares special, so added tokens not marked special stay atomic~\citep{zhan2026samebytes,yang2026nameless}; on Shieldstral, which the defense is trained on, no added or special id is reachable from content under this encoder (\cref{app:content-tokens}).
 The content's token ids are then wrapped in two reserved \emph{boundary tokens}, ids that are unused in pretraining and that no input text tokenizes to; they mark the open and the close of the document. % src: src/fix/inputs.py (bounded_ids, DOC_OPEN_ID/DOC_CLOSE_ID)
 Nothing is removed from the content: a literal \texttt{<Query>:} or \texttt{[/INST]} reaches the model as plain text inside the boundary.
-This is the parameterised-query idea from SQL injection, in the reserved-delimiter form of StruQ and SecAlign~\citep{chen2024struq,chen2024secalign} and close to the learned delimiters of DefensiveTokens and LTBD~\citep{chen2025defending,zhao2026ltbd}, applied to a classifier's content slot.
+This is the parameterised-query idea from SQL injection, in the reserved-delimiter form of StruQ and SecAlign~\citep{chen2024struq,chen2024secalign} and close to the learned delimiters of DefensiveTokens and of learnable trust-boundary delimiters (LTBD)~\citep{chen2025defending,zhao2026ltbd}, applied to a classifier's content slot.
 Because the boundary tokens are unused, their meaning has to be learned.
 B alone (bounded format, base weights, untrained boundary embeddings) therefore tests only whether the format change helps without training; the trained-boundary condition is B$+$T, in which the two boundary embeddings are learned together with T.
 
@@ -31,7 +31,7 @@ Scanning a long input in segments and acting on any flagged one is existing infe
 When the decoy is benign the target reduces to the teacher's score on the original request, which is clean-context distillation~\citep{peng2026secopd,dhouib2026raised}; the two differ only where the decoy or the whole attacked content scores above the original item on its own.
 A clean-copy ablation, trained the same way as T but with the teacher reading only the original item, tests whether the max matters (\cref{tab:fix-main}).
 The student reads the whole content through the chosen format and is trained with binary cross-entropy between the yes/no logit margin and the target.
-Training uses LoRA on the attention and MLP projections with the embedding matrix frozen; in B$+$T the two boundary-token embedding rows are also trained, and T uses the stock format (\cref{app:defense-impl}).
+Training uses low-rank adaptation (LoRA) on the attention and MLP projections with the embedding matrix frozen; in B$+$T the two boundary-token embedding rows are also trained, and T uses the stock format (\cref{app:defense-impl}).
 
 \paragraph{Hard negatives.}
 Training also includes benign text that carries label-like structure, generated from nine templates (FAQs, forms, chat logs, support tickets, meeting notes, markdown, JSON, YAML and documents that quote guard tags such as \texttt{<Query>:}) filled with benign train-split text; they are disjoint from the structured-benign test set.
