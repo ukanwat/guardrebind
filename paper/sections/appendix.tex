@@ -355,7 +355,7 @@ Counting GCG, the per-item worst case over all attacks against B$+$T is $95\%$ (
 \section{Reproducibility}
 \label{app:repro}
 
-Models and revisions: \tbd{model revisions and decoding settings}; the API-served gpt-oss-safeguard was reached through OpenRouter at temperature 0. % src: src/crossmodel.py, src/gpt_oss_mechanism.py
+Models and revisions (Hugging Face commit): Shieldstral-1.0-3B \texttt{003ec7e}, Llama Guard~3 1B \texttt{acf7aaf}, Qwen3Guard-Gen-0.6B \texttt{fada3b2}, ShieldGemma 2B \texttt{d1dffc9}. Local guards are scored from a single forward pass (no sampling): the score is the probability of the unsafe label renormalised over the guard's label tokens, computed in fp32 from bf16 hidden states; the API-served gpt-oss-safeguard was reached through OpenRouter at temperature 0. % src: src/crossmodel.py, src/gpt_oss_mechanism.py
 Dataset sources and licenses: AdvBench, HarmBench, Aegis~2.0, BeaverTails, the OpenAI moderation evaluation, ToxicChat and WildGuardMix; the non-commercial sets (ToxicChat, BeaverTails) are used for research only. % src: PROTOCOL_v2.md (Data)
 All hyperparameters, splits and the full protocol are in \cref{app:protocol,app:defense-impl}.
 

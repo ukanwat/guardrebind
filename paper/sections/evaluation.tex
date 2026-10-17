@@ -9,7 +9,6 @@ We report four quantities.
 \emph{Bypass} is measured separately on attack families held out of training (whole grammar branches never seen: see \cref{app:grammar}) and on the training families, at $\tau=0.5$, on the 291--300 harmful test items each condition flags with no attack. Each family split contributes twelve sampled attacks per item; bypass pools the eight whose decoy is benign or borderline (about 2{,}400 attacked items per cell), since an attack whose decoy is harmful is correctly flagged. % src: results/fix/test_*.json (attacks.{train,heldout}.bypass_benign_decoy; screened)
 \emph{Detection} is AUROC and recall at $\tau$ on the clean test split (801 harmful, 699 benign items from six sources).
 \emph{Over-refusal} is the flag rate on XSTest-safe~\citep{rottger2023xstest} ($n=75$), OR-Bench-hard~\citep{cui2024orbench} ($n=400$) and a structured-benign set ($n=500$), and on 150 benign items carrying the same forged pairs (\emph{attacked-benign FPR}, 2{,}400 cells).
-\emph{Calibration}: \tbd{expected calibration error; per-item clean scores were not saved by the test evaluation, so ECE needs a rerun}.
 T, B$+$T and naive adversarial training are trained with two, three and two seeds and reported as mean $\pm$ sd over seeds; the other conditions are single runs. % src: PROTOCOL_v2.md D1(d), D3
 Differences between conditions use a paired bootstrap over items on seed-averaged per-item bypass (10k resamples); proportions use Wilson intervals. % src: PROTOCOL_v2.md (Metrics)
 
