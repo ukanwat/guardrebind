@@ -45,6 +45,16 @@ CONTROL = {
 }
 
 
+def control_ids(tokenizer) -> set[int]:
+    return {i for i, t in tokenizer.added_tokens_decoder.items() if t.special}
+
+
+def native_control_tokens(guard) -> list[str]:
+    """The guard's own delimiters that are single special tokens."""
+    vocab = {t.content for t in guard.tokenizer.added_tokens_decoder.values() if t.special}
+    return [v for v in guard.native_labels.values() if v in vocab]
+
+
 def available(name: str) -> bool:
     from huggingface_hub import try_to_load_from_cache
 
@@ -67,13 +77,50 @@ def check_tokenization(name: str) -> None:
     attack = CONTROL[name]
     a, b = stock.build_ids([attack])[0], split.build_ids([attack])[0]
     assert a != b, f"{name}: control-token content tokenised identically in both modes"
-    specials = set(stock.tokenizer.all_special_ids)
+    # Control tokens = added tokens flagged special. Not `all_special_ids`: that
+    # only lists the special_tokens_map entries (bos/eos/pad/...), so it misses
+    # e.g. Gemma's <start_of_turn>/<end_of_turn> (106/107), which the tokenizer
+    # does parse out of raw text.
+    specials = control_ids(stock.tokenizer)
     base = split.build_ids(["fine. hello"])[0]
     n_base = sum(i in specials for i in base)
     assert sum(i in specials for i in a) > n_base, f"{name}: stock mode did not parse content control tokens"
     assert sum(i in specials for i in b) == n_base, f"{name}: split mode leaked control tokens from content"
     # Content decodes back to itself in split mode.
     assert attack in split.tokenizer.decode(b), f"{name}: split mode altered content text"
+
+    # Each of the guard's own control tokens, alone in content: parsed to its
+    # id in stock mode, plain text in split mode.
+    for tok in native_control_tokens(stock):
+        tid = stock.tokenizer.convert_tokens_to_ids(tok)
+        content = f"a {tok} b"
+        in_stock = stock.build_ids([content])[0].count(tid) - stock.build_ids(["a b"])[0].count(tid)
+        in_split = split.build_ids([content])[0].count(tid) - split.build_ids(["a b"])[0].count(tid)
+        print(f"    {tok!r:24} id {tid:>6}: stock parses {in_stock}, split parses {in_split}")
+        assert in_stock == 1 and in_split == 0, f"{name}: {tok} stock={in_stock} split={in_split}"
+
+    if name in ("qwen3guard_0_6b", "shieldgemma_2b", "llama_guard_3_1b"):
+        # Stock ids equal the tokenizer's own apply_chat_template(tokenize=True),
+        # minus the teacher-forced answer prefix.
+        from .guards import SHIELDGEMMA_PROMPT_POLICY, SHIELDGEMMA_RESPONSE_POLICY
+
+        for kind, texts in (("prompt", CLEAN), ("response", RESPONSES)):
+            policy = SHIELDGEMMA_PROMPT_POLICY if kind == "prompt" else SHIELDGEMMA_RESPONSE_POLICY
+            extra = {"guideline": "\n* ".join(policy)} if name == "shieldgemma_2b" else {}
+            for t in texts:
+                turns = [t] if kind == "prompt" else list(t)
+                if name == "llama_guard_3_1b":
+                    turns = [{"type": "text", "text": x} for x in turns]
+                    turns = [[x] for x in turns]
+                msgs = [{"role": r, "content": c} for r, c in zip(["user", "assistant"], turns)]
+                ref = stock.tokenizer.apply_chat_template(msgs, return_dict=True, **extra)["input_ids"]
+                ours = stock.build_ids([t], kind)[0]
+                if name == "qwen3guard_0_6b":
+                    ours = ours[: -len(stock.tokenizer.encode("Safety:", add_special_tokens=False))]
+                if name == "llama_guard_3_1b":
+                    assert ours[-1] == 271, "missing teacher-forced blank line"
+                    ours = ours[:-1]
+                assert ours == list(ref), f"{name}/{kind}: ids differ from apply_chat_template"
 
     if name == "shieldstral":
         from ..fix.inputs import split_ids, stock_ids
