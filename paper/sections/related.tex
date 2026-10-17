@@ -1,0 +1,40 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Structured-query and training defenses for generators.}
+Reserved delimiter tokens filtered from data, plus training to ignore injected instructions, is the StruQ/SecAlign line~\citep{chen2024struq,chen2024secalign}, scaled and utility-corrected by Meta-SecAlign~\citep{chen2025metasecalign} and reduced to a test-time switch by DefensiveTokens~\citep{chen2025defending}.
+Architectural variants encode provenance per token: instructional segment embeddings~\citep{wu2024instructional} and ASIDE's embedding rotation~\citep{zverev2025aside}.
+The instruction hierarchy~\citep{wallace2024instruction,guo2026ihchallenge} trains role priority; spotlighting~\citep{hines2024defending} and BIPIA~\citep{yi2023benchmarking} are the prompt-level and early boundary-plus-training versions.
+All target generative instruction-followers.
+Part~B of our fix is this family applied to a classifier's content slot; the difference is the output (one calibrated score) and the threat (a false ``safe'' verdict, not task hijacking).
+The limits are conceptual too: instructions and data are hard to separate in shared-embedding models~\citep{zverev2024llms,pant2026inseparability}, which is why we enforce a stripped boundary rather than rely on training alone.
+
+\paragraph{Self-distillation defenses.}
+SecOPD~\citep{peng2026secopd} and the concurrent RAISED~\citep{dhouib2026raised} distill a student toward the base model's \emph{clean-context} behaviour on injected inputs; Meta-SecAlign's self-generated labels are related.
+This recipe is not new as of October 2026.
+Our segment-max target (\cref{eq:target}) differs in needing no clean copy of the input --- the counterfactual is each content segment, combined by max --- which suits nested, untrusted structure in a classifier and is safety-conservative.
+
+\paragraph{Attacks on these defenses.}
+Fine-tuning defenses that report near-zero ASR are broken by attention-aware attacks~\citep{pandya2025may}, checkpoint-GCG~\citep{yang2025auditing}, RL red-teaming~\citep{yin2026pismith} and scaled adaptive attacks~\citep{nasr2025attacker}, under evaluation norms~\citep{tramer2020adaptive,athalye2018obfuscated,jia2025critical,zhan2025adaptive}.
+\Cref{sec:adaptive} adopts these.
+
+\paragraph{Attacks on guards and judges.}
+Injection into content scored by an LLM judge is established: JudgeDeceiver's optimised suffix~\citep{shi2024optimizationbased}, master-key tokens~\citep{zhao2025one}, and judge-robustness surveys~\citep{li2025llms,maloyan2025adversarial,maloyan2025investigating}.
+Against guards specifically: universal perturbations~\citep{mangaokar2024prp}, evasion by character injection~\citep{hackett2025bypassing}, safeguard-pipeline attacks~\citep{mckenzie2025stack}, and broad robustness drops on novel attacks~\citep{young2025evaluating,outeda2026decoding}.
+Most closely, concurrent work tests ``forgeries of structured input'' against a question-answering safety judge and Llama Guard~3~\citep{li2026same}; tool-call quarantine for classifiers fails and can invert~\citep{gros2026evaluating}; and agent-action monitors are broken by agent-generated injection~\citep{remedios2026redteaming}.
+Our additions are a stated mechanism, 100\% bypass on three named open guards with controls, and a trained fix rather than an evaluation.
+Jailbreaks, by contrast, are largely caught by at least one filter~\citep{xin2025jailbreaking}; structural rebinding is a different class that keeps the harmful content present.
+
+\paragraph{Structure forgery against agents and chat models.}
+The mechanism of forging template or conversational structure is well documented: Structural Template Injection~\citep{deng2026automating}, ChatInject~\citep{chang2025chatinject}, pseudo-conversation injection~\citep{chen2024goal}, separator injection~\citep{li2025separator}, and role-confusion analyses~\citep{ye2026prompt}, descending from indirect prompt injection~\citep{greshake2023not}.
+Our control-token channel (\cref{sec:control}) is the guard analogue of chat-template abuse.
+These target the generator; we target the guard's task slots.
+
+\paragraph{Shortcut learning.}
+Trained role-separation defenses can learn proxies such as position rather than true boundaries~\citep{wang2025illusion}.
+This is the main validity threat to part~T; our shortcut check (\cref{sec:mechanism}) and benign-first orderings test whether the model learned ``score the first pair''.
+
+\paragraph{Guards and judges under study.}
+Shieldstral~\citep{calvi2026shieldstral}, gpt-oss-safeguard~\citep{openai2025gptosssafeguard}, the Llama Guard line~\citep{inan2023llama,grattafiori2024llama,chi2024llama,meta2025llamaguard4,chennabasappa2025llamafirewall}, ShieldGemma~\citep{zeng2024shieldgemma,zeng2025shieldgemma}, WildGuard~\citep{han2024wildguard}, Aegis~\citep{ghosh2024aegis,ghosh2025aegis}, Qwen3Guard~\citep{zhao2025qwenguard}, GuardReasoner~\citep{liu2025guardreasoner}, Granite Guardian~\citep{padhi2024granite}, and the policy-adaptive guards DynaGuard, RSafe, Roblox Guard, AprielGuard and HiveTraceGuard-Pro~\citep{hoover2025dynaguard,zheng2025rsafe,nandwana2025taxonomyadaptive,kasundra2025aprielguard,oblakov2026hivetraceguardpro}.
+Benchmarking finds large guards still miss much unsafe content~\citep{harsh2026benchmarking,kang2024rguard}.
+Policy-adaptive guards are especially exposed because the grading question is itself text in the prompt, so content can forge a new one; a concurrent judge-side external sanitizer takes a different route~\citep{hu2026stablejudge}, and an LLM-native markup proposal~\citep{hind2026llmon} and inference-time aggregation~\citep{liu2025secinfer} are adjacent.
