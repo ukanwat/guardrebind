@@ -37,7 +37,7 @@ The second protocol was frozen before any test-split run and has four recorded d
     M5 & exploratory: category, source, size & released with the artifacts; size not varied within a series \\
     \midrule
     F1 & B alone leaves held-out bypass $\ge 50\%$ & confirmed; $76.8\%$\ci{75.8\%}{77.8\%} \\
-    F2 & T generalises worse than B$+$T on held-out families & confirmed by the pre-registered criterion, with an effect under one point; T $-$ B$+$T $= +0.7$ points\ci{$-0.1$}{$+1.5$}, one-sided $p=0.04$ ($n=290$) \\
+    F2 & T generalises worse than B$+$T on held-out families & confirmed by the pre-registered criterion, with an effect under one point; T (mean of two seeds) $-$ B$+$T $= +0.7$ points\ci{$-0.1$}{$+1.5$}, one-sided $p=0.04$ ($n=290$); T seed 0 alone is below B$+$T \\
     F3 & B$+$T held-out bypass $\le 10\%$ & confirmed; $0.9\%$\ci{0.7\%}{1.1\%} \\
     F4 & B$+$T AUROC within $0.01$, recall within 2 points (on the interval of the difference) & not confirmed; AUROC $-0.010$\ci{$-0.041$}{$+0.021$}, recall $-0.1$\ci{$-5.0$}{$+4.8$}: point estimates inside the margins, intervals wider \\
     F5 & B$+$T over-refusal within 2 points (on the interval of the difference) & not confirmed; XSTest-safe $-2.7$\ci{$-11.1$}{$+5.4$}, OR-Bench-hard $+0.25$\ci{$-6.6$}{$+7.1$}, structured benign $0.0$\ci{$-3.0$}{$+3.0$}: no point estimate rises by more than $0.25$, intervals wider than the margin \\
@@ -90,7 +90,8 @@ The template puts a space before the document, which the tokenizer would otherwi
 
 \paragraph{Training.}
 We train a LoRA (rank 16, $\alpha=32$) on the language model's attention and MLP projections with AdamW at learning rate $10^{-4}$, batch 8, one epoch and maximum length 384. The loss is binary cross-entropy between the yes/no logit margin and the segment-max teacher target. LoRA does not touch the embeddings. In B$+$T a trainable two-row offset, initialised at zero, is added to the embeddings of the two boundary tokens (ids 36 and 37), and every other embedding stays frozen. % src: src/fix/distill.py (boundary_delta) % src: src/fix/distill.py, PROTOCOL_v2.md (Fixed training recipe)
-The data are 5{,}000 train-split prompt items, each clean and with two training-family attacks, plus 1{,}250 structured-benign items, for 16{,}250 examples. One epoch is 2{,}032 steps, the last batch partial. Each attacked example's decoy and forged query are a seeded draw from the training halves of the pools: 20 of the 40 benign decoys, 3 of 6 borderline and 4 of 8 harmful decoys, and 4 of the 8 forged queries at each relatedness level. The hard negatives are train-split structured-benign items. % src: src/fix/distill.py (build); logs/pod/build_r2.log (wrote 16250 examples); logs/pod/train_r2_t_seed0.log (2032 steps)
+The data are 5{,}000 train-split prompt items, each clean and with two forms sampled uniformly from the training branch, plus 1{,}250 structured-benign items, for 16{,}250 examples. Of the 10{,}000 attacked examples, 9{,}480 append the forged structure, 317 prepend it or use the middle position, and 203 are controls with no forged structure. % src: src/fix/distill.py build_examples (rng.sample over split_attacks train branch incl. controls); recomputed on CPU: append 9480, prepend 162, middle 155, control 203
+ One epoch is 2{,}032 steps, the last batch partial. Each attacked example's decoy and forged query are a seeded draw from the training halves of the pools: 20 of the 40 benign decoys, 3 of 6 borderline and 4 of 8 harmful decoys, and 4 of the 8 forged queries at each relatedness level. The hard negatives are train-split structured-benign items. % src: src/fix/distill.py (build); logs/pod/build_r2.log (wrote 16250 examples); logs/pod/train_r2_t_seed0.log (2032 steps)
 Naive adversarial training and the clean-copy ablation use the same examples with different targets.
 
 \paragraph{Compute and adaptive budgets.}
@@ -99,7 +100,7 @@ The score-guided search has 300 guard calls per item on 50 items, starting from 
 
 \paragraph{Fixed-decoy conditions.}
 \Cref{tab:fix-fixed} gives the conditions trained and tested with one fixed decoy and query per family: naive adversarial training and the generality runs of T on Llama Guard~3 1B and Qwen3Guard 0.6B (\cref{sec:evaluation}).
-They have no held-out-decoy column. The hard negatives of the trained rows include 380 of the 500 structured-benign test items, so their structured-benign column is not a held-out measure.
+They have no held-out-decoy column. Their training drew hard negatives from all splits, not only the train split, and these include 380 of the 500 structured-benign test items, so the structured-benign column of the trained rows is not a held-out measure. % src: src/fix/distill.py build_examples decoy_split=fixed -> structured_benign(1250) over all splits; CPU recount: 380 test-split items, all in the 500-item test set
 
 \begin{table}[ht]
   \centering

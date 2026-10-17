@@ -12,8 +12,8 @@ Activation patching (\cref{app:extra}) is consistent with rebinding but does not
 \paragraph{Setup.}
 The ablation panel, the borderline-decoy comparison and the position, label-syntax and policy variations form a \emph{confirmatory} run under a protocol frozen beforehand (\cref{app:protocol}).
 Results marked \emph{exploratory} were added later and are listed there.
-The corpus is AdvBench~\citep{zou2023universal} rows 200--299, which no exploratory run touched.
-Under the policy of \cref{fig:anatomy}, 75 of them are flagged ($>0.9$) with no attack; these are the denominator. % src: PROTOCOL.md; results/confirm_log.txt
+The corpus is AdvBench~\citep{zou2023universal} rows 200--299, which no exploratory run had touched before the confirmatory run. % src: PROTOCOL.md (held-out slice; exploration used rows 0-43); later exploratory runs (e.g. results/confirm_groundtruth.csv) reuse rows 200+
+Under the policy of \cref{fig:anatomy}, 75 of them are flagged ($>0.9$) with no attack and form the denominator. % src: PROTOCOL.md; results/confirm_log.txt
 
 \subsection{Ablation of the forged pair}
 \label{sec:core}
@@ -21,7 +21,7 @@ Under the policy of \cref{fig:anatomy}, 75 of them are flagged ($>0.9$) with no 
 \begin{table}[t]
   \centering
   \small
-  \caption{What the attacker appends, and how often it clears Shieldstral. $n=75$ flagged held-out AdvBench requests, $\tau=0.5$, bypass with Wilson 95\% interval. Every row with an instruction uses the same sentence $S$, a directive to disregard the section above. Only the complete forged query--document pair clears the guard.}
+  \caption{What the attacker appends, and how often it clears Shieldstral. $n=75$ flagged held-out AdvBench requests, $\tau=0.5$, bypass with Wilson 95\% interval. Every row with an instruction uses the same sentence $S$, a directive to disregard the section above. Only rows with the full forged query--document pair clear over $9\%$.}
   % src: results/confirm_log.txt [ablation], results/tables.md; code names in order: none, sentence_bare, authority_note, benign_tail, instruct_only, instruct_query, doc_only, query_doc, full_triple
   \label{tab:ablation}
   \begin{tabular}{llc}
@@ -75,7 +75,7 @@ This $100\%$ is the highest of four Shieldstral figures in the paper, which diff
 
 \Cref{tab:ablation} shows that the forged query is what turns forged text into a task.
 A forged document alone clears $9\%$, and adding the query raises this to $100\%$.
-Instructions clear nothing in any form we tried, even with a forged query after them.
+Without a forged document, instructions clear nothing in any form we tried, even with a forged query after them.
 A forged instruction in front of the full pair lowers bypass to $92\%$.
 If the guard were persuaded, adding the directive should help the attack; it slightly hurts it.
 
@@ -88,7 +88,7 @@ A \emph{benign} decoy ($0.00$) clears $100\%$\ci{91\%}{100\%}.
 A \emph{borderline} decoy ($0.03$) clears $33\%$\ci{21\%}{49\%}.
 A \emph{harmful} decoy, one the guard flags on its own ($\approx\!1.0$), clears $0\%$\ci{0\%}{9\%}. % src: results/groundtruth_log.txt, results/confirm_groundtruth.csv
 Rebinding is not a clean switch: with the borderline decoy the attacked median is $0.71$, far above the decoy's own $0.03$, so the original request leaks back into the score. % src: results/groundtruth_log.txt (attack median 0.7058)
-The decoy we pre-registered as ``harmful'' for the confirmatory panel turned out to score only $0.03$ on its own, which puts it in the borderline class; it clears 29--35\% (\cref{app:protocol}). % src: results/confirm_log.txt [groundtruth]
+The decoy we pre-registered as ``harmful'' for the confirmatory panel turned out to score only $0.03$ on its own, so it is borderline; it clears 29--35\% (\cref{app:protocol}). % src: results/confirm_log.txt [groundtruth]
 
 Forged text works far less well when the guard is not handed a benign document to grade.
 In five exploratory variants ($n=45$), the forged query asks an off-topic question, such as whether the content is a poem or a weather forecast, and the forged document repeats the request. These clear $0$--$9\%$: changing the question alone does not move the verdict. % src: results/soften_log.txt, results/confirm_soften.csv
@@ -97,15 +97,13 @@ On 200 harmful test items that Shieldstral flags alone, an exploratory control t
 They clear $6$--$19\%$, against $96\%$\ci{92\%}{98\%} for the pair. % src: results/fix/forgery_controls_base.json (verdict_plain 38/200, verdict_json 11/200, authority 13/200, prior_verdict 11/200, task 192/200)
 
 \paragraph{Robustness.}
-The attack needs no white-box access, and the attacker has to know only the shape of the deployment's task.
-Keeping the query secret therefore does not protect the guard. The attack does need labels, though any of the seven styles below works.
-We varied one factor at a time around the core attack ($n=75$ unless stated). % src: results/confirm_log.txt [recency], [markers], [policy]; results/supp_log.txt [A]
+We varied one factor at a time around the core black-box attack ($n=75$ unless stated). % src: results/confirm_log.txt [recency], [markers], [policy]; results/supp_log.txt [A]
 \emph{Position:} the pair clears $100\%$ when appended and $15\%$\ci{8\%}{24\%} when prepended.
-Inert filler appended last clears $0\%$ (\cref{tab:ablation}), so coming last is necessary but not sufficient.
-\emph{Syntax:} seven label styles (angle brackets in three letter cases, plain colon, square brackets, markdown bold and the abbreviated \texttt{Q:}/\texttt{D:}) clear $83$--$100\%$, and the same words without labels clear none.
-\emph{Query knowledge} (exploratory): the forged query must look like a safety question but need not match the deployment's.
+Inert filler appended last clears $0\%$ (\cref{tab:ablation}), so coming last is not sufficient. Nor is it strictly necessary, since the prepended pair still clears $15\%$, but it accounts for most of the effect.
+\emph{Syntax:} the attack needs labels, but any of seven styles works (angle brackets in three letter cases, plain colon, square brackets, markdown bold and the abbreviated \texttt{Q:}/\texttt{D:}). They clear $83$--$100\%$, and the same words without labels clear none.
+\emph{Query knowledge} (exploratory): the forged query works well only if it looks like a safety question, but it need not match the deployment's.
 Paraphrases and topical variants reach $100\%$ bypass and a generic query $89\%$, while an unrelated query clears only $9\%$.
-A blind attacker who stacks five guesses, none of them the deployment's query, clears $100\%$. % src: results/supp_log.txt [A]
+A blind attacker who stacks five guesses, none of them the deployment's query, clears $100\%$, so in this study keeping the query secret does not protect the guard. % src: results/supp_log.txt [A]
 \emph{Policy:} over eight policy phrasings with matched forged queries ($n=45$--$98$), median bypass is $99\%$ (range $87$--$100\%$). % src: results/confirm_log.txt [policy]
 
 \paragraph{Decoy dose--response.}

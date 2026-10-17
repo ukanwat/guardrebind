@@ -9,7 +9,7 @@ We read its score as $P(\text{yes})$, the probability of ``yes'' renormalised ov
 Llama Guard~\citep{inan2023llama,grattafiori2024llama,chi2024llama,meta2025llamaguard4} wraps the conversation in plain-text \texttt{<BEGIN CONVERSATION>} and \texttt{<END CONVERSATION>} lines, and its prompt holds a fixed category list but no developer-written policy for content to override.
 gpt-oss-safeguard-20B~\citep{openai2025gptosssafeguard} was post-trained to follow an instruction hierarchy~\citep{wallace2024instruction}.
 Its policy sits in the system role, behind a role boundary the content cannot cross: the design one would choose as a mitigation.
-Our policy asks it to answer 1 for a violation and 0 otherwise. % src: src/crossmodel.py OSS_POLICY; src/bench/api_bench.py
+Our policy asks for 1 on a violation, else 0. % src: src/crossmodel.py OSS_POLICY; src/bench/api_bench.py
 
 \paragraph{Deployment.}
 A developer places a guard $G$ in front of a downstream system and chooses its policy and input format.
@@ -21,7 +21,7 @@ A \emph{label-only} guard returns a verdict and no score, and clears $c$ if the 
 \paragraph{Attacker.}
 \label{sec:threat}
 The attacker controls only $c$.
-They do not control the instruction, the query, the system prompt, decoding or the threshold.
+They do not control the guard's weights, the instruction, the query, the system prompt, decoding or the threshold.
 Against the attack and the benchmark (\cref{sec:attack,sec:benchmark}) they are black-box: they see no scores, and we test attackers who know the deployment's query exactly and attackers who do not.
 Against the defense (\cref{sec:evaluation}) they know the defense.
 They have the defended weights, the boundary mechanism and the training recipe, may query the defended guard's score and may use gradients.
@@ -30,7 +30,7 @@ They have the defended weights, the boundary mechanism and the training recipe, 
 The attacker wants a harmful \emph{request} $h$ to be cleared while it stays present and readable in the forwarded content.
 A request is a harmful text from a public benchmark that $G$ flags on its own.
 Attacks that remove, paraphrase or obfuscate $h$ are out of scope, which separates target rebinding from evasion that hides harmful content from a classifier~\citep{hackett2025bypassing,mangaokar2024prp}.
-We also exclude attackers who control the guard's prompt or weights, multimodal content, and denial of service.
+We also exclude multimodal content and denial of service.
 
 \paragraph{Success criterion.}
 Only \emph{flagged} requests count, meaning those the deployment flags with no attack.
