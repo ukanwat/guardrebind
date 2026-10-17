@@ -105,4 +105,4 @@ Data: train-split prompt items, 3 train-family attacks per item, plus a structur
   tail. Train-split exploration (n=40, results/bench/explore/qwen3guard.md): conversation-only 5/40, full request block 40/40;
   a harmful decoy in the same slot stays flagged (median 0.997), so it is rebinding. The full-block forgery replaces
   qwen3guard's guard_native. A len_control family (benign filler of matched length, no labels) is added for every guard,
-  because the Qwen forgery is ~1.7k chars against ~60 for the others. Both the old and the new Qwen forgery are reported.
+  because the Qwen forgery is ~1.35k chars against ~60 for the others. The old conversation-only Qwen forgery is reported from the train-split exploration (n=40) only; the benchmark uses the corrected one. Qwen3Guard runs third in queue_bench (ShieldGemma last, since it is the slowest).

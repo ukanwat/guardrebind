@@ -27,12 +27,12 @@ pgrep -f mem_guard.sh > /dev/null || (nohup sh scripts/mem_guard.sh > /dev/null 
 
 # 0. smoke: 20 cells per guard x policy on the TRAIN split (catches load/memory problems before the test run)
 [ -f results/bench/v2_smoke/shieldgemma_2b.smoke ] || {
-  run bench_smoke $B.run_bench_v2 --guards shieldstral,llama_guard_3_1b,shieldgemma_2b --split train --n 5 \
+  run bench_smoke $B.run_bench_v2 --guards shieldstral,llama_guard_3_1b,qwen3guard_0_6b,shieldgemma_2b --split train --n 5 \
     --max-cells 20 --out results/bench/v2_smoke \
   && touch results/bench/v2_smoke/shieldgemma_2b.smoke || { echo "bench smoke failed" >> $L/queue.log; exit 1; }; }
 
 # 1-3. the benchmark, test split, core_set(n=600), K=3, 3 policies; headline guard first, slowest last
-for g in shieldstral llama_guard_3_1b shieldgemma_2b; do
+for g in shieldstral llama_guard_3_1b qwen3guard_0_6b shieldgemma_2b; do
   [ -f $OUT/$g.done ] || run bench_$g $B.run_bench_v2 --guards $g --split test --n 600 --k 3 \
     --policies default,para1,para2 --out $OUT
 done
