@@ -64,7 +64,7 @@ The following runs are exploratory, outside both frozen protocols: the wider set
 \end{itemize}
 \paragraph{Pre-registered predictions and outcomes (benchmark and defense).}
 The second protocol was frozen before any test-split run, with four recorded deviations: D1 adds the variability design (three instantiations per item and family, two paraphrased deployment policies on six families, three seeds for B$+$T); D2 replaces Qwen3Guard's conversation-only native forgery with the full-task forgery found on the train split and adds the length control; D3 trims compute (5{,}000 training items with two attacks each, GCG on 20 items at 250 steps, structural search on 50 items). % src: PROTOCOL_v2.md (Deviations D1-D3)
-D4, recorded before the reported defense runs, draws training decoys and forged queries from one half of each pool and evaluates on the other half, adds the score-guided search and the two training-free baselines, and fixes the reported seeds (two for T, one for the other trained conditions). % src: PROTOCOL_v2.md D4
+D4 was recorded after a first round of test-split defense runs and before the reported ones, so it is a deviation made with test results in view (the fixed-decoy conditions of \cref{tab:fix-fixed} come from that round); it draws training decoys and forged queries from one half of each pool and evaluates on the other half, adds the score-guided search and the two training-free baselines, and fixes the reported seeds (two for T, one for the other trained conditions). % src: PROTOCOL_v2.md D4
 \begin{itemize}[leftmargin=1.5em,itemsep=1pt]
   \item M1 (a core structural family $\ge 70\%$ on every guard): confirmed; best family $93.4$--$100\%$ on all five guards.
   \item M2 (instruction-only payloads $\le 10\%$ on every guard): not confirmed; $\le 7.0\%$ on four guards, $20.2\%$ on ShieldGemma.
@@ -72,7 +72,7 @@ D4, recorded before the reported defense runs, draws training decoys and forged 
   \item M4 (control-token syntax $\ge$ angle syntax; gap closes with special parsing off): partly supported; higher in 7 of 8 comparisons but clearly so only on Shieldstral; the parsing-off arm was not part of the benchmark run.
   \item M5 (exploratory: category, source, size): per-category and per-source bypass are released with the artifacts; size was not varied within a model series.
   \item F1 (B alone leaves held-out bypass $\ge 50\%$): confirmed; $76.8\%$\ci{75.8\%}{77.8\%} on held-out families with held-out decoys.
-  \item F2 (T generalises worse than B$+$T on held-out families): partly confirmed; T reaches $1.0$--$1.8\%$ on training families, and the paired difference T $-$ B$+$T on held-out families with held-out decoys is $+0.7$ points\ci{$-0.1$}{$+1.5$}, one-sided $p=0.04$ ($n=290$), which passes the test but is under one point.
+  \item F2 (T generalises worse than B$+$T on held-out families): confirmed by the pre-registered criterion, with an effect under one point; T reaches $1.0$--$1.8\%$ on training families, and the paired difference T $-$ B$+$T on held-out families with held-out decoys is $+0.7$ points\ci{$-0.1$}{$+1.5$}, one-sided $p=0.04$ ($n=290$).
   \item F3 (B$+$T held-out bypass $\le 10\%$): confirmed; $0.9\%$\ci{0.7\%}{1.1\%}.
   \item F4 (B$+$T AUROC within $0.01$, recall within $2$ points; judged on the 95\% interval of the difference): not confirmed; AUROC $-0.010$\ci{$-0.041$}{$+0.021$}, recall $-0.1$ points\ci{$-5.0$}{$+4.8$}: point estimates inside the margins, intervals wider than them.
   \item F5 (B$+$T over-refusal within $2$ points; judged on the 95\% interval of the difference): not confirmed; XSTest-safe $-2.7$ points\ci{$-11.1$}{$+5.4$}, OR-Bench-hard $+0.2$\ci{$-6.6$}{$+7.1$}, structured benign $0.0$\ci{$-3.0$}{$+3.0$}: no point estimate rises by more than $0.2$ points, but the intervals are wider than the margin.
@@ -149,7 +149,7 @@ D4, recorded before the reported defense runs, draws training decoys and forged 
 \section{Benchmark Grammar and Per-guard Results}
 \label{app:grammar}
 
-The attack grammar has the axes below; the full grammar yields 658 forms and the core panel 62. % src: PROTOCOL_v2.md (Attacks)
+The attack grammar has the axes below; the full grammar yields 659 forms (654 attacks, 5 controls) and the core panel 63. % src: src/bench/attacks_grammar.py grammar(core=False) 659, grammar(core=True) 63, CONTROLS (5)
 Held-out families are those whose syntax is in \{JSON, YAML, markdown bold, control token\}, or whose language is not English or Spanish, or whose pair count is at least three; the remaining families are used for training the defense.
 \begin{itemize}[leftmargin=1.5em,itemsep=1pt]
   \item label syntax: guard-native tags, angle brackets, square brackets, markdown, plain colon, abbreviations, JSON, XML, YAML, control tokens;
@@ -160,13 +160,14 @@ Held-out families are those whose syntax is in \{JSON, YAML, markdown bold, cont
 
 \begin{table}[p]
   \centering\footnotesize
-  \caption{Bypass (\%) of every core attack family on each guard, default policy, mean over three instantiations, screened core set ($n$ = 300, 374, 168, 536 and 113). gpt-oss-safeguard uses the strict reading. ``native'' is each guard's own template syntax (the full-task forgery for Qwen3Guard).}
+  \caption{Bypass (\%) of every core attack family on each guard, default policy, mean over three instantiations, screened core set ($n$ = 300, 374, 168, 536 and 113). gpt-oss-safeguard uses the strict reading. ``native'' is the guard-native form, written in each guard's own template syntax (the full-task forgery for Qwen3Guard).}
   % src: /tmp/bench_analysis/bypass.csv (python -m src.bench.analyze on results/bench/v2), default policy; gpt-oss: paper/data/gpt_oss_strict.md (parse = strict, mean column)
   \label{tab:per-family}
   \setlength{\tabcolsep}{4pt}
+  \renewcommand{\arraystretch}{0.9}
   \begin{tabular}{lccccc}
     \toprule
-    family & Shieldstral & Llama Guard 3 & ShieldGemma & Qwen3Guard & gpt-oss-sg \\
+    family & Shieldstral & Llama Guard 3 & ShieldGemma & Qwen3Guard & gpt-oss-safeguard \\
     \midrule
     native pair & 71.7 & 100.0 & 73.6 & 81.7 & 71.7 \\
     angle pair & 70.9 & 96.0 & 14.3 & 9.0 & 2.4 \\
@@ -251,7 +252,7 @@ Held-out families are those whose syntax is in \{JSON, YAML, markdown bold, cont
 \paragraph{Setup.}
 gpt-oss-safeguard-20B was queried through OpenRouter (served by Groq) at temperature 0 with up to 3000 output tokens, using the policy of the cross-model study in the system role and the content in a user message ending ``\texttt{Answer (0 or 1):}''. % src: results/bench/v2/gpt_oss_summary.md (header); src/crossmodel.py OSS_POLICY
 The API returns no log-probabilities, so the score is the verdict itself (1 flagged, 0 cleared) and $\tau$ has no effect.
-The run covers 200 harmful and 200 benign test items from the core set, all 56 core families with three instantiations each, and benign-content attacks for six families: 19{,}454 calls. % src: results/bench/v2/gpt_oss_summary.md (19454 rows; 56 families; K up to 3)
+The run covers 200 harmful and 200 benign test items from the core set, all 52 attack families and 4 controls of the core panel with three instantiations per attack family, and benign-content attacks for six families: 19{,}454 calls. % src: results/bench/v2/gpt_oss_summary.md (19454 rows; 56 families; K up to 3)
 The protocol sets a larger core set for local guards; the API arm uses 200 items per class to stay within the API budget.
 No reply lacked a verdict.
 
@@ -327,6 +328,33 @@ Naive adversarial training and the clean-copy ablation use the same examples wit
 Compute: training and the test-split defense, adaptive and mechanism runs used one NVIDIA RTX 4090; a training run takes about 17 minutes (2{,}032 steps in 993\,s for T, 1{,}003\,s for B$+$T). The benchmark ran on an Apple-silicon laptop GPU. % src: logs/pod/train_{t,bt}_seed0.log
 Adaptive budgets: the score-guided search has 300 guard calls per item (20 random candidates, then batches of 10 children with restart probability 0.2) on 50 items; the structural search scores all 684 attacks on each of 50 items (batch 128); GCG optimises a 20-token suffix inside the forged document for 250 steps (batch 32 candidates per step) on 20 items, stopping an item at its first success. % src: src/fix/adaptive.py; scripts/queue_round2.sh
 
+\paragraph{Fixed-decoy conditions.}
+\Cref{tab:fix-fixed} gives the conditions trained and tested with one fixed decoy and query per family: naive adversarial training and the generality runs of T on Llama Guard~3 1B and Qwen3Guard 0.6B (\cref{sec:evaluation}).
+They have no held-out-decoy column, and the trained rows had training hard negatives that include 380 of the 500 structured-benign test items, so their structured-benign column is not a held-out measure.
+
+\begin{table}[h]
+  \centering
+  \footnotesize
+  \caption{Fixed-decoy conditions on the test split, $\tau=0.5$, in \%. Columns as in \cref{tab:fix-main,tab:fix-utility}; naive adversarial training has two seeds (range), the other rows seed~0.}
+  % src: results/fix/test_{at_seed0,at_seed1,lg3_base,lg3_t_seed0,qg3_base,qg3_t_seed0}.json (same fields as tab:fix-main / tab:fix-utility)
+  \label{tab:fix-fixed}
+  \setlength{\tabcolsep}{2pt}
+  \begin{tabular}{l cc ccc ccc cc}
+    \toprule
+    & \multicolumn{2}{c}{bypass $\downarrow$} & \multicolumn{3}{c}{detection} & \multicolumn{3}{c}{over-refusal $\downarrow$} & \multicolumn{2}{c}{benign $+$ forged pair} \\
+    \cmidrule(lr){2-3}\cmidrule(lr){4-6}\cmidrule(lr){7-9}\cmidrule(lr){10-11}
+    condition & train & held-out & AUROC & recall & FPR & OR-B. & XST. & struct. & benign & harmful \\
+    \midrule
+    naive adv.\ training (2 seeds) & 0.9--1.0 & 0.9--1.1 & 0.921--0.925 & 83.3--84.6 & 12.6--14.9 & 0.3--0.8 & 8.0--10.7 & 0.0 & 7.8--8.2 & 8.0--8.6 \\
+    Llama Guard 3 1B, base & 84.0 & 82.0 & 0.758 & 58.7 & 16.9 & 40.5 & 1.3 & 23.4 & 2.4 & 97.3 \\
+    Llama Guard 3 1B, T    & 2.3 & 2.5 & 0.771 & 58.4 & 15.0 & 38.2 & 1.3 & 23.0 & 22.5 & 100 \\
+    Qwen3Guard 0.6B, base  & 28.3 & 9.5 & 0.917 & 88.5 & 23.6 & 76.8 & 21.3 & 30.4 & 10.5 & 100 \\
+    Qwen3Guard 0.6B, T     & 0.0 & 0.0 & 0.924 & 89.0 & 23.3 & 77.2 & 20.0 & 29.4 & 25.9 & 100 \\
+    \bottomrule
+  \end{tabular}
+  \par\smallskip\raggedright OR-B.: OR-Bench-hard; XST.: XSTest-safe; struct.: structured benign; benign / harmful: decoy of the forged pair on benign content.
+\end{table}
+
 \paragraph{Content tokens.}
 \label{app:content-tokens}
 Disabling special-token parsing leaves atomic any added token that the tokenizer does not mark special~\citep{zhan2026samebytes,yang2026nameless}, so we checked which added-vocabulary ids the content encoder can still emit.
@@ -365,7 +393,7 @@ On T it clears $20/20$\ci{84\%}{100\%}, with median first success at step $16.5$
 \label{app:repro}
 
 Models and revisions (Hugging Face commit): Shieldstral-1.0-3B \texttt{003ec7e}, Llama Guard~3 1B \texttt{acf7aaf}, Qwen3Guard-Gen-0.6B \texttt{fada3b2}, ShieldGemma 2B \texttt{d1dffc9}. Local guards are scored from a single forward pass (no sampling): the score is the probability of the unsafe label renormalised over the guard's label tokens, computed in fp32 from bf16 hidden states; the API-served gpt-oss-safeguard was reached through OpenRouter at temperature 0. % src: src/crossmodel.py, src/gpt_oss_mechanism.py
-Dataset sources and licenses: AdvBench, HarmBench, Aegis~2.0, BeaverTails, the OpenAI moderation evaluation, ToxicChat and WildGuardMix; the non-commercial sets (ToxicChat, BeaverTails) are used for research only. % src: PROTOCOL_v2.md (Data)
+Dataset sources and licenses: AdvBench, HarmBench, Aegis~2.0, BeaverTails, the OpenAI moderation evaluation and ToxicChat, with XSTest and OR-Bench as over-refusal sources; the non-commercial sets (ToxicChat, BeaverTails) are used for research only. % src: src/bench/data.py load_all() sources
 All hyperparameters, splits and the full protocol are in \cref{app:protocol,app:defense-impl}.
 
 \section{Open Science}
