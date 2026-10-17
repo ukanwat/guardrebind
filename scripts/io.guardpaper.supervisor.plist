@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Template: replace __REPO__ and __HOME__, e.g.
+  sed -e "s|__REPO__|$PWD|g" -e "s|__HOME__|$HOME|g" scripts/io.guardpaper.supervisor.plist > ~/Library/LaunchAgents/io.guardpaper.supervisor.plist -->
 <plist version="1.0">
 <dict>
   <key>Label</key><string>io.guardpaper.supervisor</string>
   <key>ProgramArguments</key>
   <array><string>/bin/sh</string><string>-c</string>
     <string>sleep ${DELAY:-120}; exec /bin/sh scripts/supervisor.sh</string></array>
-  <key>WorkingDirectory</key><string>/Users/utkarshkanwat/development/guard-policy-injection</string>
+  <key>WorkingDirectory</key><string>__REPO__</string>
   <key>EnvironmentVariables</key>
   <dict>
-    <key>PATH</key><string>/Users/utkarshkanwat/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
-    <key>HOME</key><string>/Users/utkarshkanwat</string>
+    <key>PATH</key><string>__HOME__/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>HOME</key><string>__HOME__</string>
   </dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
   <key>ThrottleInterval</key><integer>300</integer>
-  <key>StandardOutPath</key><string>/Users/utkarshkanwat/development/guard-policy-injection/logs/queue/supervisor.out</string>
-  <key>StandardErrorPath</key><string>/Users/utkarshkanwat/development/guard-policy-injection/logs/queue/supervisor.out</string>
+  <key>StandardOutPath</key><string>__REPO__/logs/queue/supervisor.out</string>
+  <key>StandardErrorPath</key><string>__REPO__/logs/queue/supervisor.out</string>
 </dict>
 </plist>

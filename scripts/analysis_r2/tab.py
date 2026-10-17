@@ -1,5 +1,5 @@
 import json, math
-R='/Users/utkarshkanwat/development/guard-policy-injection/results/fix/'
+R=str(__import__('pathlib').Path(__file__).resolve().parents[2]/'results'/'fix')+'/'
 def wilson(k,n,z=1.96):
     p=k/n; d=1+z*z/n; c=(p+z*z/(2*n))/d; h=z*math.sqrt(p*(1-p)/n+z*z/(4*n*n))/d
     return c-h,c+h
