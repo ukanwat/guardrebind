@@ -1,5 +1,10 @@
 # Frozen protocol v2: GuardRebind and the trained fix
 
+**Frozen 2026-10-15 05:00 IST, at the commit that adds this line, before any test-split run.** Exception: the Qwen3Guard
+native forgery may be corrected from train-split exploration before its benchmark run; this is logged in Deviations.
+GuardRebind runs use core_set(n=600) per guard (600 harmful + 600 benign) to fit the Mac compute budget; full-test runs
+cover only the top attacks.
+
 Written before any v2 confirmatory run. Same discipline as PROTOCOL.md (v1): once committed, changes go in the
 Deviations section with a reason, never silently. v1 results stand as reported and are not re-run.
 
