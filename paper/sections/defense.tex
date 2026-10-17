@@ -20,28 +20,28 @@ B alone, with untrained boundary embeddings, tests whether the format change hel
 
 \paragraph{Part T: segment-max self-distillation.}
 T trains the \emph{student}, the guard being trained, to score the whole content at least as high as its most harmful part.
-The \emph{teacher} $T(\cdot)$ is the frozen base guard scoring a text on its own as $P(\text{yes})$, in the stock format with no attack around it.
+The \emph{teacher} $f_0(\cdot)$ is the frozen base guard scoring a text on its own as $P(\text{yes})$, in the stock format with no attack around it.
 For content $c$ with segments $S(c)$,
 \begin{equation}
-  \text{target}(c) \;=\; \max\!\Big(T(c),\ \max_{s \in S(c)} T(s)\Big).
+  \text{target}(c) \;=\; \max\!\Big(f_0(c),\ \max_{s \in S(c)} f_0(s)\Big).
   \label{eq:target}
 \end{equation}
 In an attacked training example the segments are the original request and the decoy.
 Clean content has no segments beyond itself, so its target is the teacher's own score. % src: src/fix/distill.py (_variants, label_targets)
-The whole-content term $T(c)$ bounds compositional harm that appears only in combination~\citep{zhou2026prompt}, and the max is defined without knowing which segment is the injection.
+The whole-content term $f_0(c)$ bounds compositional harm that appears only in combination~\citep{zhou2026prompt}, and the max is defined without knowing which segment is the injection.
 Existing guidance already scans long inputs in segments at inference~\citep{meta2025promptguard2}, and we run that as a baseline (\cref{sec:evaluation}).
 Here the max is a training target, so the defended guard reads the content in one pass and needs no segmenter.
 When the decoy is benign, the target reduces to clean-context distillation~\citep{peng2026secopd,dhouib2026raised}.
-A \emph{clean-copy} ablation, in which the teacher reads only the original item, tests whether the max matters.
+A \emph{clean-copy target}, in which the teacher reads only the original item, is an ablation that tests whether the max matters.
 The student reads the whole content through the chosen format, and we train it with binary cross-entropy between its yes/no logit margin and the target.
 We use low-rank adaptation (LoRA) on the attention and multilayer-perceptron (MLP) projections and freeze the embedding matrix.
 In B$+$T we also train the two boundary-token embedding rows jointly, and T alone uses the stock format (\cref{app:defense-impl}).
 
 \paragraph{Training data.}
 We generate the training attacks, so we know their segments.
-Each of 5{,}000 train-split harmful or benign items appears once clean and twice with attacks sampled from the training attack families, and 1{,}250 structured-benign items bring the total to 16{,}250 examples. % src: PROTOCOL_v2.md (Fixed training recipe, D3: 5000 items x 2 attacks); src/fix/distill.py (build --decoy-split train)
+Each of 5{,}000 train-split harmful or benign items appears once clean and twice with attacks sampled from the training attack families, and 1{,}250 \emph{structured-benign} items, benign text with label-like structure, bring the total to 16{,}250 examples. % src: PROTOCOL_v2.md (Fixed training recipe, D3: 5000 items x 2 attacks); src/fix/distill.py (build --decoy-split train)
 Each attack draws its decoy and forged query, per example, from the training half of the matching pool (\cref{app:defense-impl}). % src: src/bench/attacks_grammar.py POOL_SPLIT, draw_split
-The structured-benign items are \emph{hard negatives}: benign text with label-like structure, generated from nine templates (FAQs, forms, chat logs, markdown, JSON and others) filled with benign train-split text.
+The structured-benign items are \emph{hard negatives}, generated from nine templates (FAQs, forms, chat logs, markdown, JSON and others) filled with benign train-split text.
 Their targets come from the teacher, so the model learns that structure alone is not a reason to flag, in the spirit of NotInject/InjecGuard~\citep{li2024injecguard}. % src: src/fix/distill.py (structured_benign); src/bench/data.py TEMPLATES
 The structured-benign test set uses the same templates with test-split fill text, so over-refusal on it measures new content in familiar templates.
-Training sees no test item, no held-out attack family and no held-out decoy or forged query.
+Training sees no test item, no held-out attack family (\cref{app:grammar}) and no decoy or forged query from the held-out halves of the pools.

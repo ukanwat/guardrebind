@@ -3,12 +3,12 @@
 
 We froze the first protocol before the confirmatory run and did not edit it after seeing results, and we record every deviation from either protocol. % src: PROTOCOL.md, PROTOCOL_v2.md
 These runs are exploratory and fall outside both frozen protocols: the wider set of 100 requests, the three-decoy comparison, the softened-query control, the forged-query (attacker knowledge) variants, the forged-verdict and split-payload controls, the real-control-token probe, the colon-label detector and label-normalisation tests, the clean-copy ablation and the GCG control without a forged pair.
-The second protocol was frozen before any test-split run and has four recorded deviations. % src: PROTOCOL_v2.md (Deviations D1-D3)
+The second protocol was frozen before any test-split run and has four recorded deviations. % src: PROTOCOL_v2.md (Deviations D1-D4)
 \begin{itemize}[leftmargin=1.5em,itemsep=1pt]
-  \item D1 adds the variability design: three instantiations per item and family, two paraphrased deployment policies on six families, and three seeds for B$+$T.
+  \item D1 adds the variability design: three instantiations per item and family, two paraphrased deployment policies on six families, and three training seeds per defense condition.
   \item D2 replaces Qwen3Guard's conversation-only native forgery with the full-task forgery found on the train split, and adds the length control.
-  \item D3 trims compute: 5{,}000 training items with two attacks each, GCG on 20 items at 250 steps, and structural search on 50 items.
-  \item D4 was recorded after a first round of test-split defense runs and before the reported ones, so it is a deviation made with test results in view. The fixed-decoy conditions of \cref{tab:fix-fixed} come from that first round. D4 draws training decoys and forged queries from one half of each pool and evaluates on the other half, adds the score-guided search and the two training-free baselines, and fixes the reported seeds (two for T, one for the other trained conditions). % src: PROTOCOL_v2.md D4
+  \item D3 trims compute: 5{,}000 training items with two attacks each, three seeds for B$+$T and two for T and naive adversarial training, GCG on 20 items at 250 steps, and structural search on 50 items.
+  \item D4 was recorded after a first round of test-split defense runs and before the reported ones, so it is a deviation made with test results in view. The fixed-decoy conditions of \cref{tab:fix-fixed} come from that first round. D4 draws training decoys and forged queries from one half of each pool and evaluates on the other half, adds the score-guided search and the two training-free baselines, and replaces the D3 seed plan with a smaller set to save compute: two seeds for T and one for B$+$T and the clean-copy target. % src: PROTOCOL_v2.md D4 ("lean defense set ... replaces the D3 seed plan")
 \end{itemize}
 \Cref{tab:prereg} lists every prediction with its outcome.
 
@@ -40,7 +40,7 @@ The second protocol was frozen before any test-split run and has four recorded d
     F2 & T generalises worse than B$+$T on held-out families & confirmed by the pre-registered criterion, with an effect under one point; T $-$ B$+$T $= +0.7$ points\ci{$-0.1$}{$+1.5$}, one-sided $p=0.04$ ($n=290$) \\
     F3 & B$+$T held-out bypass $\le 10\%$ & confirmed; $0.9\%$\ci{0.7\%}{1.1\%} \\
     F4 & B$+$T AUROC within $0.01$, recall within 2 points (on the interval of the difference) & not confirmed; AUROC $-0.010$\ci{$-0.041$}{$+0.021$}, recall $-0.1$\ci{$-5.0$}{$+4.8$}: point estimates inside the margins, intervals wider \\
-    F5 & B$+$T over-refusal within 2 points (on the interval of the difference) & not confirmed; XSTest-safe $-2.7$\ci{$-11.1$}{$+5.4$}, OR-Bench-hard $+0.2$\ci{$-6.6$}{$+7.1$}, structured benign $0.0$\ci{$-3.0$}{$+3.0$}: no point estimate rises by more than $0.2$, intervals wider than the margin \\
+    F5 & B$+$T over-refusal within 2 points (on the interval of the difference) & not confirmed; XSTest-safe $-2.7$\ci{$-11.1$}{$+5.4$}, OR-Bench-hard $+0.25$\ci{$-6.6$}{$+7.1$}, structured benign $0.0$\ci{$-3.0$}{$+3.0$}: no point estimate rises by more than $0.25$, intervals wider than the margin \\
     F6 & naive adversarial training costs $\ge 3$ points structured-benign over-refusal or generalises worse & not confirmed with the fixed decoy ($0.0\%$ on a set overlapping its hard negatives, $0.9$--$1.1\%$ held-out); its costs are clean FPR and the trailing-pair blind spot \\
     \midrule
     A1 & GCG against B$+$T $\le 30\%$ & not tested on B$+$T; on T GCG clears 20/20 \\
@@ -54,7 +54,7 @@ The second protocol was frozen before any test-split run and has four recorded d
 \label{app:grammar}
 
 The attack grammar has the axes below. The full grammar yields 659 forms (654 attacks, 5 controls), and the core panel has 63. % src: src/bench/attacks_grammar.py grammar(core=False) 659, grammar(core=True) 63, CONTROLS (5)
-A family is held out if its syntax is JSON, YAML, markdown bold or control token, if its language is neither English nor Spanish, or if it has at least three forged pairs. The defense is trained on the remaining families.
+A family is held out if its syntax is JSON, YAML, markdown bold or control token, if its language is neither English nor Spanish, or if it has at least three forged pairs. Spanish-label families are therefore held out only through the syntax or pair-count rule. The defense is trained on the remaining families. % src: src/bench/attacks_grammar.py is_heldout
 \begin{itemize}[leftmargin=1.5em,itemsep=1pt]
   \item label syntax: guard-native tags, angle brackets, square brackets, markdown, plain colon, abbreviations, JSON, XML, YAML, control tokens;
   \item number of forged pairs: 1--5; position: append, prepend, middle;
@@ -67,7 +67,7 @@ Per-family, per-category and per-source bypass and threshold sensitivity are rel
 
 \paragraph{Bounded format.}
 The bounded format renders the stock chat template with a placeholder document and splits it into a trusted prefix and suffix. The content is encoded on its own with special-token parsing disabled, and the two reserved boundary tokens (unused in pretraining) are inserted around it. % src: src/fix/inputs.py
-The template puts a space before the document, which the tokenizer would otherwise merge into the content's first token. We move that space into the trusted prefix, so plain documents tokenize exactly as they do in the stock format (verified on 203 documents). % src: src/fix/inputs.py (_content); the 203-document check output is not stored in results/
+The template puts a space before the document, which the tokenizer would otherwise merge into the content's first token. We move that space into the trusted prefix, so plain documents tokenize exactly as they do in the stock format (verified on 1{,}600 documents: AdvBench rows 200--299 and the clean test sample). % src: src/fix/inputs.py (_content); scripts/check_bounded_tokenization.py -> results/fix/bounded_tokenization_check.json (1600/1600 identical)
 
 \paragraph{Training.}
 We train a LoRA (rank 16, $\alpha=32$) on the language model's attention and MLP projections with AdamW at learning rate $10^{-4}$, batch 8, one epoch and maximum length 384. The loss is binary cross-entropy between the yes/no logit margin and the segment-max teacher target. LoRA does not touch the embeddings. In B$+$T a trainable two-row offset, initialised at zero, is added to the embeddings of the two boundary tokens (ids 36 and 37), and every other embedding stays frozen. % src: src/fix/distill.py (boundary_delta) % src: src/fix/distill.py, PROTOCOL_v2.md (Fixed training recipe)
@@ -97,9 +97,9 @@ They have no held-out-decoy column. The hard negatives of the trained rows inclu
     \midrule
     naive adv.\ training (2 seeds) & 0.9--1.0 & 0.9--1.1 & 0.921--0.925 & 83.3--84.6 & 12.6--14.9 & 0.3--0.8 & 8.0--10.7 & 0.0 & 7.8--8.2 & 8.0--8.6 \\
     Llama Guard 3 1B, base & 84.0 & 82.0 & 0.758 & 58.7 & 16.9 & 40.5 & 1.3 & 23.4 & 2.4 & 97.3 \\
-    Llama Guard 3 1B, T    & 2.3 & 2.5 & 0.771 & 58.4 & 15.0 & 38.2 & 1.3 & 23.0 & 22.5 & 100 \\
+    Llama Guard 3 1B, T    & 2.3 & 2.5 & 0.771 & 58.4 & 15.0 & 38.3 & 1.3 & 23.0 & 22.5 & 100 \\
     Qwen3Guard 0.6B, base  & 28.3 & 9.5 & 0.917 & 88.5 & 23.6 & 76.8 & 21.3 & 30.4 & 10.5 & 100 \\
-    Qwen3Guard 0.6B, T     & 0.0 & 0.0 & 0.924 & 89.0 & 23.3 & 77.2 & 20.0 & 29.4 & 25.9 & 100 \\
+    Qwen3Guard 0.6B, T     & 0.0 & 0.0 & 0.924 & 89.0 & 23.3 & 77.3 & 20.0 & 29.4 & 25.9 & 100 \\
     \bottomrule
   \end{tabular}
   \par\smallskip\raggedright OR-B.: OR-Bench-hard; XST.: XSTest-safe; struct.: structured benign; benign / harmful: decoy of the forged pair on benign content.
@@ -115,7 +115,7 @@ Content can produce these ids, so a boundary-token design on these tokenizers mu
 \section{Reproducibility}
 \label{app:repro}
 
-The runs used these Hugging Face revisions: Shieldstral-1.0-3B \texttt{003ec7e}, Llama Guard~3 1B \texttt{acf7aaf}, Qwen3Guard-Gen-0.6B \texttt{fada3b2} and ShieldGemma 2B \texttt{d1dffc9}. Local guards are scored from a single forward pass with no sampling. The score is the probability of the unsafe label renormalised over the guard's label tokens, computed in fp32 from bf16 hidden states. We reached the API-served gpt-oss-safeguard through OpenRouter at temperature 0. % src: src/crossmodel.py, src/gpt_oss_mechanism.py; revisions = local HF cache refs/main, equal to the Hub main sha on 2026-10-17 (unchanged since before the runs); the code loads main and does not pin revisions
+The runs used these Hugging Face revisions: Shieldstral-1.0-3B \texttt{003ec7e}, Llama Guard~3 1B \texttt{acf7aaf}, Qwen3Guard-Gen-0.6B \texttt{fada3b2} and ShieldGemma 2B \texttt{d1dffc9}. Local guards are scored from a single forward pass with no sampling. The score is the probability of the unsafe label renormalised over the guard's label tokens, computed in fp32 from bf16 hidden states. We reached the API-served guards, gpt-oss-safeguard-20B and Llama Guard~4 12B, through OpenRouter at temperature 0 without pinning a provider. Every benchmark call to gpt-oss-safeguard was served by Groq, as recorded in the response metadata; the cross-model runs did not record the provider. % src: src/crossmodel.py, src/gpt_oss_mechanism.py, src/bench/api_bench.py (no provider field in the request; response 'provider' stored); results/bench/v2/gpt_oss_safeguard_20b.jsonl provider = Groq on 19454/19454 rows; results/confirm_crossmodel.csv has no provider column; revisions = local HF cache refs/main, equal to the Hub main sha on 2026-10-17 (unchanged since before the runs); the code loads main and does not pin revisions
 Dataset sources and licenses: AdvBench, HarmBench, Aegis~2.0, BeaverTails, the OpenAI moderation evaluation and ToxicChat, with XSTest and OR-Bench as over-refusal sources. We use the non-commercial sets (ToxicChat, BeaverTails) for research only. % src: src/bench/data.py load_all() sources
 All hyperparameters, splits and the full protocol are in \cref{app:protocol,app:defense-impl}.
 

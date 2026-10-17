@@ -10,7 +10,7 @@ Rebinding predicts that only a complete forged pair works, and that the verdict 
 The evidence is behavioural, with two activation-level checks (\cref{sec:binding}).
 
 \paragraph{Setup.}
-The ablation panel, the borderline-decoy comparison and the position, label-syntax and policy variations follow a protocol frozen before the run (\cref{app:protocol}).
+The ablation panel, the borderline-decoy comparison and the position, label-syntax and policy variations form a \emph{confirmatory} run that follows a protocol frozen before it (\cref{app:protocol}).
 Results marked \emph{exploratory} were added after the confirmatory run and are listed there.
 The corpus is AdvBench~\citep{zou2023universal} rows 200--299, which no exploratory run touched.
 Under the policy of \cref{fig:anatomy}, 75 of the 100 requests are flagged ($>0.9$) with no attack, and these screened requests are the denominator. % src: PROTOCOL.md; results/confirm_log.txt
@@ -77,7 +77,7 @@ In an exploratory control on 200 harmful test items that Shieldstral flags alone
 We varied one factor at a time around the core attack ($n=75$ unless stated). % src: results/confirm_log.txt [recency], [markers], [policy]; results/supp_log.txt [A]
 \emph{Position:} appending the pair clears $100\%$ and prepending the identical pair clears $15\%$\ci{8\%}{24\%}.
 Inert filler placed last clears $0\%$ (\cref{tab:ablation}), so the pair must come last, and later text alone is not enough.
-\emph{Syntax:} seven label styles (case variants, plain colon, brackets, markdown, abbreviated \texttt{Q:}/\texttt{D:}) clear $83$--$100\%$, and the same words without labels clear $0\%$.
+\emph{Syntax:} seven label styles (angle brackets in three letter cases, plain colon, square brackets, markdown bold and the abbreviated \texttt{Q:}/\texttt{D:}) clear $83$--$100\%$, and the same words without labels clear $0\%$.
 The labelled structure is necessary, but no single syntax is.
 \emph{Query knowledge} (exploratory): the forged query must look like a safety question but need not match the deployment's.
 Paraphrases and topical variants clear $100\%$, a generic query $89\%$ and an unrelated query $9\%$, and a blind attacker who stacks five guesses, none of them the deployment's query, clears $100\%$. % src: results/supp_log.txt [A]
@@ -88,7 +88,7 @@ The attack therefore needs no white-box access and little knowledge of the deplo
 \label{sec:binding}
 Two activation-level analyses on Shieldstral are consistent with rebinding but do not identify the circuit that implements it.
 In \emph{activation patching} ($n=100$) between the attacked input and the same input with request and decoy swapped, patching the final position flips the verdict on $99\%$ of inputs from layer 20.
-Patching the forged labels, the forged query or the decoy's positions at any layer moves the normalised margin by at most $0.05$ and flips at most $3\%$ of verdicts. % src: patching_test_n100.json summary.final.into_attacked.flip_rate[20]=0.99; forged_* peak_effect <= 0.043, max flip_rate 0.03
+Patching the forged labels, the forged query or the decoy's positions at any layer moves the yes/no logit margin by at most $0.05$ of the gap between the two inputs and flips at most $3\%$ of verdicts. % src: patching_test_n100.json summary.final.into_attacked.flip_rate[20]=0.99; forged_* peak_effect <= 0.043, max flip_rate 0.03
 In a \emph{decoy dose--response} ($n=150$ requests, 40 decoys with standalone scores from $0.00$ to $1.00$), bypass falls from $98\%$ for decoys scoring below $0.1$ to $0\%$ above $0.9$, with Spearman $\rho = -0.84$ over decoys (decoy-bootstrap 95\% interval $[-0.93, -0.67]$). % src: results/mech/dose_response_test_n150_d40.json; dose_response_test_n150_d40_rho_ci.json
 The pre-registered prediction M3 ($\rho \le -0.8$, with bypass non-increasing across score bins) is partly supported.
 The point estimate meets the threshold, but the decoy-level interval crosses it, the dev split gives $-0.78$, and bypass is not monotone between the extreme bins. % src: monotone_nonincreasing_bins False; dose_response_dev_n150_d40.json -0.777

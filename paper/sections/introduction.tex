@@ -47,7 +47,7 @@ What has been missing is a measurement specific to guards: whether the failure i
 We answer each in turn:
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt]
   \item[\textbf{C1}] \textbf{The guard grades the decoy.} On Shieldstral only a complete forged pair clears the guard, and \emph{bypass}, the share of flagged requests the attack clears, falls as the decoy itself becomes more harmful (\cref{sec:attack}).
-  \item[\textbf{C2}] \textbf{The attack is widespread.} It transfers to two other guard input designs, and on our benchmark, \guardrebind{}, some attack family exceeds $93\%$ bypass on each of five guards (\cref{sec:benchmark}).
+  \item[\textbf{C2}] \textbf{The attack is widespread.} Adapted to their formats, it clears gpt-oss-safeguard, which keeps the policy behind a role boundary, and Llama Guard~4, which has no policy in its prompt. On our benchmark, \guardrebind{}, some attack family exceeds $93\%$ bypass on each of five guards (\cref{sec:benchmark}).
   \item[\textbf{C3}] \textbf{A defense and its limits.} We train the guard to score the whole content at least as high as its most harmful part, with each part scored alone by the frozen base guard (\emph{segment-max self-distillation}). The trained guard resists appended attacks whose families, decoys and forged queries were held out of training, but a search guided by its score still breaks it, and more than half of the search's wins need no forged structure (\cref{sec:defense,sec:evaluation}).
 \end{itemize}
 Predictions were pre-registered, and \cref{app:protocol} lists each one with its outcome.

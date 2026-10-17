@@ -4,14 +4,13 @@
 \paragraph{Guards.}
 Shieldstral-1.0-3B~\citep{calvi2026shieldstral} takes a fixed system prompt and a user message with three plain-text fields, \texttt{<Instruct>}, \texttt{<Query>} and \texttt{<Document>} (\cref{fig:anatomy}). % src: src/prompt.py (verbatim from the model card)
 The developer writes the first two fields, which together form the deployment's \emph{policy}, and interpolates the content into the third.
-Its paper describes no special-token delimiters and reports no prompt-injection evaluation.
+The Shieldstral paper describes no special-token delimiters and reports no prompt-injection evaluation.
 We read its score as $P(\text{yes})$, the yes/no logits renormalised over the two answers.
 Llama Guard~\citep{inan2023llama,grattafiori2024llama,chi2024llama,meta2025llamaguard4} wraps the conversation in plain-text \texttt{<BEGIN CONVERSATION>} and \texttt{<END CONVERSATION>} lines, and its prompt holds no policy for content to override.
 gpt-oss-safeguard-20B~\citep{openai2025gptosssafeguard} was post-trained to follow an instruction hierarchy~\citep{wallace2024instruction}.
 Its policy sits in the system role, behind a role boundary the content cannot cross, which is the design one would choose as a mitigation.
 
 \paragraph{Deployment.}
-\label{sec:threat}
 A developer places a guard $G$ in front of a downstream system and chooses its policy and input format.
 Untrusted content $c$ goes into the \emph{content slot} (Shieldstral's \texttt{<Document>} field), and may be a user message, a retrieved passage, a tool result in an agent loop or an earlier turn of a conversation.
 $G$ \emph{clears} $c$ if its score is below a threshold $\tau$ ($\tau = 0.5$ unless stated).
@@ -19,6 +18,7 @@ A \emph{label-only} guard returns a verdict and no score, and clears $c$ if the 
 Cleared content is forwarded unchanged.
 
 \paragraph{Attacker.}
+\label{sec:threat}
 The attacker controls only $c$.
 They do not control the instruction, the query, the system prompt, decoding or the threshold.
 Against the attack and the benchmark (\cref{sec:attack,sec:benchmark}) they are black-box: they see no scores, and they may know the deployment's query exactly or not at all.

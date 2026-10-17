@@ -78,6 +78,7 @@ read files in `results/`.
 | Table 7 (fixed-decoy conditions: naive AT, Llama Guard 3, Qwen3Guard) | `results/fix/test_{at_seed0,at_seed1,lg3_base,lg3_t_seed0,qg3_base,qg3_t_seed0}.json` | `scripts/queue_fix_full.sh` (round 1; PART=main, seeds and generality) |
 | GCG, counted in Table 5 "all attacks" (Section 6.3 text) | `results/fix/adaptive_{base,B}_gcg.json`, `adaptive_base_gcg_nopair.json`, `r2_adaptive_t_seed0_gcg.json` | `scripts/queue_fix_full.sh` (round 1) and `scripts/queue_round2.sh`; the no-pair control is `src.fix.adaptive --attack gcg --no-pair` |
 | content-token check (Appendix C) | `results/fix/content_token_check.json` | `python scripts/check_content_tokens.py` (CPU, tokenizers only) |
+| bounded-format tokenization check (Appendix C) | `results/fix/bounded_tokenization_check.json` | `python scripts/check_bounded_tokenization.py` (CPU, tokenizer only; reads `data/items.jsonl`) |
 
 Pilot, dev-split and other exploratory outputs that the paper does not cite are not included.
 
@@ -117,10 +118,10 @@ Guards (Hugging Face; the paper used the revisions listed in its Reproducibility
 
 ## Released adapters
 
-The trained LoRA adapters behind Tables 5-7 are **not in git** (up to about 100MB each):
+The trained LoRA adapters behind Tables 3-5 and 7 are **not in git** (up to about 100MB each):
 `r2_t_seed0`, `r2_t_seed1` (T), `r2_bt_seed0` (B+T, LoRA plus `boundary_embeddings.pt`)
 and `r2_cc_seed0` (clean-copy ablation), plus the round-1 fixed-decoy adapters
-`at_seed{0,1}`, `lg3_t_seed0` and `qg3_t_seed0` (Table 15). B is the base model with the
+`at_seed{0,1}`, `lg3_t_seed0` and `qg3_t_seed0` (Table 7). B is the base model with the
 bounded format and has no adapter.
 
 Download location: **TODO(author: HF Hub upload)**. Put them under `models/fix/<name>/`
