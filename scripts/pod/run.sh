@@ -1,0 +1,22 @@
+#!/bin/bash
+# On the pod: run the PART=main fix queue to completion (retrying passes), then wait for the Mac to confirm it has
+# copied everything back (logs/queue/SYNCED), then stop this pod so billing ends. Hard stop at MAX_HOURS.
+set -u
+cd /workspace/gpi
+export PATH=/workspace/bin:$PATH UV_CACHE_DIR=/workspace/.uvcache UV_PROJECT_ENVIRONMENT=/workspace/venv
+export HF_HOME=/workspace/hf HF_HUB_OFFLINE=1 PART=main OFF=0 TRIES=3
+MAX_HOURS=${MAX_HOURS:-38}
+START=$(cat logs/queue/POD_START 2>/dev/null || date +%s | tee logs/queue/POD_START)
+stop_pod() { echo "$(date '+%F %T') stopping pod: $1" >> logs/queue/queue.log; sleep 5
+  runpodctl stop pod "$RUNPOD_POD_ID" || runpodctl pod stop "$RUNPOD_POD_ID"; }
+budget_left() { [ $(( $(date +%s) - START )) -lt $(( MAX_HOURS * 3600 )) ]; }
+( while sleep 300; do budget_left || { pkill -f 'src\.(fix|bench|mech)\.'; stop_pod "budget ($MAX_HOURS h)"; }; done ) &
+for pass in 1 2 3 4 5; do
+  echo "$(date '+%F %T') POD pass $pass" >> logs/queue/queue.log
+  if sh scripts/queue_fix_full.sh; then touch logs/queue/FIX_DONE; break; fi
+  sleep 60
+done
+[ -f logs/queue/FIX_DONE ] || touch logs/queue/FIX_GAVE_UP
+# wait up to 3h for the Mac's final sync, then stop
+for i in $(seq 1 36); do [ -f logs/queue/SYNCED ] && break; sleep 300; done
+stop_pod "queue finished (synced=$([ -f logs/queue/SYNCED ] && echo yes || echo no))"
