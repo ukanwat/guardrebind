@@ -2,19 +2,17 @@
 \label{sec:related}
 
 \paragraph{Structure forgery against generators and judges.}
-\citet{liu2024formalizing} formalise prompt injection against LLM-integrated applications. Their ``fake completion'' and ``combined'' attacks forge the end of one task and the start of another, and we apply the same construction to guards.
+The ``fake completion'' and ``combined'' attacks of \citet{liu2024formalizing} forge the end of one task and the start of another; we apply that construction to guards.
 In attacks descended from indirect prompt injection~\citep{greshake2023not}, forged template or conversation structure redirects agents and chat models~\citep{deng2026automating,chang2025chatinject,chen2024goal,li2025separator,ye2026prompt}, and injected content can manipulate the scores of LLM judges~\citep{shi2024optimizationbased,tamber2025illusions,li2025llms}.
-Those targets are generators that carry out the injected task, or judges whose answer shifts.
-Ours are safety classifiers that grade the forged task, so a successful attack is a false ``safe'' verdict on content that still contains the harmful request.
+Those targets carry out the injected task or shift their answer. Ours grade the forged task, so success is a false ``safe'' verdict on content that still holds the harmful request.
 
 \paragraph{Attacks on guards.}
 Guards have been bypassed with universal perturbations~\citep{mangaokar2024prp}, character-injection evasion~\citep{hackett2025bypassing} and pipeline attacks~\citep{mckenzie2025stack}, and a forged judge-output block bypassed OpenAI's LLM-based detectors~\citep{mccauley2025hat}.
 The closest work is concurrent: \citet{li2026same} forge verdict and authority fields in a typed judge's structured input, and none of their forgeries introduces a new task to grade.
-Our content forges a task instead of a verdict, and we also train a defense and test it against adaptive attackers.
+Our content forges a task instead of a verdict, and we also train and adaptively test a defense.
 
 \paragraph{Structured-query and distillation defenses.}
 StruQ and SecAlign~\citep{chen2024struq,chen2024secalign} combine reserved delimiters with training to ignore injected instructions.
 Meta-SecAlign~\citep{chen2025metasecalign}, DefensiveTokens~\citep{chen2025defending} and learnable trust-boundary delimiters~\citep{zhao2026ltbd} extend this line, and SecOPD~\citep{peng2026secopd} and the concurrent RAISED~\citep{dhouib2026raised} distill the model toward its behaviour on clean context.
-All of them defend generative instruction-followers.
-We apply the idea to a classifier's content slot, where the output is one score, and our segment-max target does not need to know which segment is the injection.
-Fine-tuning defenses that report near-zero attack success have been broken by adaptive attacks~\citep{pandya2025may,nasr2025attacker}, and ours is broken the same way (\cref{sec:adaptive}).
+All of them defend generative instruction-followers; we apply the idea to a classifier's content slot, and our target does not need to know which segment is the injection.
+Like other fine-tuning defenses~\citep{pandya2025may,nasr2025attacker}, ours falls to adaptive attacks.
