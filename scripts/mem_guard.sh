@@ -19,7 +19,10 @@ while true; do
   if [ $paused -eq 0 ] && [ -n "$pids" ] && { { [ -n "$free" ] && [ "$free" -lt "$LOW" ]; } || [ $low_batt -eq 1 ]; }; then
     kill -STOP $pids 2>/dev/null; paused=1
     echo "$(date '+%H:%M:%S') free=${free}% batt=${pct}% low_batt=$low_batt PAUSE $pids" >> "$LOG"
-  elif [ $paused -eq 1 ] && [ $low_batt -eq 0 ] && [ -n "$free" ] && [ "$free" -gt "$HIGH" ]; then
+  elif [ $paused -eq 1 ] && { [ $low_batt -eq 1 ] || [ -z "$free" ] || [ "$free" -le "$HIGH" ]; }; then
+    # still paused: also stop jobs that started after the pause (e.g. the queue's next step)
+    [ -n "$pids" ] && kill -STOP $pids 2>/dev/null
+  elif [ $paused -eq 1 ]; then
     kill -CONT $pids 2>/dev/null; paused=0
     echo "$(date '+%H:%M:%S') free=${free}% batt=${pct}% RESUME" >> "$LOG"
   fi
