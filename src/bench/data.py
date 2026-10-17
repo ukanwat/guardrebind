@@ -13,9 +13,12 @@ Labels are the source dataset's own. Over-refusal sets (XSTest safe prompts,
 OR-Bench hard-1k) are benign and carry an `overrefusal_` source prefix.
 
 AdvBench and HarmBench are read from their upstream GitHub CSVs at pinned
-commits (MIT; same rows as the gated walledai/* mirrors on the Hub), so row
-indices match src/corpus.py and do not depend on Hub gating. WildGuardMix is
-gated on the Hub; without access it is skipped with a warning.
+commits (MIT). Checked 2026-10-15: the gated walledai/AdvBench and
+walledai/HarmBench copies are identical row for row (text, order, categories,
+contexts), so row indices match src/corpus.py without needing Hub access.
+WildGuardMix is gated on the Hub; without access it is skipped with a warning.
+
+    uv run python -m src.bench.data --refresh --suffix _v2   # rebuild into data/items_v2.jsonl etc.
 """
 
 from __future__ import annotations
@@ -148,12 +151,12 @@ HARMBENCH_MAP = {  # SemanticCategory; copyright rows are excluded
     "harmful": None,
 }
 
-WILDGUARD_MAP = {  # subcategory
+WILDGUARD_MAP = {  # subcategory, as in wildguardtest/wildguardtrain (checked against the data)
     "violence_and_physical_harm": "violence",
     "cyberattack": "cyber",
     "fraud_assisting_illegal_activities": "fraud",
     "sexual_content": "sexual",
-    "social_stereotypes_and_discrimination": "hate",
+    "social_stereotypes_and_unfair_discrimination": "hate",
     "toxic_language_hate_speech": "hate",
     "defamation_encouraging_unethical_or_unsafe_actions": "harassment",
     "private_information_individual": "privacy",
@@ -161,9 +164,9 @@ WILDGUARD_MAP = {  # subcategory
     "causing_material_harm_by_disseminating_misinformation": "misinformation",
     "disseminating_false_or_misleading_information_encouraging_disinformation_campaigns": "misinformation",
     "mental_health_over-reliance_crisis": "self_harm",
-    "copyright_violations": "other",
     "others": "other",
 }
+WILDGUARD_EXCLUDE = {"copyright_violations"}  # not content harm; HarmBench copyright rows are excluded too
 
 # AdvBench has no categories; HarmBench "illegal"/"harmful" and uncategorised
 # ToxicChat rows also land here. First matching rule wins.
@@ -296,11 +299,13 @@ def load_wildguardmix(train_slice: int = 3000):
         rows = range(len(ds)) if config == "wildguardtest" else _ranked(range(len(ds)), config)[: 2 * train_slice]
         for i in rows:
             r = ds[i]
-            if r["prompt_harm_label"] not in ("harmful", "unharmful"):
+            if r["prompt_harm_label"] not in ("harmful", "unharmful") or r["subcategory"] in WILDGUARD_EXCLUDE:
                 continue
             label = int(r["prompt_harm_label"] == "harmful")
+            if label and r["subcategory"] not in WILDGUARD_MAP:
+                raise ValueError(f"unmapped WildGuardMix subcategory {r['subcategory']!r}")
             yield _cand("wildguardmix", f"{config}-{i}", r["prompt"], None, label,
-                        WILDGUARD_MAP.get(r.get("subcategory") or "", "other"))
+                        WILDGUARD_MAP.get(r["subcategory"], "other"))
 
 
 def load_aegis():
@@ -513,12 +518,12 @@ def _read(path: Path) -> list[Item]:
         return [Item(**json.loads(line)) for line in f]
 
 
-def load_all(refresh: bool = False) -> list[Item]:
-    """All benchmark items, cached to data/items.jsonl."""
-    if ITEMS_PATH.exists() and not refresh:
-        return _read(ITEMS_PATH)
+def load_all(refresh: bool = False, path: Path = ITEMS_PATH) -> list[Item]:
+    """All benchmark items, cached to data/items.jsonl (or `path`)."""
+    if path.exists() and not refresh:
+        return _read(path)
     items = build()
-    _write(ITEMS_PATH, items)
+    _write(path, items)
     return items
 
 
@@ -647,16 +652,17 @@ TEMPLATES = {
 }
 
 
-def structured_benign(n: int = 5000, seed: int = 0, refresh: bool = False, items: list[Item] | None = None) -> list[Item]:
-    """n benign structured hard negatives, cached to data/structured_benign.jsonl.
+def structured_benign(n: int = 5000, seed: int = 0, refresh: bool = False, items: list[Item] | None = None,
+                      path: Path = STRUCTURED_PATH) -> list[Item]:
+    """n benign structured hard negatives, cached to data/structured_benign.jsonl (or `path`).
 
     Each item draws its fill text from benign items of its own split, so test
     structured items never reuse train text.
     """
-    meta_path = STRUCTURED_PATH.with_suffix(".meta.json")
-    if not refresh and STRUCTURED_PATH.exists() and meta_path.exists():
+    meta_path = path.with_suffix(".meta.json")
+    if not refresh and path.exists() and meta_path.exists():
         if json.loads(meta_path.read_text()) == {"n": n, "seed": seed}:
-            return _read(STRUCTURED_PATH)
+            return _read(path)
     items = load_all() if items is None else items
     pools = {s: {"q": [], "qa": []} for s in SPLITS}
     for it in items:
@@ -693,7 +699,7 @@ def structured_benign(n: int = 5000, seed: int = 0, refresh: bool = False, items
         seen.add(key)
         out.append(Item(f"structured_benign:{len(out):05d}-{name}", text, "prompt", 0, "benign",
                         "structured_benign", "en", split))
-    _write(STRUCTURED_PATH, out)
+    _write(path, out)
     meta_path.write_text(json.dumps({"n": n, "seed": seed}))
     return out
 
@@ -712,8 +718,11 @@ def counts_table(items: list[Item]) -> str:
 
 if __name__ == "__main__":
     refresh = "--refresh" in sys.argv
-    items = load_all(refresh=refresh)
-    structured = structured_benign(refresh=refresh)
+    # --suffix _v2 writes data/items_v2.jsonl etc., leaving the live cache alone
+    suffix = sys.argv[sys.argv.index("--suffix") + 1] if "--suffix" in sys.argv else ""
+    items = load_all(refresh=refresh, path=ITEMS_PATH.with_stem(ITEMS_PATH.stem + suffix))
+    structured = structured_benign(refresh=refresh, items=items,
+                                   path=STRUCTURED_PATH.with_stem(STRUCTURED_PATH.stem + suffix))
     print(counts_table(items + structured))
     print(f"\nharmful={sum(it.label for it in items)} benign={sum(1 - it.label for it in items)} "
           f"structured_benign={len(structured)}")
