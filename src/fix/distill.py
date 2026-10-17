@@ -184,19 +184,28 @@ def train(data: Path, fmt: str, out: Path, epochs: int = 1, batch: int = 8, lr: 
         r=rank, lora_alpha=2 * rank, lora_dropout=0.0,
         target_modules=r".*language_model.*\.(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)",
     ))
+    boundary_delta = None
     if fmt == "bounded":
-        # The boundary ids are unused in pretraining, so let their embeddings learn.
-        # Only those two rows may move: mask every other row's gradient.
-        emb = model.get_input_embeddings()
-        emb.weight.requires_grad_(True)
-        keep = torch.zeros(emb.weight.shape[0], 1, device=emb.weight.device, dtype=emb.weight.dtype)
-        keep[[36, 37]] = 1
-        emb.weight.register_hook(lambda g: g * keep)
+        # The boundary ids are unused in pretraining, so their embeddings must learn. Making the
+        # whole embedding matrix trainable would cost a 131k x d dense gradient (~0.8GB) per
+        # step, so a 2-row delta is added to those two ids' embeddings instead.
+        emb_mod = model.get_input_embeddings()
+        boundary_delta = torch.nn.Parameter(torch.zeros(2, emb_mod.weight.shape[1],
+                                                        device=emb_mod.weight.device, dtype=torch.float32))
+
+        def add_delta(module, args, output):
+            ids_in = args[0]
+            d = boundary_delta.to(output.dtype)
+            return output + (ids_in == 36).unsqueeze(-1) * d[0] + (ids_in == 37).unsqueeze(-1) * d[1]
+
+        emb_mod.register_forward_hook(add_delta)
     model.gradient_checkpointing_enable()
     model.enable_input_require_grads()
     model.train()
 
     params = [p for p in model.parameters() if p.requires_grad]
+    if boundary_delta is not None:
+        params.append(boundary_delta)
     opt = torch.optim.AdamW(params, lr=lr, weight_decay=0.0)
     steps = epochs * math.ceil(len(rows) / batch)
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / 50) * max(0.0, 1 - s / steps))
@@ -221,8 +230,7 @@ def train(data: Path, fmt: str, out: Path, epochs: int = 1, batch: int = 8, lr: 
         set_peft_model_state_dict(model, ck["lora"])
         if fmt == "bounded":
             with torch.no_grad():
-                emb = model.get_input_embeddings().weight
-                emb[[36, 37]] = ck["boundary"].to(emb.device, emb.dtype)
+                boundary_delta.copy_(ck["boundary_delta"].to(boundary_delta.device))
         opt.load_state_dict(ck["opt"])
         sched.load_state_dict(ck["sched"])
         done = ck["step"]
@@ -233,7 +241,7 @@ def train(data: Path, fmt: str, out: Path, epochs: int = 1, batch: int = 8, lr: 
         torch.save({
             "lora": get_peft_model_state_dict(model), "opt": opt.state_dict(), "sched": sched.state_dict(),
             "step": at,
-            "boundary": model.get_input_embeddings().weight[[36, 37]].detach().cpu() if fmt == "bounded" else None,
+            "boundary_delta": boundary_delta.detach().cpu() if boundary_delta is not None else None,
         }, tmp)
         tmp.replace(ckpt_path)
 
@@ -266,7 +274,9 @@ def train(data: Path, fmt: str, out: Path, epochs: int = 1, batch: int = 8, lr: 
                 save_ckpt(step)
     model.save_pretrained(out)
     if fmt == "bounded":
-        torch.save(model.get_input_embeddings().weight[[36, 37]].detach().cpu(), out / "boundary_embeddings.pt")
+        # Saved as the full trained rows (base + delta), which is what ShieldstralFixed loads.
+        rows = model.get_input_embeddings().weight[[36, 37]].detach().float() + boundary_delta.detach()
+        torch.save(rows.to(torch.bfloat16).cpu(), out / "boundary_embeddings.pt")
     print(f"saved -> {out}")
 
 
