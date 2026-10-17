@@ -87,7 +87,7 @@ D4 was recorded after a first round of test-split defense runs and before the re
 
 \Cref{tab:sens-tau,tab:sens-screen,tab:sens-dist} reproduce the pre-registered sensitivity tables. % src: results/sensitivity.md
 
-\begin{table}[h]
+\begin{table}[ht]
   \centering\small
   \caption{Bypass rate versus decision threshold $\tau$ (screen held at $>0.9$, $n=75$).}
   % src: results/sensitivity.md
@@ -108,7 +108,7 @@ D4 was recorded after a first round of test-split defense runs and before the re
   \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[ht]
   \centering\small
   \caption{Screen threshold versus $n$ and bypass of forged Query$+$Document at $\tau{=}0.5$.}
   % src: results/sensitivity.md
@@ -125,7 +125,7 @@ D4 was recorded after a first round of test-split defense runs and before the re
   \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[ht]
   \centering\small
   \caption{Score distributions (screen $>0.9$, $n=75$).}
   % src: results/sensitivity.md
@@ -164,7 +164,7 @@ Held-out families are those whose syntax is in \{JSON, YAML, markdown bold, cont
   % src: /tmp/bench_analysis/bypass.csv (python -m src.bench.analyze on results/bench/v2), default policy; gpt-oss: paper/data/gpt_oss_strict.md (parse = strict, mean column)
   \label{tab:per-family}
   \setlength{\tabcolsep}{4pt}
-  \renewcommand{\arraystretch}{0.9}
+  \renewcommand{\arraystretch}{0.88}
   \begin{tabular}{lccccc}
     \toprule
     family & Shieldstral & Llama Guard 3 & ShieldGemma & Qwen3Guard & gpt-oss-safeguard \\
@@ -229,7 +229,7 @@ Held-out families are those whose syntax is in \{JSON, YAML, markdown bold, cont
   \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[ht]
   \centering\small
   \caption{Threshold sensitivity: bypass (\%) of each guard's strongest family (at $\tau=0.5$) as $\tau$ varies, default policy.}
   % src: /tmp/bench_analysis/bypass_tau.csv
@@ -265,7 +265,7 @@ Clean recall ($56.5\%$), clean FPR ($12.0\%$) and the 113-item screen are identi
 \Cref{tab:gpt-oss-parse} lists the families where the reading could matter.
 Only two stacked-pair families depend on it; every other family moves by under one point.
 
-\begin{table}[h]
+\begin{table}[ht]
   \centering\small
   \caption{gpt-oss-safeguard bypass under three verdict readings, first instantiation, $n=113$ screened harmful items, Wilson 95\% intervals for the strict reading. ``worst'' is the share of items cleared by at least one of three instantiations (strict).}
   % src: paper/data/gpt_oss_strict.md (sections parse = strict / last / first)
@@ -290,7 +290,7 @@ Only two stacked-pair families depend on it; every other family moves by under o
 \paragraph{Clean detection by source.}
 \Cref{tab:gpt-oss-source} gives the no-attack recall and false-positive rate per source. The small cells are reported but not interpreted.
 
-\begin{table}[h]
+\begin{table}[ht]
   \centering\small
   \caption{gpt-oss-safeguard clean detection by source (verdicts identical under all three readings), Wilson 95\% intervals.}
   % src: results/bench/v2/gpt_oss_summary.md (Per source (clean))
@@ -332,7 +332,7 @@ Adaptive budgets: the score-guided search has 300 guard calls per item (20 rando
 \Cref{tab:fix-fixed} gives the conditions trained and tested with one fixed decoy and query per family: naive adversarial training and the generality runs of T on Llama Guard~3 1B and Qwen3Guard 0.6B (\cref{sec:evaluation}).
 They have no held-out-decoy column, and the trained rows had training hard negatives that include 380 of the 500 structured-benign test items, so their structured-benign column is not a held-out measure.
 
-\begin{table}[h]
+\begin{table}[ht]
   \centering
   \footnotesize
   \caption{Fixed-decoy conditions on the test split, $\tau=0.5$, in \%. Columns as in \cref{tab:fix-main,tab:fix-utility}; naive adversarial training has two seeds (range), the other rows seed~0.}
@@ -371,7 +371,7 @@ The suffix leaves the harmful request present and readable, so GCG is within the
 On the base guard it clears every item with or without a forged pair, but with the pair the median first success comes at step 1 rather than 13.5: the forged structure makes the optimisation easier.
 On T it clears $20/20$\ci{84\%}{100\%}, with median first success at step $16.5$ (maximum $174$): training slows the optimisation but does not stop it. % src: r2_adaptive_t_seed0_gcg.json(.jsonl) first_success
 
-\begin{table}[h]
+\begin{table}[ht]
   \centering\small
   \caption{White-box GCG on Shieldstral, 20 screened test items, 20-token suffix, 250 steps. Bypass with Wilson 95\% interval; first success is the median (maximum) optimisation step at which a cleared item is first cleared. T is seed~0.}
   % src: results/fix/adaptive_{base,B}_gcg.json, adaptive_base_gcg_nopair.json, r2_adaptive_t_seed0_gcg.json (bypass_by_budget, first_success_steps)
