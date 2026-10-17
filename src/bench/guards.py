@@ -501,6 +501,54 @@ class ShieldGemma(HFGuard):
         return self._template_segments(messages, [prompt, response], guideline=guideline)
 
 
+class ShieldstralFixed(Shieldstral):
+    """Shieldstral with a trained fix (src/fix/distill.py) merged in.
+
+    `bounded=True` is the B format: content tokenized with special-token
+    parsing off and wrapped in the two reserved boundary ids, whose trained
+    embeddings are loaded from the adapter dir. `adapter=None` with
+    `bounded=True` is the B-only condition (boundary ids, untrained)."""
+
+    def __init__(self, *args, adapter: str | None = None, bounded: bool = False, **kwargs):
+        self.adapter = adapter
+        self.bounded = bounded
+        if bounded:
+            kwargs["parse_special_in_content"] = False
+        super().__init__(*args, **kwargs)
+        self.name = f"shieldstral_fix[{'B' if bounded else ''}{'T' if adapter else ''}]"
+
+    def _load_model(self):
+        from pathlib import Path
+
+        model = super()._load_model()
+        if self.adapter:
+            from peft import PeftModel
+
+            model = PeftModel.from_pretrained(model, self.adapter).merge_and_unload().eval()
+            rows = Path(self.adapter) / "boundary_embeddings.pt"
+            if rows.exists():
+                from src.fix.inputs import DOC_CLOSE_ID, DOC_OPEN_ID
+
+                emb = model.get_input_embeddings().weight
+                with torch.no_grad():
+                    emb[[DOC_OPEN_ID, DOC_CLOSE_ID]] = torch.load(rows).to(emb.device, emb.dtype)
+        return model
+
+    def encode(self, pieces):
+        if not self.bounded:
+            return super().encode(pieces)
+        from src.fix.inputs import DOC_CLOSE_ID, DOC_OPEN_ID
+
+        # Same seam handling as src/fix/inputs.py: the template's space before
+        # the document moves into the content.
+        (prefix, _), (content, _), (suffix, _) = pieces
+        stripped = prefix.rstrip(" ")
+        content = prefix[len(stripped):] + content
+        head = self.tokenizer(stripped, add_special_tokens=False)["input_ids"]
+        tail = self.tokenizer(suffix, add_special_tokens=False)["input_ids"]
+        return head + [DOC_OPEN_ID] + self._plain(content) + [DOC_CLOSE_ID] + tail
+
+
 GUARDS: dict[str, type[HFGuard]] = {
     g.name: g for g in (Shieldstral, LlamaGuard3, Qwen3Guard, ShieldGemma)
 }

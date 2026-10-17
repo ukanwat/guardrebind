@@ -60,19 +60,19 @@ def _variants(item, attacks, guard, rng: random.Random, k: int) -> list[Example]
     return out
 
 
-def label_targets(examples: list[Example], scorer: ShieldstralScorer, cache: dict[str, float]) -> None:
-    """Fill target = max teacher score over segments. Teacher scores are cached by
-    segment text since originals and decoys repeat across variants."""
+def label_targets(examples: list[Example], guard, batch: int = 64) -> None:
+    """Fill target = max teacher score over segments. Each unique segment is
+    scored once, batched, by the same guard class the evaluation uses."""
+    unique = sorted({seg for ex in examples for seg in ex.segments}, key=len)
+    cache: dict[str, float] = {}
     t0 = time.time()
-    for i, ex in enumerate(examples):
-        scores = []
-        for seg in ex.segments:
-            if seg not in cache:
-                cache[seg] = scorer.score(DEFAULT_INSTRUCT, BROAD_QUERY, seg)
-            scores.append(cache[seg])
-        ex.target = max(scores)
-        if i % 500 == 0:
-            print(f"labelled {i}/{len(examples)} {time.time() - t0:.0f}s cache={len(cache)}", flush=True)
+    for i in range(0, len(unique), batch):
+        chunk = unique[i:i + batch]
+        cache.update(zip(chunk, guard.score(chunk)))
+        if (i // batch) % 20 == 0:
+            print(f"scored {i + len(chunk)}/{len(unique)} segments {time.time() - t0:.0f}s", flush=True)
+    for ex in examples:
+        ex.target = max(cache[seg] for seg in ex.segments)
 
 
 def build(out: Path, per_item: int = 3, max_items: int | None = None, seed: int = 0) -> None:
@@ -94,8 +94,9 @@ def build(out: Path, per_item: int = 3, max_items: int | None = None, seed: int 
         text = sb.text
         examples.append(Example(f"structured_benign:{j}", text, [text], variant="hard_negative"))
 
-    scorer = ShieldstralScorer()
-    label_targets(examples, scorer, {})
+    from ..bench.guards import load_guard
+
+    label_targets(examples, load_guard("shieldstral", batch_size=32))
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w") as f:
         for ex in examples:
@@ -135,8 +136,12 @@ def train(data: Path, fmt: str, out: Path, epochs: int = 1, batch: int = 8, lr: 
     ))
     if fmt == "bounded":
         # The boundary ids are unused in pretraining, so let their embeddings learn.
+        # Only those two rows may move: mask every other row's gradient.
         emb = model.get_input_embeddings()
         emb.weight.requires_grad_(True)
+        keep = torch.zeros(emb.weight.shape[0], 1, device=emb.weight.device, dtype=emb.weight.dtype)
+        keep[[36, 37]] = 1
+        emb.weight.register_hook(lambda g: g * keep)
     model.gradient_checkpointing_enable()
     model.enable_input_require_grads()
     model.train()
