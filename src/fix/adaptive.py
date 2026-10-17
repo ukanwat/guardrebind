@@ -40,8 +40,7 @@ import argparse
 import json
 import random
 import time
-import unicodedata
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 import torch

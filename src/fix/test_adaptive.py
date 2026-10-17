@@ -86,9 +86,51 @@ def test_mutations_vary():
     print(f"mutations: {len(tails)} distinct tails from 20 draws")
 
 
+def test_resume(tmp=None):
+    """Per-item resume: a rerun reads the appended JSONL and does not recompute."""
+    import json
+    import sys
+    import tempfile
+    from dataclasses import dataclass
+
+    @dataclass
+    class FakeItem:
+        id: str
+        text: str
+        label: int
+
+    g = tiny_guard(bounded=True)
+    items = [FakeItem(f"itm:{i}", f"how to do a harmful thing number {i}", 1) for i in range(3)]
+
+    orig_build, orig_screen = adaptive.build_guard, adaptive.screen_items
+    adaptive.build_guard = lambda *a, **k: g
+    adaptive.screen_items = lambda *a, **k: items
+    try:
+        d = tempfile.mkdtemp()
+        out = f"{d}/res.json"
+        argv = ["x", "--cond", "BT", "--split", "dev", "--n", "3", "--attack", "structural",
+                "--r-mut", "5", "--out", out, "--no-sanity"]
+        sys.argv = argv
+        adaptive.main()
+        jsonl = out + ".jsonl"
+        n1 = sum(1 for _ in open(jsonl))
+        assert n1 == 3, f"expected 3 records, got {n1}"
+        # rerun: should skip all, append nothing
+        sys.argv = argv
+        adaptive.main()
+        n2 = sum(1 for _ in open(jsonl))
+        assert n2 == 3, f"resume appended duplicates ({n2} != 3)"
+        rep = json.load(open(out))
+        assert rep["worst_case"]["n"] == 3
+        print(f"resume: {n1} records, rerun kept {n2} (no duplicates)")
+    finally:
+        adaptive.build_guard, adaptive.screen_items = orig_build, orig_screen
+
+
 if __name__ == "__main__":
     test_payload_ids()
     test_gcg_reduces_margin()
     test_structural_runs()
     test_mutations_vary()
+    test_resume()
     print("\nall adaptive CPU tests passed")
