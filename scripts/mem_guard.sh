@@ -4,9 +4,13 @@
 #   - the Mac is on battery with less than BATT_MIN % left (a GPU job drains the battery fast)
 # and resumes (SIGCONT) once memory is above HIGH % and the Mac is on AC power or above BATT_MIN %.
 # Paused jobs lose nothing.
+# GPU share: outside a pause, jobs run ON seconds then rest OFF seconds (SIGSTOP), so the GPU is idle part of
+# the time and the Mac stays responsive. OFF=0 turns this off.
 LOW=${LOW:-15}
 HIGH=${HIGH:-30}
 BATT_MIN=${BATT_MIN:-0}   # 0 = off (the person, 2026-10-16: run on battery too)
+ON=${ON:-4}
+OFF=${OFF:-1}   # the person, 2026-10-16: use the GPU a bit less so the Mac doesn't freeze
 LOG=$(dirname "$0")/../logs/queue/mem_guard.log
 paused=0
 while true; do
@@ -26,5 +30,9 @@ while true; do
     kill -CONT $pids 2>/dev/null; paused=0
     echo "$(date '+%H:%M:%S') free=${free}% batt=${pct}% RESUME" >> "$LOG"
   fi
-  sleep 5
+  if [ $paused -eq 0 ] && [ -n "$pids" ] && [ "$OFF" -gt 0 ]; then
+    kill -STOP $pids 2>/dev/null; sleep $OFF; kill -CONT $pids 2>/dev/null; sleep $ON
+  else
+    sleep 5
+  fi
 done
