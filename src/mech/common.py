@@ -30,6 +30,7 @@ from ..attacks import PAYLOADS
 from ..bench.data import Item, load_all
 from ..bench.guards import Shieldstral
 from ..prompt import BROAD_QUERY
+from ..safe_io import atomic_write_text
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "results" / "mech"
@@ -294,8 +295,7 @@ def _show(path: Path) -> str:
 
 
 def write_json(path: Path, obj: dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(obj, indent=1, default=_jsonable))
+    atomic_write_text(path, json.dumps(obj, indent=1, default=_jsonable))
     print(f"wrote {_show(path)}")
 
 

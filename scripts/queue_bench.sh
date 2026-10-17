@@ -2,6 +2,7 @@
 # GuardRebind v2 benchmark queue (PROTOCOL_v2 D1, amended: K=3, policy paraphrases on 6 families, screened).
 # One GPU job at a time, behind the fix/mech queues. Each step logs to logs/queue/<step>.log; a step whose
 # output is on disk is skipped and run_bench_v2 resumes cell by cell, so the queue can be rerun.
+# Exits non-zero if anything is still missing, so scripts/supervisor.sh runs it again.
 #
 # Estimated GPU time on this Mac (M4 Max), from a timed train-split run (480 cells/guard, batch 16, unsorted,
 # GPU shared with the distill build): shieldstral 5.3 cells/s, llama_guard_3_1b 8.2/s, shieldgemma_2b 2.3/s.
@@ -12,12 +13,9 @@
 #   it is last in the queue and resumable, so it can be stopped and finished later.
 set -u
 cd "$(dirname "$0")/.."
-L=logs/queue
+. scripts/lib.sh
 OUT=results/bench/v2
-mkdir -p $L $OUT results/bench/v2_smoke
-export PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.5 PYTORCH_MPS_LOW_WATERMARK_RATIO=0.4
-run() { name=$1; shift; echo "$(date '+%H:%M:%S') START $name" >> $L/queue.log
-  nice -n 10 "$@" > $L/$name.log 2>&1; rc=$?; echo "$(date '+%H:%M:%S') END $name exit=$rc" >> $L/queue.log; return $rc; }
+mkdir -p $OUT results/bench/v2_smoke
 B="uv run --frozen python -m src.bench"
 
 # Wait for the GPU: no fix/mech job and no other queue holding it. Launch standalone; do not call this from
@@ -42,4 +40,9 @@ done
 
 # 5. analysis (CPU): tables, figures, summary.md
 run bench_analyze uv run --frozen --with matplotlib python -m src.bench.analyze --inp $OUT
-echo "$(date '+%H:%M:%S') BENCH QUEUE DONE" >> $L/queue.log
+
+m=$(missing $OUT/shieldstral.done $OUT/llama_guard_3_1b.done $OUT/qwen3guard_0_6b.done $OUT/shieldgemma_2b.done \
+  $OUT/stability.json $OUT/summary.md)
+# .done markers are empty files: check existence, not size
+m=$(for f in $m; do [ -e "$f" ] || echo "$f"; done)
+[ -z "$m" ] && echo "$(date '+%H:%M:%S') BENCH QUEUE DONE" >> $L/queue.log || { echo "bench missing: $m" >> $L/queue.log; exit 1; }

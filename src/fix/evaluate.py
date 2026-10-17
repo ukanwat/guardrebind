@@ -24,6 +24,7 @@ from sklearn.metrics import roc_auc_score
 from ..bench.attacks_grammar import GUARD_SPECS, grammar, split_attacks
 from ..bench.data import load_all, structured_benign
 from ..bench.guards import ShieldstralFixed
+from ..safe_io import atomic_write_text
 from ..stats import wilson
 
 TAU = 0.5
@@ -126,8 +127,7 @@ def main() -> None:
         attacks_out[name] = {"bypass": _rate(cleared, total), "attacked_benign_fpr": _rate(fp, fp_total), "per_attack": per}
     report["attacks"] = attacks_out
 
-    a.out.parent.mkdir(parents=True, exist_ok=True)
-    a.out.write_text(json.dumps(report, indent=2))
+    atomic_write_text(a.out, json.dumps(report, indent=2))
     summary = {
         "cond": a.cond, "auroc": round(report["auroc"], 4), "recall": report["recall"]["rate"],
         "fpr": report["fpr_clean"]["rate"], **{f"or_{k}": v["rate"] for k, v in over.items()},

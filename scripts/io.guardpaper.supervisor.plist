@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>io.guardpaper.supervisor</string>
+  <key>ProgramArguments</key>
+  <array><string>/bin/sh</string><string>-c</string>
+    <string>sleep ${DELAY:-120}; exec /bin/sh scripts/supervisor.sh</string></array>
+  <key>WorkingDirectory</key><string>/Users/utkarshkanwat/development/guard-policy-injection</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>/Users/utkarshkanwat/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>HOME</key><string>/Users/utkarshkanwat</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
+  <key>ThrottleInterval</key><integer>300</integer>
+  <key>StandardOutPath</key><string>/Users/utkarshkanwat/development/guard-policy-injection/logs/queue/supervisor.out</string>
+  <key>StandardErrorPath</key><string>/Users/utkarshkanwat/development/guard-policy-injection/logs/queue/supervisor.out</string>
+</dict>
+</plist>

@@ -24,6 +24,7 @@ import torch
 
 from .attacks_grammar import GUARD_SPECS, families, grammar
 from .data import load_all
+from ..safe_io import atomic_write_text, read_jsonl
 from .guards import load_guard
 from .run_bench_v2 import Cell, score_cells
 
@@ -36,10 +37,8 @@ def sample_rows(inp: Path, n: int, seed: int) -> dict[str, list[dict]]:
     for path in sorted(inp.glob("*__*.jsonl")):
         if path.name.endswith("__split.jsonl"):
             continue
-        with path.open() as f:
-            for line in f:
-                r = json.loads(line)
-                by_guard.setdefault(r["guard"], []).append(r)
+        for r in read_jsonl(path):
+            by_guard.setdefault(r["guard"], []).append(r)
     rng = random.Random(seed)
     return {g: rng.sample(rows, min(n, len(rows))) for g, rows in sorted(by_guard.items())}
 
@@ -105,7 +104,7 @@ def main(argv: list[str] | None = None, loader=load_guard) -> None:
         for r in out[-3:]:
             print(f"{r['guard']:18s} {r['comparison']:18s} n={r['n']} max={r['max_abs_diff']:.2e} "
                   f"p99={r['p99_abs_diff']:.2e} flips={r['flips']}", flush=True)
-    (a.inp / "stability.json").write_text(json.dumps({"n_per_guard": a.n, "seed": a.seed, "comparisons": out},
+    atomic_write_text(a.inp / "stability.json", json.dumps({"n_per_guard": a.n, "seed": a.seed, "comparisons": out},
                                                      indent=1))
     import pandas as pd
 

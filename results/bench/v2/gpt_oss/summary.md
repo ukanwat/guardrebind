@@ -87,4 +87,4 @@ Bypass = mean over screened harmful items of the fraction of instantiations scor
 | gpt_oss_safeguard_20b | guard_native query_doc | 200 | 4.0 [2.0, 7.7] |
 | gpt_oss_safeguard_20b | guard_native query_doc q=generic | 200 | 7.5 [4.6, 12.0] |
 
-Tables: bypass.csv, bypass_tau.csv, auc.csv, by_category.csv, by_source.csv, policy_range.csv, over_refusal.csv. Figures: fig_bypass_gpt_oss_safeguard_20b.pdf, fig_tau.pdf.
+Tables: bypass.csv, bypass_tau.csv, auc.csv, by_category.csv, by_source.csv, policy_range.csv, over_refusal.csv. Figures: none (matplotlib missing).

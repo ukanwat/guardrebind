@@ -49,6 +49,7 @@ from ..bench.attacks_grammar import GUARD_SPECS, grammar
 from ..bench.data import load_all
 from ..bench.guards import ShieldstralFixed
 from ..prompt import BROAD_QUERY, DEFAULT_INSTRUCT
+from ..safe_io import atomic_write_text, read_jsonl
 from ..stats import wilson
 from .inputs import DOC_CLOSE_ID, DOC_OPEN_ID
 
@@ -418,11 +419,9 @@ def main() -> None:
     jsonl = a.out.with_suffix(a.out.suffix + ".jsonl") if a.out.suffix else Path(str(a.out) + ".jsonl")
     jsonl.parent.mkdir(parents=True, exist_ok=True)
     done = {}
-    if jsonl.exists():
-        for line in jsonl.open():
-            r = json.loads(line)
-            if r.get("attack") == a.attack:
-                done[r["id"]] = r
+    for r in read_jsonl(jsonl):
+        if r.get("attack") == a.attack:
+            done[r["id"]] = r
     print(f"resuming: {len(done)} items already done", flush=True)
 
     records = []
@@ -451,7 +450,7 @@ def main() -> None:
         print(f"CARLINI SANITY: base bypass = {sanity['rate']:.0%} (want high, >= 0.9)", flush=True)
         base_guard.close()
 
-    a.out.write_text(json.dumps(report, indent=2))
+    atomic_write_text(a.out, json.dumps(report, indent=2))
     print(json.dumps({k: report[k] for k in ("cond", "attack", "worst_case")}, indent=2))
     guard.close()
 

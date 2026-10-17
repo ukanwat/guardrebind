@@ -33,6 +33,7 @@ from pathlib import Path
 import torch
 
 from ..prompt import BROAD_QUERY, DEFAULT_INSTRUCT
+from ..safe_io import atomic_write_text, read_jsonl
 from ..scorer import ShieldstralScorer
 from .inputs import bounded_ids, split_ids, stock_ids
 
@@ -75,10 +76,8 @@ def label_targets(examples: list[Example], guard, cache_path: Path, batch: int =
     are appended to cache_path as they come in, so an interrupted build resumes
     where it stopped."""
     cache: dict[str, float] = {}
-    if cache_path.exists():
-        for line in cache_path.open():
-            row = json.loads(line)
-            cache[row["text"]] = row["score"]
+    for row in read_jsonl(cache_path):
+        cache[row["text"]] = row["score"]
     todo = sorted({seg for ex in examples for seg in ex.segments} - cache.keys(), key=len)
     print(f"cached {len(cache)}, to score {len(todo)}", flush=True)
     t0 = time.time()
@@ -140,10 +139,7 @@ def build(out: Path, per_item: int = 3, max_items: int | None = None, seed: int 
                       out.with_suffix(".teacher_cache.jsonl"), batch=16)
     # naive_at targets are hard labels, already set in build_examples (no teacher).
 
-    out.parent.mkdir(parents=True, exist_ok=True)
-    with out.open("w") as f:
-        for ex in examples:
-            f.write(json.dumps(asdict(ex)) + "\n")
+    atomic_write_text(out, "".join(json.dumps(asdict(ex)) + "\n" for ex in examples))
     print(f"wrote {len(examples)} examples ({mode}) -> {out}")
 
 
@@ -277,6 +273,8 @@ def train(data: Path, fmt: str, out: Path, epochs: int = 1, batch: int = 8, lr: 
         # Saved as the full trained rows (base + delta), which is what ShieldstralFixed loads.
         rows = model.get_input_embeddings().weight[[36, 37]].detach().float() + boundary_delta.detach()
         torch.save(rows.to(torch.bfloat16).cpu(), out / "boundary_embeddings.pt")
+    # Written last: the queue treats a model as trained only when this marker exists.
+    atomic_write_text(out / "DONE", f"{step} steps\n")
     print(f"saved -> {out}")
 
 

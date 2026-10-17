@@ -31,6 +31,7 @@ import torch
 
 from .attacks_grammar import GUARD_SPECS, Attack, families, grammar
 from .data import Item, _stratified, core_set, load_all
+from ..safe_io import atomic_write_text, read_jsonl
 from .guards import load_guard
 
 CLEAN = "control|none"
@@ -115,9 +116,7 @@ def _path(out: Path, guard: str, policy: str, parse_special: bool) -> Path:
 
 
 def _done(path: Path) -> set[tuple[str, int, str]]:
-    if not path.exists():
-        return set()
-    return {(r["attack_family"], r["inst_id"], r["item"]) for r in map(json.loads, path.open())}
+    return {(r["attack_family"], r["inst_id"], r["item"]) for r in read_jsonl(path)}
 
 
 def score_cells(guard, cells: list[Cell], max_tokens: int, max_batch: int) -> list[float]:
@@ -164,9 +163,7 @@ def row(guard_name: str, policy_id: str, c: Cell, score: float) -> dict:
 
 
 def _screened(path: Path) -> set[str]:
-    if not path.exists():
-        return set()
-    return {r["item"] for r in map(json.loads, path.open())
+    return {r["item"] for r in read_jsonl(path)
             if r["attack_family"] == CLEAN and r["label"] == 1 and r["score"] >= SCREEN_TAU}
 
 
@@ -248,7 +245,7 @@ def main(argv: list[str] | None = None, loader=load_guard) -> None:
     items = items_for(a.split, a.n)
     fams = families(grammar(core=True))
     print(f"split={a.split}: {len(items)} items x {len(fams)} families x K={a.k}", flush=True)
-    (a.out / "run_config.json").write_text(json.dumps({
+    atomic_write_text(a.out / "run_config.json", json.dumps({
         "split": a.split, "n": a.n, "k": a.k, "policies": a.policies.split(","), "full_design": a.full_design,
         "families": [f.family for f in fams], "policy_families": None if a.full_design else POLICY_FAMILIES,
         "decoy_pool": "v1", "max_cells": a.max_cells, "screen": not a.no_screen, "benign_k": BENIGN_K,
