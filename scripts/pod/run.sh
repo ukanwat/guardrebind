@@ -4,7 +4,8 @@
 set -u
 cd /workspace/gpi
 export PATH=/workspace/bin:$PATH UV_CACHE_DIR=/workspace/.uvcache UV_PROJECT_ENVIRONMENT=/workspace/venv
-export HF_HOME=/workspace/hf HF_HUB_OFFLINE=1 PART=main OFF=0 TRIES=3
+# UV_NO_SYNC: keep the CUDA-12.9 torch that bootstrap.sh installed over the locked (CUDA 13) wheel
+export HF_HOME=/workspace/hf HF_HUB_OFFLINE=1 PART=main OFF=0 TRIES=3 UV_NO_SYNC=1
 MAX_HOURS=${MAX_HOURS:-14}   # Secure 4090 at $0.89/h: 14h = $12.5, inside the $15 budget
 START=$(cat logs/queue/POD_START 2>/dev/null || date +%s | tee logs/queue/POD_START)
 stop_pod() { echo "$(date '+%F %T') stopping pod: $1" >> logs/queue/queue.log; sleep 5
