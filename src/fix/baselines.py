@@ -82,6 +82,9 @@ class SegmaxGuard:
         self.guard = guard
 
     def score(self, texts: list[str], kind: str = "prompt") -> list[float]:
+        if kind != "prompt":
+            # response items need their (prompt, response) split; attacks are prompt-side, so score these whole
+            return self.guard.score(texts, kind=kind)
         segs = [segments(t) for t in texts]
         uniq = list(dict.fromkeys(s for ss in segs for s in ss))
         got = dict(zip(uniq, self.guard.score(uniq, kind=kind))) if uniq else {}
