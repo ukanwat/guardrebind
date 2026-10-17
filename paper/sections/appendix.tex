@@ -252,7 +252,7 @@ Held-out families are those whose syntax is in \{JSON, YAML, markdown bold, cont
 \paragraph{Setup.}
 gpt-oss-safeguard-20B was queried through OpenRouter (served by Groq) at temperature 0 with up to 3000 output tokens, using the policy of the cross-model study in the system role and the content in a user message ending ``\texttt{Answer (0 or 1):}''. % src: results/bench/v2/gpt_oss_summary.md (header); src/crossmodel.py OSS_POLICY
 The API returns no log-probabilities, so the score is the verdict itself (1 flagged, 0 cleared) and $\tau$ has no effect.
-The run covers 200 harmful and 200 benign test items from the core set, all 52 attack families and 4 controls of the core panel with three instantiations per attack family, and benign-content attacks for six families: 19{,}454 calls. % src: results/bench/v2/gpt_oss_summary.md (19454 rows; 56 families; K up to 3)
+The run covers 200 harmful and 200 benign test items from the core set, all 52 attack families and 4 controls of the core panel with three instantiations per attack family, and the same attacks on benign items for six families: 19{,}454 calls. % src: results/bench/v2/gpt_oss_summary.md (19454 rows; 56 families; K up to 3)
 The protocol sets a larger core set for local guards; the API arm uses 200 items per class to stay within the API budget.
 No reply lacked a verdict.
 

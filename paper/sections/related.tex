@@ -3,10 +3,9 @@
 
 \paragraph{Structure forgery against generators and judges.}
 \citet{liu2024formalizing} formalise prompt injection against LLM-integrated applications and benchmark attacks and defenses; their ``fake completion'' and ``combined'' attacks forge the end of one task and the start of another, which is the construction we apply to guards.
-Their targets are generators whose output follows the injected task; ours are classifiers whose verdict follows the forged task, so the effect of success is a false ``safe'' verdict on content that still contains the harmful request, and we measure it with controls specific to that setting (decoy harm, position, label syntax).
 Forging template or conversational structure to redirect a model is documented for agents and chat models: Structural Template Injection~\citep{deng2026automating}, ChatInject~\citep{chang2025chatinject}, pseudo-conversation injection~\citep{chen2024goal}, separator injection~\citep{li2025separator} and role-confusion analyses~\citep{ye2026prompt}, all descending from indirect prompt injection~\citep{greshake2023not}, with benchmarks such as BIPIA~\citep{yi2023benchmarking}.
-Injection into content scored by an LLM judge is also established: optimised suffixes~\citep{shi2024optimizationbased}, master-key tokens~\citep{zhao2025one} and judge-robustness surveys~\citep{li2025llms,maloyan2025adversarial}.
-These target a generator or a judge's answer; we target a safety classifier's task slots.
+Injection into content scored by an LLM judge is also established: optimised suffixes~\citep{shi2024optimizationbased}, master-key tokens~\citep{zhao2025one}, arbitrary content injected into retrieval and relevance judging~\citep{tamber2025illusions}, and judge-robustness surveys~\citep{li2025llms,maloyan2025adversarial}.
+These target generators whose output follows the injected task, or a judge's answer; ours are safety classifiers whose verdict follows the forged task, so success is a false ``safe'' verdict on content that still contains the harmful request, and we measure it with controls specific to that setting (decoy harm, position, label syntax).
 
 \paragraph{Attacks on guards.}
 Guards are bypassed by universal perturbations~\citep{mangaokar2024prp}, character-injection evasion~\citep{hackett2025bypassing} and pipeline attacks~\citep{mckenzie2025stack}, with broad robustness drops on novel attacks~\citep{young2025evaluating,outeda2026decoding}.

@@ -37,11 +37,9 @@ We call the attacker's forged query and document a \emph{forged pair}, and the t
   \label{fig:anatomy}
 \end{figure}
 
-Forging a completed task followed by a new one is a known prompt-injection pattern: the ``fake completion'' and ``combined'' attacks of \citet{liu2024formalizing} use it against LLM-integrated applications, and forging conversational or template structure to redirect a model is well documented for agents and chat models~\citep{deng2026automating,chang2025chatinject,chen2024goal,li2025separator}.
-Injection into content scored by an LLM judge is established~\citep{shi2024optimizationbased,li2025llms,gros2026evaluating,tamber2025illusions}, and a forged judge-output block has bypassed a production LLM safety judge~\citep{mccauley2025hat}.
-Concurrent work forges verdict and authority fields in a typed judge's structured input; these fail on harmful-request moderation, and none introduces a new task to grade~\citep{li2026same}.
+Forging a completed task followed by a new one is a known prompt-injection pattern against LLM-integrated applications~\citep{liu2024formalizing}, and forged template, conversational or judge-output structure is documented against agents, chat models and LLM judges~\citep{deng2026automating,chang2025chatinject,chen2024goal,li2025separator,shi2024optimizationbased,li2025llms,gros2026evaluating,tamber2025illusions,mccauley2025hat}; concurrent work forges verdict and authority fields in a judge's input~\citep{li2026same}.
 An informal version of the core attack appeared in an earlier blog post~\citep{kanwat2026blog}.
-We do not claim a new class of injection.
+We do not claim a new class of injection (\cref{sec:related} positions this work).
 What has been missing is a guard-specific measurement: whether the failure is rebinding or persuasion, how widely it occurs across guard designs, and whether a guard can be trained to resist it.
 
 \paragraph{Evidence.}
