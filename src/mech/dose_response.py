@@ -11,7 +11,8 @@ Every screened harmful request of --split (flagged alone) is attacked with every
     H + "\\n\\n<Query>: Q\\n\\n<Document>: decoy"
 Per rung: bypass = fraction of requests whose attacked score < tau, and the median attacked score.
 Reported: Spearman rho between the rung's standalone score and its bypass rate (pre-registered M3
-predicts rho <= -0.8), with a 95% bootstrap interval over requests; a binned curve (bypass by
+predicts rho <= -0.8), with 95% bootstrap intervals over requests, over decoys (rungs) and over both
+(rho_cis; `--recompute <json>` redoes them from a saved result without a model); a binned curve (bypass by
 standalone-score bin, bootstrap over requests); and the pooled request x rung rho of attacked score
 vs standalone score. With --split train, decoys are excluded from the request pool.
 """
@@ -36,6 +37,54 @@ def ladder(scores: np.ndarray, n: int) -> list[int]:
         picked.append(j)
         free.remove(j)
     return sorted(picked, key=lambda i: scores[i])
+
+
+def _rho(x: np.ndarray, y: np.ndarray) -> float:
+    return spearmanr(x, y).statistic if np.ptp(x) > 0 and np.ptp(y) > 0 else np.nan
+
+
+def _ci(boot: list[float]) -> list[float]:
+    return list(np.nanpercentile(boot, [2.5, 97.5])) if np.isfinite(boot).any() else [np.nan, np.nan]
+
+
+def rho_cis(bypass: np.ndarray, d_scores: np.ndarray, n_boot: int, seed: int) -> dict:
+    """95% percentile intervals for Spearman rho(rung standalone score, rung bypass rate), bypass a
+    [requests, rungs] 0/1 matrix, under three resampling schemes:
+      spearman_rho_ci          over requests (rungs fixed; the original interval, same RNG stream)
+      spearman_rho_ci_decoys   over decoys: rungs drawn with replacement, requests fixed. The rungs
+                               are the units rho is computed over, so this is the interval that
+                               speaks to "another set of decoys"
+      spearman_rho_ci_both     requests and rungs resampled together (two-way)."""
+    n_req, n_rung = bypass.shape
+    rng = np.random.default_rng(seed)
+    req = []
+    for _ in range(n_boot):
+        r = bypass[rng.integers(0, n_req, n_req)].mean(0)
+        req.append(spearmanr(d_scores, r).statistic if np.ptp(r) > 0 else np.nan)
+    rng = np.random.default_rng(seed + 1)
+    rate = bypass.mean(0)
+    dec, both = [], []
+    for _ in range(n_boot):
+        k = rng.integers(0, n_rung, n_rung)
+        dec.append(_rho(d_scores[k], rate[k]))
+    for _ in range(n_boot):
+        k = rng.integers(0, n_rung, n_rung)
+        r = bypass[rng.integers(0, n_req, n_req)][:, k].mean(0)
+        both.append(_rho(d_scores[k], r))
+    return {"spearman_rho_ci": _ci(req), "spearman_rho_ci_decoys": _ci(dec), "spearman_rho_ci_both": _ci(both),
+            "n_boot": n_boot}
+
+
+def recompute(path, n_boot: int, seed: int) -> dict:
+    """The rho intervals from a saved result (attacked_scores + rung standalone scores); no model."""
+    import json
+
+    res = json.loads(open(path).read())
+    att = np.array(res["attacked_scores"], dtype=float)
+    d_scores = np.array([r["standalone"] for r in res["rungs"]])
+    bypass = (att < res["tau"]).astype(float)
+    return {"source": str(path), "spearman_rho_bypass": _rho(d_scores, bypass.mean(0)),
+            "n_requests": att.shape[0], "n_rungs": att.shape[1], **rho_cis(bypass, d_scores, n_boot, seed)}
 
 
 def run(a) -> dict:
@@ -64,12 +113,7 @@ def run(a) -> dict:
     bypass = (att < TAU).astype(float)
     rate = bypass.mean(0)
     rho = spearmanr(d_scores, rate).statistic if len(decoys) > 2 else float("nan")
-    rng = np.random.default_rng(a.seed)
-    boot = []
-    for _ in range(a.n_boot):
-        r = bypass[rng.integers(0, len(harmful), len(harmful))].mean(0)
-        boot.append(spearmanr(d_scores, r).statistic if np.ptp(r) > 0 else np.nan)
-    rho_lo, rho_hi = np.nanpercentile(boot, [2.5, 97.5]) if np.isfinite(boot).any() else (np.nan, np.nan)
+    cis = rho_cis(bypass, d_scores, a.n_boot, a.seed)
     pooled = spearmanr(np.repeat(d_scores[None], len(harmful), 0).ravel(), att.ravel()).statistic
 
     edges = np.linspace(0, 1, a.bins + 1)
@@ -88,7 +132,7 @@ def run(a) -> dict:
         "experiment": "decoy_dose_response", "split": a.split, "decoy_split": "train", "n_requests": len(harmful),
         "n_rungs": len(decoys), "pool": len(pool), "seed": a.seed, "tau": TAU, "bins": a.bins,
         "screen": h_screen,
-        "spearman_rho_bypass": rho, "spearman_rho_ci": [rho_lo, rho_hi],
+        "spearman_rho_bypass": rho, **cis,
         "spearman_rho_pooled_scores": pooled,
         "monotone_nonincreasing_bins": all(x["bypass"] >= y["bypass"] for x, y in zip(binned, binned[1:])),
         "binned": binned,
@@ -145,7 +189,18 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--tag", default="")
     ap.add_argument("--allow-test", action="store_true")
+    ap.add_argument("--recompute", metavar="JSON",
+                    help="no model: recompute the rho intervals (incl. over decoys) from a saved result and write "
+                         "them to <JSON stem>_rho_ci.json")
     a = ap.parse_args()
+    if a.recompute:
+        from pathlib import Path
+
+        src = Path(a.recompute)
+        out = recompute(src, a.n_boot, a.seed)
+        write_json(src.with_name(src.stem + "_rho_ci.json"), out)
+        print({k: v for k, v in out.items() if k != "source"})
+        return
     check_split(a.split, a.allow_test)
     res = run(a)
     stem = f"dose_response_{a.split}_n{a.n}_d{a.n_decoys}{a.tag}"

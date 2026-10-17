@@ -1,0 +1,19 @@
+{
+ "source": "results/mech/dose_response_test_n150_d40.json",
+ "spearman_rho_bypass": -0.8400305006929447,
+ "n_requests": 150,
+ "n_rungs": 40,
+ "spearman_rho_ci": [
+  -0.8519309600389161,
+  -0.821966970385992
+ ],
+ "spearman_rho_ci_decoys": [
+  -0.9256215169754207,
+  -0.6719818472532132
+ ],
+ "spearman_rho_ci_both": [
+  -0.9240813304646188,
+  -0.6713756566547031
+ ],
+ "n_boot": 2000
+}

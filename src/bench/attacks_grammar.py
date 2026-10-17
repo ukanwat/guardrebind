@@ -712,6 +712,75 @@ def _inst_seed(item_id: str, family: str, j: int) -> int:
     return int.from_bytes(h[:8], "big")
 
 
+# ---------------------------------------------------------------------------
+# Decoy / query pool split (round 2)
+# ---------------------------------------------------------------------------
+# Every instantiation pool is cut in two halves, so a fix can be trained on one
+# set of decoy sentences and forged queries and tested on sentences it never saw:
+#
+#   pool                       TRAIN        HELDOUT
+#   decoy benign (40)          0-19         20-39
+#   decoy borderline (6)       0-2          3-5
+#   decoy harmful (8)          0-3          4-7
+#   query paraphrase (8)       0-3          4-7
+#   query generic (8)          0-3          4-7
+#   query out_of_domain (8)    0-3          4-7
+#
+# Index 0 (the decoy and query every fixed-panel attack used before round 2) is
+# in TRAIN. The benign TRAIN half is exactly BENIGN_DECOYS; HELDOUT is the 20
+# topics added in DECOY_POOL_V1. Queries `exact` and translated (non-en) queries
+# have no pool, so they are never redrawn. "fixed" means no redraw: the attack's
+# own decoy_idx / query_idx, the pre-round-2 behaviour.
+DECOY_SPLITS = ("fixed", "train", "heldout")
+POOL_SPLIT: dict[str, dict[str, tuple[int, int]]] = {
+    "decoy": {"benign": (0, 20), "borderline": (0, 3), "harmful": (0, 4)},
+    "query": {"paraphrase": (0, 4), "generic": (0, 4), "out_of_domain": (0, 4)},
+}
+
+
+def split_indices(kind: str, category: str, split: str) -> list[int]:
+    """Pool indices of one decoy ("decoy") or query ("query") pool in a split
+    ("train" = [lo, hi) of POOL_SPLIT, "heldout" = the rest of the pool)."""
+    pool = (_INST_DECOY_POOLS if kind == "decoy" else QUERY_POOLS_V1)[category]
+    lo, hi = POOL_SPLIT[kind][category]
+    if split == "train":
+        return list(range(lo, hi))
+    if split == "heldout":
+        return [i for i in range(len(pool)) if not lo <= i < hi]
+    raise ValueError(f"split must be train or heldout, not {split!r}")
+
+
+def split_pool(kind: str, category: str, split: str) -> list[str]:
+    """The texts of split_indices(kind, category, split)."""
+    pool = (_INST_DECOY_POOLS if kind == "decoy" else QUERY_POOLS_V1)[category]
+    return [pool[i] for i in split_indices(kind, category, split)]
+
+
+def draw_split(attack: Attack, split: str, key: str, j: int = 0) -> Attack:
+    """One instantiation of `attack` with its decoy and query drawn from the
+    `split` half of their pools, set through decoy_idx/decoy_text and
+    query_idx/query_text exactly as Attack.instantiate does. The draw is seeded
+    by sha256(key, family, split, j), so it is reproducible and independent of
+    any other RNG (key is e.g. the item id). split="fixed", or an attack with no
+    pool (controls, instruct_only, exact or translated queries without a
+    document), returns the attack unchanged."""
+    if split == "fixed":
+        return attack
+    decoys, queries = attack._pools()
+    if decoys is None and queries is None:
+        return attack
+    fam = attack.family
+    rng = random.Random(_inst_seed(f"{key}\x1f{split}", fam, j))
+    p = dict(attack.params, decoy_split=split, inst=j)
+    if decoys is not None:
+        p["decoy_idx"] = rng.choice(split_indices("decoy", p["decoy"], split))
+        p["decoy_text"] = decoys[p["decoy_idx"]]
+    if queries is not None:
+        p["query_idx"] = rng.choice(split_indices("query", p["query"], split))
+        p["query_text"] = queries[p["query_idx"]]
+    return Attack(name=f"{fam}|{split}={j}", params=p)
+
+
 def _control_attack(ctrl: str) -> Attack:
     return Attack(name=f"control|{ctrl}", params={"control": ctrl})
 

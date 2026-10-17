@@ -19,6 +19,10 @@ src/fix/inputs.py). B alone is the base model with the bounded format.
     uv run python -m src.fix.distill build --out data/fix/train.jsonl
     uv run python -m src.fix.distill train --data data/fix/train.jsonl --fmt bounded --out models/fix/bt
 
+Round 2: `build --decoy-split train` draws each attacked example's decoy and forged query from the
+TRAIN halves of the pools (attacks_grammar.POOL_SPLIT), seeded by the item id; the default (fixed)
+is the original build, byte for byte. The HELDOUT halves are kept for evaluate / adaptive.
+
 Other guards (T only): `build --guard llama_guard_3_1b` scores segments with that
 guard and writes the attacks in its syntax; `train --guard llama_guard_3_1b
 --fmt stock` trains its own model on its own rendering and label tokens.
@@ -58,9 +62,16 @@ class Example:
 BUILD_MODES = ("segment_max", "naive_at", "clean_copy")
 
 
-def _variants(item, attacks, guard, rng: random.Random, k: int, mode: str = "segment_max") -> list[Example]:
+def _variants(item, attacks, guard, rng: random.Random, k: int, mode: str = "segment_max",
+              decoy_split: str = "fixed") -> list[Example]:
+    from ..bench.attacks_grammar import draw_split
+
     out = [Example(f"{item.id}|clean", item.text, [item.text])]
     for attack in rng.sample(attacks, min(k, len(attacks))):
+        # decoy_split="train": the decoy and forged query are redrawn from the TRAIN halves of their pools
+        # (attacks_grammar.POOL_SPLIT), seeded by the item id; "fixed" keeps the attack's own (index 0).
+        # The draw has its own RNG, so the items and attacks sampled are the same as the fixed build's.
+        attack = draw_split(attack, decoy_split, item.id)
         document = attack.apply(item.text, guard)
         decoy = attack.params.get("decoy_text")
         segments = [document, item.text] + ([decoy] if decoy else [])
@@ -103,7 +114,7 @@ def label_targets(examples: list[Example], guard, cache_path: Path, batch: int =
 
 
 def build_examples(per_item: int, max_items: int | None, seed: int, max_chars: int,
-                   mode: str, guard: str = "shieldstral") -> list[Example]:
+                   mode: str, guard: str = "shieldstral", decoy_split: str = "fixed") -> list[Example]:
     """Construct the (unlabeled for segment_max, hard-labeled for naive_at)
     examples. No model is loaded here; segment_max targets are filled later by
     label_targets. Identical example structure across modes (checked in tests).
@@ -125,7 +136,7 @@ def build_examples(per_item: int, max_items: int | None, seed: int, max_chars: i
 
     examples: list[Example] = []
     for item in items:
-        examples += _variants(item, train_attacks, GUARD_SPECS[guard], rng, per_item, mode)
+        examples += _variants(item, train_attacks, GUARD_SPECS[guard], rng, per_item, mode, decoy_split)
     for j, sb in enumerate(structured_benign(len(items) // 4)):
         text = sb.text
         ex = Example(f"structured_benign:{j}", text, [text], variant="hard_negative")
@@ -137,10 +148,12 @@ def build_examples(per_item: int, max_items: int | None, seed: int, max_chars: i
 
 def build(out: Path, per_item: int = 3, max_items: int | None = None, seed: int = 0,
           max_chars: int = 1200, mode: str = "segment_max", cache: Path | None = None,
-          guard: str = "shieldstral", device: str | None = None) -> None:
+          guard: str = "shieldstral", device: str | None = None, decoy_split: str = "fixed") -> None:
     if mode not in BUILD_MODES:
         raise ValueError(f"mode must be one of {BUILD_MODES}")
-    examples = build_examples(per_item, max_items, seed, max_chars, mode, guard)
+    if decoy_split not in ("fixed", "train"):
+        raise ValueError("decoy_split must be fixed or train (heldout decoys are for evaluation only)")
+    examples = build_examples(per_item, max_items, seed, max_chars, mode, guard, decoy_split)
 
     if mode in ("segment_max", "clean_copy"):
         from ..bench.guards import load_guard
@@ -438,6 +451,9 @@ def main() -> None:
     b.add_argument("--cache", type=Path, help="teacher score cache (default: next to --out)")
     b.add_argument("--guard", default="shieldstral", help="teacher and attack syntax (a load_guard name)")
     b.add_argument("--device", help="default: cuda, then mps, then cpu")
+    b.add_argument("--decoy-split", choices=["fixed", "train"], default="fixed",
+                   help="fixed: each attack's own decoy/query (index 0, the original build); train: per attacked "
+                        "example, a seeded draw from the TRAIN halves of the decoy and query pools")
     t = sub.add_parser("train")
     t.add_argument("--data", type=Path, required=True)
     t.add_argument("--fmt", choices=list(FORMATS), required=True)
@@ -455,7 +471,8 @@ def main() -> None:
     t.add_argument("--fp32", action="store_true", help="non-shieldstral guards only: fp32 weights (CPU tests)")
     a = ap.parse_args()
     if a.cmd == "build":
-        build(a.out, a.per_item, a.max_items, mode=a.mode, cache=a.cache, guard=a.guard, device=a.device)
+        build(a.out, a.per_item, a.max_items, mode=a.mode, cache=a.cache, guard=a.guard, device=a.device,
+              decoy_split=a.decoy_split)
     elif a.guard == "shieldstral":
         train(a.data, a.fmt, a.out, a.epochs, a.batch, a.lr, seed=a.seed)
     else:
