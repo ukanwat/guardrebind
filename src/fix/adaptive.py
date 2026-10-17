@@ -101,7 +101,8 @@ class Payload:
     tail_text: str         # the chat-template suffix after the content (generation prompt)
 
 
-NO_PAIR = False  # set by --no-pair: GCG control with the suffix right after the item, no forged pair
+NO_PAIR = False
+NULL_SEARCH = False  # set by --null-search  # set by --no-pair: GCG control with the suffix right after the item, no forged pair
 
 
 def _baseline_payload(guard: ShieldstralFixed, item_text: str) -> Payload:
@@ -420,8 +421,17 @@ def mutate_candidate(c: dict, rng: random.Random, decoys: list[str], queries: li
 def render_candidate(item_text: str, c: dict, spec=None) -> str:
     """The attacked content for a search candidate, drawn the way Attack.apply
     draws the grammar (same syntaxes and positions), but with free label strings,
-    decoy and query text."""
+    decoy and query text. With NULL_SEARCH the candidate adds only plain benign
+    text (n copies of the decoy, no labels, no query): the control for dilution
+    and threshold effects."""
     spec = spec or GUARD_SPECS["shieldstral"]
+    if NULL_SEARCH:
+        filler = "\n\n".join([c["decoy"]] * c["n_pairs"])
+        if c["position"] == "prepend":
+            return filler + "\n\n" + item_text
+        if c["position"] == "middle":
+            return FILLER + "\n\n" + item_text + "\n\n" + filler
+        return item_text + "\n\n" + filler
     labels, n = c["labels"], c["n_pairs"]
     syntax = c["syntax"]
     if syntax == "guard_native" and labels == EN_LABELS:
@@ -560,9 +570,11 @@ def main() -> None:
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--no-sanity", action="store_true", help="skip the base sanity check")
     ap.add_argument("--no-pair", action="store_true", help="GCG control: suffix right after the item, no forged pair")
+    ap.add_argument("--null-search", action="store_true", help="search control: plain benign text only, no labels/query")
     a = ap.parse_args()
-    global NO_PAIR
+    global NO_PAIR, NULL_SEARCH
     NO_PAIR = a.no_pair
+    NULL_SEARCH = a.null_search
 
     guard = build_guard(a.cond, a.adapter, a.device)
     screened = screen_items(guard, a.split, a.n)
