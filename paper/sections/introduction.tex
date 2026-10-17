@@ -42,7 +42,7 @@ What has been missing is a guard-specific account: whether the failure is rebind
 
 \paragraph{Evidence.}
 In a pre-registered study on Shieldstral, the forged pair clears 75 of 75 flagged held-out requests ($100\%$\ci{95\%}{100\%}); a forged document alone clears $9\%$ and an instruction alone $0\%$, and the bypass rate falls from $100\%$ to $33\%$ to $0\%$ as the trailing document becomes more harmful (\cref{sec:attack}). % src: results/confirm_log.txt, results/groundtruth_log.txt
-The construction transfers to gpt-oss-safeguard-20B (30/30) and Llama Guard~4 (29/29), and in \guardrebind{} the median best-attack bypass over \tbd{N} guards is \tbd{X\%} (\cref{sec:benchmark}).
+The construction transfers to gpt-oss-safeguard-20B (30/30, and 113/113 held-out test items in \guardrebind{}) and Llama Guard~4 (29/29), and in \guardrebind{} the median best-attack bypass over \tbd{N} guards is \tbd{X\%} (\cref{sec:benchmark}). % src: results/confirm_crossmodel.csv (30/30, 29/29); paper/data/gpt_oss_strict.md (parse = strict, full_triple 113/113)
 A defense that combines a boundary the content cannot forge with segment-max self-distillation changes held-out-family bypass on Shieldstral from \tbd{X\%} to \tbd{Y\%} and per-item worst-case bypass under adaptive white-box attack to \tbd{Z\%} (\cref{sec:evaluation}).
 
 \paragraph{Contributions.}

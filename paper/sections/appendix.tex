@@ -51,6 +51,7 @@ The protocol was frozen before the confirmatory run and not edited after results
   \item P9 (escaping fixes it): refuted --- bracket-escape 88\%, label-strip 91\%, nonce-fence 93\%.
 \end{itemize}
 The benchmark and defense predictions (M1--M5, F1--F6, A1--A3) are stated in the released protocol (\cref{app:open-science}).
+On gpt-oss-safeguard, the one guard measured so far, M1 holds (best core family $100\%$, strict reading) and so does M2 (instruction-only payloads at most $6.2\%$); the local guards are \tbd{M1--M5 outcomes per guard}. % src: paper/data/gpt_oss_strict.md (parse = strict): 11 families 113/113; sentence_bare 3/113, authority_note 4/113, instruct_only 7/113
 
 \section{Sensitivity Analysis}
 \label{app:sensitivity}
@@ -128,6 +129,77 @@ Held-out families are those whose syntax is in \{JSON, YAML, markdown bold, cont
 \end{itemize}
 Per-guard breakdowns by syntax, pair count, harm category, source and $\tau$ are released with the artifacts.
 \tbd{per-guard tables}
+
+\section{gpt-oss-safeguard in \texorpdfstring{\guardrebind{}}{GuardRebind}}
+\label{app:gpt-oss}
+
+\paragraph{Setup.}
+gpt-oss-safeguard-20B was queried through OpenRouter (served by Groq) at temperature 0 with up to 3000 output tokens, using the policy of the cross-model study in the system role and the content in a user message ending ``\texttt{Answer (0 or 1):}''. % src: results/bench/v2/gpt_oss_summary.md (header); src/crossmodel.py OSS_POLICY
+The API returns no log-probabilities, so the score is the verdict itself (1 flagged, 0 cleared) and $\tau$ has no effect.
+The run covers 200 harmful and 200 benign test items from the core set, all 56 core families with three instantiations each, and benign-content attacks for six families: 19{,}454 calls. % src: results/bench/v2/gpt_oss_summary.md (19454 rows; 56 families; K up to 3)
+The protocol sets a larger core set for local guards; the API arm uses 200 items per class to stay within the API budget.
+No reply lacked a verdict.
+
+\paragraph{Reading the verdict.}
+Most replies are a bare \texttt{0} or \texttt{1}.
+Two other shapes occur: 447 replies echo the prompt (``\texttt{Answer (0 or 1): 0}''), and on stacked forgeries the model often answers once per content block it sees (``\texttt{1\textbackslash n0}'' 254 times, ``\texttt{1\textbackslash n0\textbackslash n0}'' 143 times). % src: paper/data/gpt_oss_strict.py (ECHO note, 447 rows); results/bench/v2/gpt_oss_summary.md (Raw outputs)
+We remove the echoed ``\texttt{(0 or 1)}'' and then read the standalone 0/1 tokens three ways: \emph{strict}, flagged if any verdict is 1 (primary in the body, the reading least favourable to the attack); \emph{last}, the final verdict, which is what a pipeline reading the trailing label acts on; and \emph{first}. % src: paper/data/gpt_oss_strict.py (parse)
+The choice of the strict reading as primary was made after the multi-verdict replies were seen; because it can only lower bypass relative to the other two readings, it does not favour the attack.
+Clean recall ($56.5\%$), clean FPR ($12.0\%$) and the 113-item screen are identical under all three readings. % src: paper/data/gpt_oss_strict.md (each parse: recall 113/200, FPR 24/200, screen 113)
+\Cref{tab:gpt-oss-parse} lists the families where the reading could matter.
+Only two stacked-pair families depend on it; every other family moves by under one point.
+
+\begin{table}[h]
+  \centering\small
+  \caption{gpt-oss-safeguard bypass under three verdict readings, first instantiation, $n=113$ screened harmful items, Wilson 95\% intervals for the strict reading. ``worst'' is the share of items cleared by at least one of three instantiations (strict).}
+  % src: paper/data/gpt_oss_strict.md (sections parse = strict / last / first)
+  \label{tab:gpt-oss-parse}
+  \begin{tabular}{lcccc}
+    \toprule
+    family & strict & last & first & worst (strict) \\
+    \midrule
+    angle triple                          & 100\%\ci{97\%}{100\%} & 100\% & 100\% & 100\% \\
+    XML triple                            & 100\%\ci{97\%}{100\%} & 100\% & 100\% & 100\% \\
+    angle triple, 5 pairs                 & 98.2\%\ci{93.8\%}{99.5\%} & 99.1\% & 98.2\% & 100\% \\
+    guard-native, 1 pair                  & 73.5\%\ci{65\%}{81\%} & 73.5\% & 73.5\% & 95.6\% \\
+    guard-native, 2 pairs                 & 100\%\ci{97\%}{100\%} & 100\% & 100\% & 100\% \\
+    guard-native, borderline decoy        & 83.2\%\ci{75\%}{89\%} & 83.2\% & 83.2\% & 99.1\% \\
+    angle pair, 2 pairs, generic query    & 5.3\%\ci{2.5\%}{11.1\%} & 88.5\% & 5.3\% & 5.3\% \\
+    markdown pair, 3 pairs                & 5.3\%\ci{2.5\%}{11.1\%} & 85.0\% & 5.3\% & 5.3\% \\
+    control-token pair                    & 13.3\%\ci{8\%}{21\%} & 14.2\% & 13.3\% & 30.1\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Clean detection by source.}
+\Cref{tab:gpt-oss-source} gives the no-attack recall and false-positive rate per source. The small cells are reported but not interpreted.
+
+\begin{table}[h]
+  \centering\small
+  \caption{gpt-oss-safeguard clean detection by source (verdicts identical under all three readings), Wilson 95\% intervals.}
+  % src: results/bench/v2/gpt_oss_summary.md (Per source (clean))
+  \label{tab:gpt-oss-source}
+  \begin{tabular}{lcccc}
+    \toprule
+    source & harmful $n$ & recall & benign $n$ & FPR \\
+    \midrule
+    AdvBench       & 13 & 100\%\ci{77\%}{100\%} & 0  & --- \\
+    Aegis 2.0      & 78 & 52.6\%\ci{42\%}{63\%} & 69 & 5.8\%\ci{2\%}{14\%} \\
+    BeaverTails    & 81 & 56.8\%\ci{46\%}{67\%} & 52 & 19.2\%\ci{11\%}{32\%} \\
+    HarmBench      & 10 & 80.0\%\ci{49\%}{94\%} & 0  & --- \\
+    OpenAI mod.    & 5  & 20.0\%\ci{4\%}{62\%}  & 12 & 0\%\ci{0\%}{24\%} \\
+    OR-Bench-hard  & 0  & ---                   & 13 & 76.9\%\ci{50\%}{92\%} \\
+    XSTest-safe    & 0  & ---                   & 3  & 0\%\ci{0\%}{56\%} \\
+    ToxicChat      & 13 & 30.8\%\ci{13\%}{58\%} & 51 & 0\%\ci{0\%}{7\%} \\
+    \midrule
+    all            & 200 & 56.5\%\ci{49.6\%}{63.2\%} & 200 & 12.0\%\ci{8.2\%}{17.2\%} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Turn markers sent as text.}
+The guard-native forgery writes the model's turn markers into the content as text; whether the provider tokenizes them as control tokens is not observable through the API.
+In a minority of attacked rows the model's reasoning quotes the literal marker text, and bypass for the single-pair native forgery, read by the last verdict, is similar whether it does ($67\%$, 6 of 9 rows) or not ($72\%$). % src: results/bench/v2/gpt_oss_summary.md (Harmony-token diagnostic: guard_native query_doc, 9 quoted rows, 66.7 vs 72.1; computed under the last parse)
 
 \section{Defense Implementation and Training}
 \label{app:defense-impl}

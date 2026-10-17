@@ -5,6 +5,7 @@
 The instruction/query/document convention has no parser: it is plain text interpolated by the developer.
 A second well-formed query--document pair inside the content is, to the model, indistinguishable from the developer's, so the model grades the document of the last complete pair it sees.
 On this account the guard is not persuaded to answer ``safe''; it answers the same kind of question about a different document.
+For Shieldstral a complete pair is a question and a document; guards whose request also carries instructions need those forged too (\cref{sec:request-unit}).
 The hypothesis predicts three things, which this section tests in turn: only a complete forged pair should work (\cref{sec:core}); the verdict should follow the harm of the trailing document (\cref{sec:groundtruth}); and the effect should not depend on recency, one marker syntax, the policy wording or exact knowledge of the deployment (\cref{sec:robustness}).
 The evidence in \cref{sec:core,sec:groundtruth,sec:robustness} is behavioural; \cref{sec:binding} tests where in the network the binding happens.
 

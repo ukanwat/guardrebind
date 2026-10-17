@@ -14,6 +14,8 @@ Where retraining is possible, pairing the boundary with segment-max training (\c
 
 The confirmatory results (\cref{sec:attack}) are one guard, one corpus (AdvBench rows 200--299), English, text-only, short documents.
 The cross-model results are label-only, and for Llama Guard~4 we did not separate rebinding from chat-template malformation (\cref{sec:crossmodel}).
+gpt-oss-safeguard flags only $56.5\%$ of harmful core items with no attack, so its bypass rates describe the 113 items it does catch, on one API provider and the user-message channel (\cref{sec:bench-results}). % src: paper/data/gpt_oss_strict.md (parse = strict, recall 113/200); results/bench/v2/gpt_oss_summary.md (provider Groq)
+The ``what counts as a request'' result for Qwen3Guard is exploratory: train split, 40 items, the 0.6B model, one decoy (\cref{sec:request-unit}).
 The binding is partial, not total: with a borderline trailing decoy the original request still raises the score (\cref{sec:groundtruth}), and prepending the forged pair still clears $15\%$, so position is not the whole story.
 Segment-max can miss harm that exists only in the combination of benign segments; including the whole content as a segment (\cref{eq:target}) bounds but does not remove this, which the composition attack tests directly (\cref{tab:adaptive}).
 Part~T risks learning a positional shortcut rather than a true boundary~\citep{wang2025illusion}; the benign-first check is designed to detect this but a negative result there would not rule it out fully.
