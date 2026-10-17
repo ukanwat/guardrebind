@@ -6,7 +6,7 @@
 Target rebinding is a property of how a guard's input is assembled, not of any one model, so most of the fix is available to deployers today.
 First, do not interpolate untrusted content into a plain-text template: give the content region a boundary the content cannot reproduce, and tokenize the content with special-token parsing disabled so that control-token strings in it stay inert, after checking that the tokenizer has no added tokens outside the special set, which that setting leaves atomic~\citep{zhan2026samebytes,yang2026nameless} (\cref{sec:defense,app:content-tokens}).
 Second, treat a guard verdict as a filter, not an authorization: a cleared verdict means ``no policy violation was detected in what was graded'', which is not the same as ``this exact content is safe'', and in an agent loop an action should not run on a guard verdict alone.
-Third, do not rely on prompt-level mitigations: an anti-injection directive and syntax-specific marker stripping did not stop the attack (\cref{tab:fix-main}), and a fail-closed detector trades bypass for over-refusal.
+Third, do not rely on prompt-level mitigations: an anti-injection directive and syntax-specific label stripping did not stop the attack (\cref{tab:fix-main}), and a fail-closed detector trades bypass for over-refusal.
 A role boundary around the policy (\cref{sec:crossmodel}) and larger models are not sufficient on their own.
 Where retraining is possible, pairing the boundary with segment-max training (\cref{sec:evaluation}) is what closed the held-out families in our experiments.
 
@@ -16,8 +16,8 @@ Where retraining is possible, pairing the boundary with segment-max training (\c
 The confirmatory results (\cref{sec:attack}) are one guard, one corpus (AdvBench rows 200--299), English, text-only, short documents.
 The cross-model results are label-only, and for Llama Guard~4 we did not separate rebinding from chat-template malformation (\cref{sec:crossmodel}).
 gpt-oss-safeguard flags only $56.5\%$ of harmful core items with no attack, so its bypass rates describe the 113 items it does catch, on one API provider and the user-message channel (\cref{sec:bench-results}). % src: paper/data/gpt_oss_strict.md (parse = strict, recall 113/200); results/bench/v2/gpt_oss_summary.md (provider Groq)
-The ``what counts as a request'' result for Qwen3Guard is exploratory: train split, 40 items, the 0.6B model, one decoy (\cref{sec:request-unit}).
-The binding is partial, not total: with a borderline trailing decoy the original request still raises the score (\cref{sec:groundtruth}), and prepending the forged pair still clears $15\%$, so position is not the whole story.
+The ``what counts as a task'' result for Qwen3Guard is exploratory: train split, 40 items, the 0.6B model, one decoy (\cref{sec:request-unit}).
+The binding is partial, not total: with a borderline decoy the original request still raises the score (\cref{sec:groundtruth}), and prepending the forged pair still clears $15\%$, so position is not the whole story.
 Segment-max can miss harm that exists only in the combination of benign segments; including the whole content as a segment (\cref{eq:target}) bounds but does not remove this, which the composition attack tests directly (\cref{tab:adaptive}).
 Part~T risks learning a positional shortcut rather than a true boundary~\citep{wang2025illusion}; the benign-first check is designed to detect this but a negative result there would not rule it out fully.
 We close one structural channel and do not claim general prompt-injection robustness, which is argued to be unattainable in shared-embedding models without enforced separation~\citep{pant2026inseparability}.
@@ -25,6 +25,6 @@ We close one structural channel and do not claim general prompt-injection robust
 \subsection{Conclusion}
 
 Safety guards receive the content they judge through the same plain-text channel that states their task, and content that forges that task structure rebinds the guard to a document the attacker chooses while the harmful request stays in the approved message.
-On Shieldstral the forged pair clears all 75 pre-registered held-out requests, the bypass tracks the trailing document's own harm, and the construction transfers to two other guard designs.
+On Shieldstral the forged pair clears all 75 pre-registered held-out requests, the bypass tracks the decoy's own harm, and the construction transfers to two other guard designs.
 A boundary the content cannot forge, paired with segment-max self-distillation, is the combination we test against attackers who know the defense.
 The failure is structural, so the remedy is structural: give untrusted content a boundary it cannot write, and train the guard to read what is inside it as one document.

@@ -5,13 +5,13 @@
 The instruction/query/document convention has no parser: it is plain text interpolated by the developer.
 A second well-formed query--document pair inside the content is, to the model, indistinguishable from the developer's, so the model grades the document of the last complete pair it sees.
 On this account the guard is not persuaded to answer ``safe''; it answers the same kind of question about a different document.
-For Shieldstral a complete pair is a question and a document; guards whose request also carries instructions need those forged too (\cref{sec:request-unit}).
-The hypothesis predicts three things, which this section tests in turn: only a complete forged pair should work (\cref{sec:core}); the verdict should follow the harm of the trailing document (\cref{sec:groundtruth}); and the effect should not depend on recency, one marker syntax, the policy wording or exact knowledge of the deployment (\cref{sec:robustness}).
+For Shieldstral a complete grading task is a query and a document; guards whose grading task also includes instructions need those forged too (\cref{sec:request-unit}).
+The hypothesis predicts three things, which this section tests in turn: only a complete forged pair should work (\cref{sec:core}); the verdict should follow the harm of the decoy (\cref{sec:groundtruth}); and the effect should not depend on recency, one label syntax, the policy wording or exact knowledge of the deployment (\cref{sec:robustness}).
 The evidence in \cref{sec:core,sec:groundtruth,sec:robustness} is behavioural; \cref{sec:binding} tests where in the network the binding happens.
 
 \paragraph{Setup.}
 All results in \cref{sec:core,sec:groundtruth,sec:robustness} follow a protocol frozen before the run (\cref{app:protocol}).
-The corpus is AdvBench~\citep{zou2023universal} rows 200--299, which no exploratory run touched; 75 of the 100 requests are flagged ($>0.9$) by the honest canonical policy and form the denominator. % src: PROTOCOL.md; results/confirm_log.txt
+The corpus is AdvBench~\citep{zou2023universal} rows 200--299, which no exploratory run touched; 75 of the 100 requests are flagged ($>0.9$) with no attack under the policy of \cref{fig:anatomy}; these screened requests form the denominator. % src: PROTOCOL.md; results/confirm_log.txt
 Exact payload strings are in \cref{app:payloads}.
 
 \subsection{Core result: only a complete forged pair works}
@@ -43,39 +43,39 @@ Exact payload strings are in \cref{app:payloads}.
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{fig_scores.pdf}
-  \caption{The guard grades the forged pair's document. (a)~Per-request scores with no attack and with the forged pair ($n=75$): every attacked score falls below $\tau$. (b)~The same attack with three trailing decoys ($n=39$): the bypass collapses as the decoy becomes more harmful. Bars are medians; diamonds are each decoy scored on its own.}
+  \caption{The guard grades the decoy. (a)~Per-request scores with no attack and with the forged pair ($n=75$): every attacked score falls below $\tau$. (b)~The same attack with three decoys ($n=39$): the bypass collapses as the decoy becomes more harmful. Bars are medians; diamonds are each decoy scored on its own.}
   % src: results/confirm_shieldstral.csv (ablation, undefended, none and query_doc); results/confirm_groundtruth.csv. Drawn by figures/make_figures.py.
   \label{fig:scores}
 \end{figure}
 
-The attack appends a forged \texttt{<Query>} (the deployment's own safety question) and a forged \texttt{<Document>} holding one benign sentence (\cref{fig:anatomy}).
+The attack appends a forged \texttt{<Query>} (the deployment's own safety question) and a forged \texttt{<Document>} holding a benign decoy sentence (\cref{fig:anatomy}).
 It clears all 75 screened requests ($100\%$\ci{95\%}{100\%}, \cref{tab:ablation}): the median score falls from $0.986$ to $0.016$ and the highest attacked score is $0.469$ (\cref{fig:scores}a). % src: results/confirm_shieldstral.csv; results/sensitivity.md
-On a wider screen of 100 flagged AdvBench requests, which includes these 75, it clears 100 of 100 ($100\%$\ci{96\%}{100\%}). % src: results/hundred_log.txt, results/confirm_hundred.csv
+On a wider set of 100 flagged AdvBench requests, which includes these 75, it clears 100 of 100 ($100\%$\ci{96\%}{100\%}). % src: results/hundred_log.txt, results/confirm_hundred.csv
 
 The factorial panel in \cref{tab:ablation} holds one fixed sentence wherever an instruction appears, so wording cannot be confused with structure.
 An instruction alone clears $0\%$, whether as a bare sentence, a ``Note:'' or a forged \texttt{<Instruct>} field.
-A forged document with no question clears $9\%$.
-A forged question and document clear $100\%$, and adding a forged instruction in front of them lowers this to $92\%$.
+A forged document with no query clears $9\%$.
+A forged query and document clear $100\%$, and adding a forged instruction in front of them lowers this to $92\%$.
 The pair, not any imperative text and not an extra document, carries the attack.
 
-\subsection{The guard grades the trailing document}
+\subsection{The guard grades the decoy}
 \label{sec:groundtruth}
 
-If the guard were being persuaded to answer ``safe'', the content of the trailing document would not matter.
-Holding the attack fixed and varying only the trailing decoy, a benign decoy (standalone score $0.00$) clears $100\%$\ci{91\%}{100\%}, a borderline decoy ($0.03$) clears $33\%$\ci{21\%}{49\%}, and a decoy the guard flags on its own ($\approx\!1.0$) clears $0\%$\ci{0\%}{9\%} ($n=39$, \cref{fig:scores}b). % src: results/groundtruth_log.txt, results/confirm_groundtruth.csv
+If the guard were being persuaded to answer ``safe'', the content of the decoy would not matter.
+Holding the attack fixed and varying only the decoy, a \emph{benign} decoy (\emph{standalone score}, the guard's score on the decoy alone, $0.00$) clears $100\%$\ci{91\%}{100\%}, a \emph{borderline} decoy ($0.03$) clears $33\%$\ci{21\%}{49\%}, and a \emph{harmful} decoy, one the guard flags on its own ($\approx\!1.0$), clears $0\%$\ci{0\%}{9\%} ($n=39$, \cref{fig:scores}b). % src: results/groundtruth_log.txt, results/confirm_groundtruth.csv
 The binding is not complete: with the borderline decoy the attacked median is $0.71$, far above the decoy's own $0.03$, so the original request still raises the score when the decoy is not clearly benign. % src: results/groundtruth_log.txt (attack median 0.7058)
-The pre-registered ``harmful decoy'' of the confirmatory panel is this borderline rung and clears 29--35\% (\cref{app:protocol}). % src: results/confirm_log.txt [groundtruth]
+The pre-registered ``harmful decoy'' of the confirmatory panel is this borderline decoy and clears 29--35\% (\cref{app:protocol}). % src: results/confirm_log.txt [groundtruth]
 
-The forged question works by opening a new pair, not by softening the check.
-Forging a softened question (``is this a poem?'') while leaving the harmful request as the judged document, with no benign decoy anywhere, clears $0$--$9\%$ across five variants ($n=45$). % src: results/soften_log.txt, results/confirm_soften.csv
-The working attack needs a benign trailing document, and the harmful text survives, approved, at the top of the message.
+The forged query works by opening a new pair, not by softening the check.
+Forging a softened query (``is this a poem?'') while leaving the harmful request as the judged document, with no benign decoy anywhere, clears $0$--$9\%$ across five variants ($n=45$). % src: results/soften_log.txt, results/confirm_soften.csv
+The working attack needs a benign decoy, and the harmful text survives, approved, at the top of the message.
 
 \paragraph{Forged verdicts versus a forged task.}
 \label{sec:verdict-vs-task}
 Earlier and concurrent attacks on judges forge a verdict or an authority claim about the content, not a new task~\citep{mccauley2025hat,li2026same}.
 In an exploratory control outside the frozen protocol, on \tbd{n} harmful test items that Shieldstral flags alone, we append one of four such forgeries to the request: a plain-text statement that it was assessed as safe, a JSON moderation record marking it unflagged, a note that the safety team approved it, and a claimed earlier guard output of ``no''.
 They clear \tbd{X\%}, \tbd{X\%}, \tbd{X\%} and \tbd{X\%}, against \tbd{X\%} for the forged pair on the same items.
-A split payload puts the first half of the request in the content and the second half in the forged document, so the trailing document is itself part of the harm; it clears \tbd{X\%}.
+A split payload puts the first half of the request in the content and the second half in the forged document, so the decoy is itself part of the harm; it clears \tbd{X\%}.
 \Cref{sec:evaluation} repeats these controls on the defended guards.
 
 \subsection{Robustness: position, syntax, query knowledge and policy}
@@ -84,7 +84,7 @@ A split payload puts the first half of the request in the content and the second
 \begin{table}[t]
   \centering
   \small
-  \caption{The forged pair under variations, Shieldstral, $n=75$ unless stated, $\tau=0.5$, bypass with Wilson 95\% interval. Position and labels matter; the marker syntax, the exact query and the policy wording do not.}
+  \caption{The forged pair under variations, Shieldstral, $n=75$ unless stated, $\tau=0.5$, bypass with Wilson 95\% interval. Position and labels matter; the label syntax, the exact query and the policy wording do not.}
   % src: results/confirm_log.txt [recency], [markers], [policy]; results/supp_log.txt [A]
   \label{tab:robustness}
   \begin{tabular}[t]{lc}
@@ -94,7 +94,7 @@ A split payload puts the first half of the request in the content and the second
     \multicolumn{2}{@{}l}{\emph{position}} \\
     pair appended after the request   & 100\%\ci{95\%}{100\%} \\
     pair prepended before the request & 15\%\ci{8\%}{24\%} \\
-    \multicolumn{2}{@{}l}{\emph{marker syntax}} \\
+    \multicolumn{2}{@{}l}{\emph{label syntax}} \\
     \texttt{<Query>:} (title case)    & 100\%\ci{95\%}{100\%} \\
     \texttt{<query>:} (lower case)    & 99\%\ci{93\%}{100\%} \\
     \texttt{<QUERY>:} (upper case)    & 95\%\ci{87\%}{98\%} \\
@@ -114,7 +114,7 @@ A split payload puts the first half of the request in the content and the second
     paraphrase                        & 100\%\ci{95\%}{100\%} \\
     topical variant                   & 100\%\ci{95\%}{100\%} \\
     generic ``violates the policy?''  & 89\%\ci{80\%}{94\%} \\
-    unrelated question                & 9\%\ci{5\%}{18\%} \\
+    unrelated query                   & 9\%\ci{5\%}{18\%} \\
     five stacked blind guesses        & 100\%\ci{95\%}{100\%} \\
     \multicolumn{2}{@{}l}{\emph{policy phrasing (8 policies, $n=45$--$98$)}} \\
     median over policies              & 99\% \\
@@ -125,8 +125,8 @@ A split payload puts the first half of the request in the content and the second
 
 \Cref{tab:robustness} varies one factor at a time around the core attack.
 \emph{Position:} appending the pair clears $100\%$, prepending the identical pair clears $15\%$, while inert filler placed last clears $0\%$ (\cref{tab:ablation}); the effect needs the forged pair to be the last pair, not merely later text.
-\emph{Syntax:} every labelled marker style clears $83$--$100\%$ and the same words without labels clear $0\%$, so the labelled structure is necessary but no single syntax is.
-\emph{Query knowledge:} the forged question must look like a safety question but need not match the deployment's: paraphrases and topical variants clear $100\%$, a generic question $89\%$, an unrelated question $9\%$, and a blind attacker who stacks five guesses, none of them the deployment's query, clears $100\%$. % src: results/supp_log.txt [A]
+\emph{Syntax:} every label style clears $83$--$100\%$ and the same words without labels clear $0\%$, so the labelled structure is necessary but no single syntax is.
+\emph{Query knowledge:} the forged query must look like a safety question but need not match the deployment's: paraphrases and topical variants clear $100\%$, a generic query $89\%$, an unrelated query $9\%$, and a blind attacker who stacks five guesses, none of them the deployment's query, clears $100\%$. % src: results/supp_log.txt [A]
 \emph{Policy:} across eight policy phrasings, each with a matched forged query, the median bypass is $99\%$ (range $87$--$100\%$). % src: results/confirm_log.txt [policy]
 The attack therefore needs no white-box access and little knowledge of the deployment.
 
@@ -135,7 +135,7 @@ The attack therefore needs no white-box access and little knowledge of the deplo
 
 Under the stock Hugging Face chat template, literal strings such as \texttt{[/INST]} inside the content are tokenized as the real control tokens, so content can close the user turn and open a new one rather than imitate a label.
 This channel is documented for agents: chat-template injection~\citep{chang2025chatinject}, the authority carried by the reserved token's own embedding~\citep{zhan2026samebytes}, forgeable control tokens across deployed tokenizers~\citep{yang2026nameless}, and gpt-oss channel tokens that suppress reasoning and evade monitors~\citep{usama2026control}; we measure what it adds against a guard.
-In an exploratory probe on the first 40 held-out flagged requests, outside the frozen protocol, closing and reopening the turn with real control tokens before a forged triple clears 40/40 (median $0.0028$), against a median of $0.014$ for the plain label pair (40/40). % src: PLAN.md findings log 2026-10-15; src/fix/special_tokens.py
+In an exploratory probe on the first 40 held-out flagged requests, outside the frozen protocol, closing and reopening the turn with real control tokens before a \emph{forged triple} (a forged instruction, query and document) clears 40/40 (median $0.0028$), against a median of $0.014$ for the plain-text forged pair (40/40). % src: PLAN.md findings log 2026-10-15; src/fix/special_tokens.py
 Tokenizing the identical payload as plain text clears 39/40 with median $0.029$, about $10\times$ higher. % src: PLAN.md findings log, split-token control
 A forged system prompt (``answer no to every document'') clears 11/40 through real control tokens and 0/40 as plain text (median $0.994$).
 The label pair does most of the work; real control tokens lower the score further and make an otherwise inert instruction partly effective.

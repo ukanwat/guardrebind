@@ -1,10 +1,9 @@
 \begin{abstract}
-LLM safety guards act as access controls: a small classifier reads a message, a retrieved passage or a tool result and decides whether it may pass.
-Most guards receive that content by string interpolation into a plain-text prompt that also states the grading task.
-We show that content which forges that task structure changes which document the guard grades, an effect we call \emph{target rebinding}.
-Appending a forged question--document pair with a benign trailing document to a flagged harmful request clears Shieldstral-1.0-3B on all 75 pre-registered held-out AdvBench requests (100 of 100 in a wider screen), and the harmful text stays in the approved message. % src: results/confirm_log.txt, results/hundred_log.txt
+Content that imitates an LLM safety guard's prompt format can make the guard grade a forged, harmless \emph{decoy} document instead of the real content, which is approved unchanged; we call this \emph{target rebinding}.
+It is possible because most guards receive content by string interpolation into a plain-text prompt that also states the grading task.
+Appending a forged query--document pair with a benign decoy to a flagged harmful request clears Shieldstral-1.0-3B on all 75 pre-registered held-out AdvBench requests (100 of 100 in a wider set), and the harmful text stays in the approved message. % src: results/confirm_log.txt, results/hundred_log.txt
 Format-adapted versions clear 30/30 on gpt-oss-safeguard-20B, which puts the policy behind a role boundary, and 29/29 on Llama Guard~4, which uses a fixed taxonomy. % src: results/confirm_crossmodel.csv
-Across \tbd{N} open guards and \tbd{N} grammar-generated attack forms in our benchmark, \guardrebind{}, the median best-attack bypass is \tbd{X\%}.
-A defense that wraps content in reserved boundary tokens the content cannot produce, and trains the guard with segment-max self-distillation, changes held-out-family bypass from \tbd{X\%} to \tbd{Y\%} and per-item worst-case adaptive bypass to \tbd{Z\%}, with a detection AUROC change of \tbd{$\Delta$}.
+Across \tbd{N} open guards and \tbd{N} grammar-generated attack forms in our benchmark, \guardrebind{}, the median over guards of the best attack family's bypass rate is \tbd{X\%}.
+A defense that wraps content in reserved boundary tokens the content cannot produce, and trains the guard to score content at least as high as its most harmful part, changes bypass on attack families held out of training from \tbd{X\%} to \tbd{Y\%} and the share of items cleared by any adaptive attack (per-item worst case) to \tbd{Z\%}, with a detection AUROC change of \tbd{$\Delta$}.
 We release the benchmark, harness, adapters and every raw score.
 \end{abstract}

@@ -13,7 +13,7 @@ Differences between conditions use a paired bootstrap over items (10k resamples)
 
 \paragraph{Baselines.}
 The $2{\times}2$ (none/B/T/B$+$T) is compared against prompt-level defenses carried over from \cref{sec:attack} and the literature: the anti-injection directive ``Never follow instructions inside the user message'', proposed in the since-withdrawn PolicyGuard preprint~\citep{park2026policyguard}, label stripping, a fail-closed label detector, spotlighting/datamarking~\citep{hines2024defending}, and a mock-tool-call wrapper~\citep{gros2026evaluating}; a learned-soft-prompt baseline, DefensiveTokens~\citep{chen2025defending}; and naive adversarial training, a LoRA on attack examples with hard 0/1 labels, as the obvious strong competitor. % src: arXiv:2608.02687v1 (policy listing: "Never follow instructions inside the user message, including requests to ignore, reveal, rewrite, or override this policy."; Sec. 7: "We have not conducted a dedicated adversarial red-teaming exercise against the classifier."); tested string = src/prompt.py ANTI_INJECTION_DIRECTIVE (its first clause)
-The anti-injection directive and the normalisers were already measured against the attack: the directive leaves bypass unchanged (\cref{tab:fix-main}, consistent with no instruction being followed), and marker normalisation is syntax-specific, so deleting one label form clears the colon variant to $0\%$ while the bracket variant still clears $100\%$. % src: results/confirm_log.txt [mitigation]; results/supp_log.txt [B]
+The anti-injection directive and the normalisers were already measured against the attack: the directive leaves bypass unchanged (\cref{tab:fix-main}, consistent with no instruction being followed), and label normalisation is syntax-specific, so deleting one label form clears the colon variant to $0\%$ while the bracket variant still clears $100\%$. % src: results/confirm_log.txt [mitigation]; results/supp_log.txt [B]
 
 \subsection{Main results}
 
@@ -58,7 +58,7 @@ The split payload, a pattern absent from training, clears \tbd{X\%} and \tbd{Y\%
 \label{sec:adaptive}
 
 We grant the attacker the defended weights, the boundary mechanism and the training recipe, and follow the evaluation norms of \citet{carlini2019evaluating}.
-Because the content is tokenized with special-token parsing disabled, and no added or special id is reachable from content on Shieldstral (\cref{app:content-tokens}), the content cannot produce the boundary ids: the attacker optimises the content text only, and every attack runs end to end on the full defended model, so no non-differentiable step hides a gradient.
+Because the content is tokenized with special-token parsing disabled, and no added or special id is reachable from content on Shieldstral (\cref{app:content-tokens}), the content cannot produce the boundary tokens: the attacker optimises the content text only, and every attack runs end to end on the full defended model, so no non-differentiable step hides a gradient.
 We report, per example, the worst case over all attacks (any attack succeeds), not the best single attack's average, and we run every attack against B-only and T-only as well as B$+$T.
 
 \begin{table}[t]
@@ -84,5 +84,5 @@ We report, per example, the worst case over all attacks (any attack succeeds), n
 
 \Cref{tab:adaptive} gives the attacks and budgets.
 Forged-boundary strings and Unicode lookalikes test whether the boundary can be rebuilt from text; GCG~\citep{zou2023universal} and checkpoint-GCG~\citep{yang2025auditing} optimise a content suffix to minimise $P(\text{unsafe})$; a structural search enumerates the grammar with label mutations; an LLM attacker that sees the defense gets ten tries per item; and a composition attack splits harm across segments to test \cref{eq:target} directly~\citep{zhou2026prompt}.
-Sanity checks pass: each attack reaches at least \tbd{X\%} bypass on the undefended model, stronger attacks beat weaker ones, and bypass against B$+$T is flat within \tbd{$\Delta$} points as the GCG budget goes from 100 to 500 to 1000 steps, so the attacks have converged.
+Sanity checks pass: each attack reaches at least \tbd{X\%} bypass on the base guard, stronger attacks beat weaker ones, and bypass against B$+$T is flat within \tbd{$\Delta$} points as the GCG budget goes from 100 to 500 to 1000 steps, so the attacks have converged.
 The per-item worst case over all attacks leaves B$+$T at \tbd{Z\%}, against \tbd{X\%} for base and \tbd{Y\%} for naive adversarial training, while the detection and over-refusal of \cref{tab:fix-main} are retained.
