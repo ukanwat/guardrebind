@@ -9,8 +9,8 @@
 LOW=${LOW:-15}
 HIGH=${HIGH:-30}
 BATT_MIN=${BATT_MIN:-0}   # 0 = off (the person, 2026-10-16: run on battery too)
-ON=${ON:-4}
-OFF=${OFF:-1}   # the person, 2026-10-16: use the GPU a bit less so the Mac doesn't freeze
+ON=${ON:-9}
+OFF=${OFF:-1}   # the person, 2026-10-16: ~90% GPU, leave ~10% for normal Mac use
 LOG=$(dirname "$0")/../logs/queue/mem_guard.log
 paused=0
 while true; do
