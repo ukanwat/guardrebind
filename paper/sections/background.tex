@@ -6,10 +6,10 @@ Shieldstral-1.0-3B~\citep{calvi2026shieldstral} takes a fixed system prompt and 
 The developer writes the first two fields, which together form the deployment's \emph{policy}, and interpolates the content into the third.
 The Shieldstral paper describes no special-token delimiters and reports no prompt-injection evaluation.
 We read its score as $P(\text{yes})$, the probability of ``yes'' renormalised over the two answers.
-Llama Guard~\citep{inan2023llama,grattafiori2024llama,chi2024llama,meta2025llamaguard4} wraps the conversation in plain-text \texttt{<BEGIN CONVERSATION>} and \texttt{<END CONVERSATION>} lines, and its prompt holds no policy for content to override.
+Llama Guard~\citep{inan2023llama,grattafiori2024llama,chi2024llama,meta2025llamaguard4} wraps the conversation in plain-text \texttt{<BEGIN CONVERSATION>} and \texttt{<END CONVERSATION>} lines, and its prompt holds a fixed category list but no developer-written policy for content to override.
 gpt-oss-safeguard-20B~\citep{openai2025gptosssafeguard} was post-trained to follow an instruction hierarchy~\citep{wallace2024instruction}.
 Its policy sits in the system role, behind a role boundary the content cannot cross: the design one would choose as a mitigation.
-Our policy asks it to answer 1 if the content violates the policy and 0 otherwise. % src: src/crossmodel.py OSS_POLICY; src/bench/api_bench.py
+Our policy asks it to answer 1 for a violation and 0 otherwise. % src: src/crossmodel.py OSS_POLICY; src/bench/api_bench.py
 
 \paragraph{Deployment.}
 A developer places a guard $G$ in front of a downstream system and chooses its policy and input format.
@@ -17,15 +17,14 @@ Untrusted content $c$ goes into the \emph{content slot} (Shieldstral's \texttt{<
 It may be a user message, a retrieved passage, a tool result in an agent loop or an earlier turn of a conversation.
 $G$ \emph{clears} $c$, judging it safe, if its score is below a threshold $\tau$ ($\tau = 0.5$ unless stated).
 A \emph{label-only} guard returns a verdict and no score, and clears $c$ if the verdict is safe.
-Cleared content is forwarded unchanged.
 
 \paragraph{Attacker.}
 \label{sec:threat}
 The attacker controls only $c$.
 They do not control the instruction, the query, the system prompt, decoding or the threshold.
-Against the attack and the benchmark (\cref{sec:attack,sec:benchmark}) they are black-box: they see no scores, and they may know the deployment's query exactly or not at all.
+Against the attack and the benchmark (\cref{sec:attack,sec:benchmark}) they are black-box: they see no scores, and we test attackers who know the deployment's query exactly and attackers who do not.
 Against the defense (\cref{sec:evaluation}) they know the defense.
-They have the defended weights, the boundary mechanism and the training recipe, may query the defended guard's score, and may optimise content with gradients.
+They have the defended weights, the boundary mechanism and the training recipe, may query the defended guard's score and may use gradients.
 
 \paragraph{Goal and scope.}
 The attacker wants a harmful \emph{request} $h$ to be cleared while it stays present and readable in the forwarded content.
@@ -39,5 +38,4 @@ The flag rule depends on the setting: $G(h) > 0.9$ in the Shieldstral confirmato
 The \emph{attack payload} $p$ is the text the attacker adds to $h$.
 The attack succeeds if $G$ clears $h \oplus p$, where $\oplus$ is concatenation.
 The \emph{bypass rate} (or \emph{bypass}) is the fraction of flagged requests on which it succeeds, reported with a Wilson 95\% interval.
-We measure success at the guard and do not test whether a downstream model acts on the request.
-Shieldstral's bypass figures differ between sections because the flag rule, the items and the decoys differ between studies (\cref{sec:core} relates them).
+We measure success at the guard, not at a downstream model.

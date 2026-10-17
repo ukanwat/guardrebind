@@ -9,7 +9,6 @@ Those targets carry out the injected task or shift their answer. Ours grade the 
 \paragraph{Attacks on guards.}
 Guards have been bypassed with universal perturbations~\citep{mangaokar2024prp}, character-injection evasion~\citep{hackett2025bypassing} and pipeline attacks~\citep{mckenzie2025stack}, and a forged judge-output block bypassed OpenAI's LLM-based detectors~\citep{mccauley2025hat}.
 The closest work is concurrent: \citet{li2026same} forge verdict and authority fields in a typed judge's structured input, and none of their forgeries introduces a new task to grade.
-Our content forges a task instead of a verdict, and we also train and adaptively test a defense.
 
 \paragraph{Structured-query and distillation defenses.}
 StruQ and SecAlign~\citep{chen2024struq,chen2024secalign} combine reserved delimiters with training to ignore injected instructions.

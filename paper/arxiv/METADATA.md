@@ -12,16 +12,16 @@ Utkarsh Kanwat
 
 ## Abstract
 
-(Plain text, no LaTeX, 1278 characters; the arXiv limit is 1920.)
+(Plain text, no LaTeX, 1583 characters; the arXiv limit is 1920.)
 
 ```
-Safety guards check content before an LLM application acts on it, and most paste that content into a plain-text prompt. Content that imitates the prompt can append a second task, and the guard answers that one instead. We call this target rebinding: the guard grades the last complete task in its input, here a harmless decoy, and the harmful request goes through unchanged. In a pre-registered test, an appended forged query and decoy clear all 75 held-out AdvBench requests that Shieldstral-1.0-3B flags. The guard is not persuaded: a directive to ignore the text above clears none of them, and a harmful decoy stops the attack. On our GuardRebind benchmark, the strongest of 52 attack families clears at least 93% of flagged items on each of five guards. Training the guard to score content no lower than its most harmful part cuts attack success from 75% to 0.8-1.6% on attack families, decoys and forged queries held out of training (all appended after the content). AUROC stays within 0.01, though non-inferiority is not established. An adaptive score-guided search still clears the trained guard on 94% of items, usually by placing forged structure before the request. On about half of them, benign text with no forged structure, found by the same search, also clears it.
+Safety guards check content before an LLM application acts on it, and most paste that content into a plain-text prompt. Content that imitates the prompt can append a second task, and the guard answers that one instead. We call this target rebinding. Our explanation is that the guard grades the last complete task in its input, here a harmless decoy, so the harmful request goes through unchanged. In a pre-registered test, an appended forged query and decoy clear all 75 held-out AdvBench requests that Shieldstral-1.0-3B flags. The guard is not persuaded: a directive to ignore the text above clears none of them, and a harmful decoy stops the attack. On our GuardRebind benchmark, each of five guards has an attack family, chosen per guard from 52, that clears at least 93% of its flagged items. Rebinding explains this best on Shieldstral and gpt-oss-safeguard; on ShieldGemma and Llama Guard 3, generic evasion and trailing text respectively do part of the work. Training the guard to score content no lower than its most harmful part cuts attack success from 75% to 0.8-1.6% on attack families, decoys and forged queries held out of training (all appended after the request), a measure we added after a first round of test runs. AUROC stays within 0.01, though non-inferiority is not established. Adaptive attacks still beat the trained guard on 49 of 50 items, a score-guided search alone on 94%, usually by placing forged structure before the request. On about half of the items the search wins, benign text with no forged structure, found by the same search, also clears it.
 ```
 
 ## Comments
 
 ```
-21 pages (13 main body), 2 figures, 7 tables
+21 pages (13 main body), 2 figures, 8 tables
 ```
 
 ## Categories

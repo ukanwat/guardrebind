@@ -1,12 +1,13 @@
 \begin{abstract}
 Safety guards check content before an LLM application acts on it, and most paste that content into a plain-text prompt.
 Content that imitates the prompt can append a second task, and the guard answers that one instead.
-We call this \emph{target rebinding}: the guard grades the last complete task in its input, here a harmless \emph{decoy}, and the harmful request goes through unchanged.
+We call this \emph{target rebinding}. Our explanation is that the guard grades the last complete task in its input, here a harmless \emph{decoy}, so the harmful request goes through unchanged.
 In a pre-registered test, an appended forged query and decoy clear all 75 held-out AdvBench requests that Shieldstral-1.0-3B flags. % src: results/confirm_log.txt [ablation] query_doc 75/75
 The guard is not persuaded: a directive to ignore the text above clears none of them, and a harmful decoy stops the attack. % src: results/confirm_log.txt [ablation] sentence_bare/authority_note 0/75; results/groundtruth_log.txt harmful decoy 0/39
-On our \guardrebind{} benchmark, the strongest of 52 attack families clears at least $93\%$ of flagged items on each of five guards. % src: results/bench/v2/bypass.csv (best family per guard, min 93.4 on Qwen3Guard)
-Training the guard to score content no lower than its most harmful part cuts attack success from $75\%$ to $0.8$--$1.6\%$ on attack families, decoys and forged queries held out of training (all appended after the content). % src: results/fix/r2_test_{base,t_seed0,t_seed1}.json by_decoy_split.heldout.heldout.bypass_benign_decoy
+On our \guardrebind{} benchmark, each of five guards has an attack family, chosen per guard from 52, that clears at least $93\%$ of its flagged items. % src: results/bench/v2/bypass.csv (best family per guard, min 93.4 on Qwen3Guard)
+Rebinding explains this best on Shieldstral and gpt-oss-safeguard; on ShieldGemma and Llama Guard~3, generic evasion and trailing text respectively do part of the work.
+Training the guard to score content no lower than its most harmful part cuts attack success from $75\%$ to $0.8$--$1.6\%$ on attack families, decoys and forged queries held out of training (all appended after the request), a measure we added after a first round of test runs. % src: results/fix/r2_test_{base,t_seed0,t_seed1}.json by_decoy_split.heldout.heldout.bypass_benign_decoy; PROTOCOL_v2.md D4
 AUROC stays within $0.01$, though non-inferiority is not established. % src: auroc 0.810 vs 0.802-0.803
-An adaptive score-guided search still clears the trained guard on $94\%$ of items, usually by placing forged structure before the request. % src: results/fix/r2_adaptive_t_seed0_search.json worst_case 47/50; paper/data/search_no_feedback.md (34 of 47 wins prepend)
-On about half of them, benign text with no forged structure, found by the same search, also clears it. % src: paper/data/search_no_feedback.md (26 plain-text-control wins of 47)
+Adaptive attacks still beat the trained guard on 49 of 50 items, a score-guided search alone on $94\%$, usually by placing forged structure before the request. % src: tab:adaptive all attacks T 49/50 (r2_adaptive_t_seed0_{search,gcg}.json); search 47/50; paper/data/search_no_feedback.md (34 of 47 wins prepend)
+On about half of the items the search wins, benign text with no forged structure, found by the same search, also clears it. % src: paper/data/search_no_feedback.md (26 plain-text-control wins of 47)
 \end{abstract}
