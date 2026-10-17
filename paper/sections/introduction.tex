@@ -1,23 +1,22 @@
 \section{Introduction}
 \label{sec:intro}
 
-Safety guards for large language model (LLM) applications are small models trained to decide whether a piece of text violates a policy.
-They sit in front of chat assistants, retrieval pipelines and agent tool calls, and their verdict acts as a control: cleared content is passed on, and in an agent loop an action may run without further review.
+A harmful request can pass a safety guard unedited if the attacker follows it with a few lines that imitate the guard's own prompt.
+The guard then grades a harmless sentence the attacker supplies, and the downstream model receives the request with the guard's approval.
+Safety guards are small models trained to decide whether a piece of text violates a policy, and large language model (LLM) applications place them in front of chat assistants, retrieval pipelines and agent tool calls.
+Their verdict acts as a control: cleared content is passed on, and in an agent loop an action may run without further review.
+
 Recent guards also take the policy as an input.
-Shieldstral~\citep{calvi2026shieldstral,mistral2026shieldstralblog} is a query--document guard.
-The developer writes an \emph{instruction} (how strict to be) and a \emph{query} (a yes/no question such as ``does this content assist harmful activity?''), the untrusted content goes in as the \emph{document}, and the guard answers whether the document is unsafe with respect to the query (\cref{fig:anatomy}).
+In Shieldstral~\citep{calvi2026shieldstral,mistral2026shieldstralblog}, the developer writes an \emph{instruction} (how strict to be) and a \emph{query} (a yes/no safety question), the untrusted content goes in as the \emph{document}, and the guard answers whether the document is unsafe with respect to the query (\cref{fig:anatomy}).
 gpt-oss-safeguard~\citep{openai2025gptosssafeguard} reasons over a developer-written policy in the system role, and Llama Guard~\citep{inan2023llama,meta2025llamaguard4} grades a conversation against a fixed taxonomy inside its own delimiters.
 In all three, the content under review reaches the model in the same token stream as the text that tells the model what to do with it.
 The Llama Guard paper warns that the model ``may be susceptible to prompt injection attacks''~\citep{inan2023llama}, and the gpt-oss-safeguard report rates the 20B model's prompt-injection robustness at 0.512~\citep{openai2025gptosssafeguard}.
 Neither says what such an attack looks like against a guard, or how to build a guard that resists it.
 
-In the formats we study, the labels that delimit the query and the document (\texttt{<Query>:}, \texttt{<Document>:}) are plain text that the developer interpolates around the content.
-Nothing stops the content from containing the same labels.
+In the formats we study, the labels that mark the query and the document (\texttt{<Query>:}, \texttt{<Document>:}) are plain text that the developer interpolates around the content, and nothing stops the content from containing the same labels.
 When it does, the guard sees two complete grading tasks and grades the document in the last one.
-The harmful request is not removed or rewritten.
-It stays in the message that the guard approves and the downstream model receives.
-We call this \emph{target rebinding}, because the content changes which document the guard grades and leaves its judgement of that document alone.
-The attacker's forged query and document form a \emph{forged pair}, and the text of the forged document, which the guard grades in place of the content, is the \emph{decoy}.
+We call this \emph{target rebinding}: the content changes which document the guard grades and leaves its judgement of that document alone.
+The forged query and document form a \emph{forged pair}, and the forged document, which the guard grades in place of the content, is the \emph{decoy}.
 
 \begin{figure}[t]
   \centering
@@ -45,11 +44,11 @@ Forging a completed task followed by a new one is a known prompt-injection patte
 An informal version of our attack appeared in an earlier blog post~\citep{kanwat2026blog}.
 We do not claim a new class of injection.
 What has been missing is a measurement specific to guards: whether the failure is rebinding or persuasion, how widely it occurs across guard designs, and whether a guard can be trained to resist it.
-Our contributions are:
+We answer each in turn:
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt]
-  \item[\textbf{C1}] \textbf{The attack and why it works.} On Shieldstral only a complete forged pair clears the guard, and bypass falls as the decoy itself becomes more harmful (\cref{sec:attack}).
-  \item[\textbf{C2}] \textbf{It is widespread.} It transfers to two other guard input designs, and our benchmark, \guardrebind{}, finds an attack family above $93\%$ on each of five guards (\cref{sec:benchmark}).
-  \item[\textbf{C3}] \textbf{A defense that holds against held-out attacks and fails against an adaptive one.} Segment-max self-distillation closes the structural channel on appended attack families, decoys and forged queries held out of training, but a score-guided search still breaks it, and more than half of its wins need no forged structure (\cref{sec:defense,sec:evaluation}).
+  \item[\textbf{C1}] \textbf{The guard grades the decoy.} On Shieldstral only a complete forged pair clears the guard, and \emph{bypass}, the share of flagged requests the attack clears, falls as the decoy itself becomes more harmful (\cref{sec:attack}).
+  \item[\textbf{C2}] \textbf{The attack is widespread.} It transfers to two other guard input designs, and on our benchmark, \guardrebind{}, some attack family exceeds $93\%$ bypass on each of five guards (\cref{sec:benchmark}).
+  \item[\textbf{C3}] \textbf{A defense and its limits.} We train the guard to score the whole content at least as high as its most harmful part, with each part scored alone by the frozen base guard (\emph{segment-max self-distillation}). The trained guard resists appended attacks whose families, decoys and forged queries were held out of training, but a search guided by its score still breaks it, and more than half of the search's wins need no forged structure (\cref{sec:defense,sec:evaluation}).
 \end{itemize}
 Predictions were pre-registered, and \cref{app:protocol} lists each one with its outcome.
 % ADAPTERS: pending author decision

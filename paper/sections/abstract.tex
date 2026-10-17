@@ -1,11 +1,7 @@
 \begin{abstract}
-Most LLM safety guards receive the content they judge by string interpolation into a plain-text grading prompt.
-We show that content imitating that prompt can make the guard grade a harmless \emph{decoy} document in place of the real content, which is then approved unchanged.
-We call this \emph{target rebinding}.
-Appending a forged query--document pair clears Shieldstral-1.0-3B on all 75 pre-registered held-out AdvBench requests it flags, and format-adapted versions clear 30/30 on gpt-oss-safeguard-20B and 29/29 on Llama Guard~4. % src: results/confirm_log.txt; results/confirm_crossmodel.csv (first 30 AdvBench rows 200-229)
-In our benchmark, \guardrebind{}, the strongest of 52 attack families clears $93$--$100\%$ of flagged items on each of five guards. % src: results/bench/v2/bypass.csv, paper/data/gpt_oss_strict.md
-Training the guard to score content at least as high as its most harmful part cuts bypass on appended attack families, decoys and queries held out of training from $75\%$ to $0.8$--$1.6\%$. % src: results/fix/r2_test_{base,t_seed0,t_seed1}.json
-Detection AUROC moves by under $0.01$, and flags on benign content carrying a forged pair rise from $0.2\%$ to $0.7\%$.
-An adaptive attacker still breaks it. A score-guided search clears the trained guard on $94\%$ of items, and the per-item worst case including the GCG gradient attack is $98\%$. % src: results/fix/r2_adaptive_*.json
-Benign user prompts placed before the request, with no forged structure, already clear it on $52\%$ of items.
+We make LLM safety guards grade a harmless \emph{decoy} instead of the content they review, so harmful requests pass unchanged.
+Most guards paste content into a plain-text prompt, and content that imitates it opens a second grading task (\emph{target rebinding}).
+An appended forged query--document pair clears Shieldstral-1.0-3B on all 75 pre-registered held-out AdvBench requests it flags, adapted versions clear 30/30 on gpt-oss-safeguard-20B and 29/29 on Llama Guard~4, and on our \guardrebind{} benchmark the best of 52 attack families clears $93$--$100\%$ of flagged items on five guards. % src: results/confirm_log.txt; results/confirm_crossmodel.csv (first 30 AdvBench rows 200-229); results/bench/v2/bypass.csv, paper/data/gpt_oss_strict.md
+Training the guard to score content no lower than its most harmful part cuts the bypass rate on appended attack families, decoys and queries held out of training from $75\%$ to $0.8$--$1.6\%$, while AUROC moves under $0.01$ and flags on benign content with a forged pair rise from $0.2\%$ to $0.7\%$. % src: results/fix/r2_test_{base,t_seed0,t_seed1}.json
+Adaptive attacks win: score-guided search clears the trained guard on $94\%$ of items ($98\%$ per-item worst case with GCG), and benign user prompts placed before the request, without forged structure, clear $52\%$. % src: results/fix/r2_adaptive_*.json
 \end{abstract}
