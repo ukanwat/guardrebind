@@ -16,12 +16,11 @@ The core set is a stratified sample of 600 harmful and 600 benign test items per
 
 \paragraph{Attack grammar.}
 Attacks come from a grammar whose axes are label syntax, number of forged pairs (1--5), position, decoy harm, forged-query relatedness, language, and encoding (real control tokens or plain text), with levels in \cref{app:grammar}.
-Position is append (after the request), prepend (before it) or middle (benign filler, then the request, then the forged structure).
+Position is append (after the request), prepend (before it) or middle (benign filler, then the request, then the forged structure; it differs from append only by the leading filler).
 An attack \emph{family} is the structural choice: one level on each axis. A \emph{form} adds one fixed decoy sentence and one fixed forged query, so a family can have several forms. For example, one family appends a single forged query and document in English angle-bracket labels, with a benign decoy and a generic forged query.
 An \emph{instantiation} of a family draws the two sentences from pools instead: one of 40 benign decoys and one of eight generic safety questions.
 % src: src/bench/attacks_grammar.py (Attack.family, instantiate, QUERY_POOLS_V1 generic, 8 per pool); _INST_DECOY_POOLS benign = 40
-The full grammar has 654 attack forms and 5 controls, one of which is the no-attack condition.
-Its core panel has 63 forms: 58 attack forms in 52 families (five guard-native families have two or three forms each) and the same 5 controls. % src: src/bench/attacks_grammar.py len(grammar(core=False)) = 659 (654 attack + 5 control incl. control|none), len(grammar(core=True)) = 63 = 58 attack forms + 5 controls, 57 families = 52 attack + 5 control; guard_native query_doc n=1 append families with forms 2,2,2,3,2
+The core panel we run has 52 attack families and 5 controls, one of which is the no-attack condition (counts in \cref{app:grammar}). % src: src/bench/attacks_grammar.py len(grammar(core=True)) = 63 = 58 attack forms + 5 controls, 57 families = 52 attack + 5 control
 The \emph{guard-native forgery} forges the guard's whole grading task, writing its turn or template markers as plain text (see \emph{What counts as a task} in \cref{sec:bench-results}). % src: PROTOCOL_v2.md (Deviation D2)
 This forgery is long for Qwen3Guard (about 1.35k characters, against 110--210 for the other guards), so every guard also gets a length control, label-free benign filler of matched length. % src: len of the guard_native query_doc payload per GUARD_SPECS (attacks_grammar.py): qwen3guard 1349, others 113-205
 
@@ -32,7 +31,7 @@ Each item--family cell draws three instantiations, seeded by the item and family
 \subsection{Results}
 \label{sec:bench-results}
 
-The best family is chosen after the fact, so we also report the pre-specified guard-native forgery, which clears $71.7$--$100\%$ on every guard.
+The best family is chosen after the fact, so we also report the guard-native forgery, fixed before any test-split run (for Qwen3Guard, revised on the train split, D2 in \cref{app:protocol}), which clears $71.7$--$100\%$ on every guard.
 Bypass counts only flagged items, so it measures how much of a guard's working detection the attack removes, not its clean accuracy.
 Clean miss rates run from $10.7\%$ on Qwen3Guard to $72.0\%$ on ShieldGemma, whose $100\%$ best bypass covers only the minority of harmful items it flags.
 

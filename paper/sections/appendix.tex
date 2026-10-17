@@ -2,7 +2,7 @@
 \label{app:protocol}
 
 We froze the first protocol before the confirmatory run and did not edit it after seeing results, and we record every deviation from either protocol. % src: PROTOCOL.md, PROTOCOL_v2.md
-These runs are exploratory and fall outside both frozen protocols: the wider set of 100 requests, the three-decoy comparison, the off-topic-query control, the forged-query (attacker knowledge) variants, the forged-verdict and split-payload controls, the real-control-token probe, the colon-label detector and label-normalisation tests, the clean-copy ablation and the GCG control without a forged pair.
+These runs are exploratory and fall outside both frozen protocols: the three-decoy comparison, the off-topic-query control, the forged-verdict controls, the forged-query (attacker knowledge) variants (\cref{sec:attack}), the Qwen3Guard probe (\cref{sec:request-unit}) and the clean-copy ablation (\cref{sec:evaluation}).
 The second protocol was frozen before any test-split run and has four recorded deviations. % src: PROTOCOL_v2.md (Deviations D1-D4)
 \begin{itemize}[leftmargin=1.5em,itemsep=1pt]
   \item D1 adds the variability design: three instantiations per item and family, two paraphrased deployment policies on six families, and three training seeds per defense condition.
@@ -14,7 +14,7 @@ The second protocol was frozen before any test-split run and has four recorded d
 
 \begin{table}[!tbp]
   \centering\footnotesize
-  \caption{Pre-registered predictions and outcomes. P: confirmatory study; M: benchmark; F, A: defense. Intervals are 95\%.}
+  \caption{Pre-registered predictions and outcomes. P: confirmatory study; M: benchmark; F, A: defense. ``Refuted'': the data contradict the prediction; ``not confirmed'': the test is inconclusive. Intervals are 95\%.}
   \label{tab:prereg}
   \begin{tabular}{@{}l p{0.36\linewidth} p{0.52\linewidth}@{}}
     \toprule
@@ -23,7 +23,7 @@ The second protocol was frozen before any test-split run and has four recorded d
     P1 & instruction-only $\le 10\%$ & confirmed (0\%) \\
     P2 & forged pair $\ge 70\%$ & confirmed (100\%) \\
     P3 & harmful decoy lowers bypass & not a valid test as run: the panel's ``harmful decoy'' scores $0.03$ alone, so it is the borderline decoy; bypass fell to 29--35\%; the exploratory three-decoy comparison and M3 address the prediction \\
-    P4 & not recency & confirmed (append 100\%, prepend 15\%) \\
+    P4 & not recency: prepending clears markedly less than appending & confirmed (inert filler appended last 0\%; forged pair appended 100\%, prepended 15\%) \\
     P5 & syntax not load-bearing & confirmed (all variants high, no labels 0\%) \\
     P6 & wide policy-dependence & refuted: median 99\%, range 87--100\% \\
     P7 & directive does not fix & confirmed (unchanged) \\
@@ -31,17 +31,17 @@ The second protocol was frozen before any test-split run and has four recorded d
     P9 & escaping fixes it & refuted: bracket-escape 88\%, label-strip 91\%, nonce-fence 93\% \\
     \midrule
     M1 & a core family $\ge 70\%$ on every guard & confirmed; best family $93.4$--$100\%$ \\
-    M2 & instruction-only $\le 10\%$ on every guard & not confirmed; $\le 7.0\%$ on four guards, $20.2\%$ on ShieldGemma \\
+    M2 & instruction-only $\le 10\%$ on every guard & refuted on ShieldGemma ($20.2\%$); $\le 7.0\%$ on the other four \\
     M3 & dose--response, $\rho \le -0.8$ and non-increasing bins (Shieldstral, Qwen3Guard) & partly supported on Shieldstral: $\rho=-0.84$, interval $[-0.93,-0.67]$ over decoys ($[-0.85,-0.82]$ over requests), $-0.78$ on the dev split, bins not monotone; not run on Qwen3Guard \\
     M4 & control-token syntax $\ge$ angle; gap closes with special parsing off & partly supported; higher in 7 of 8 comparisons but clearly so only on Shieldstral; the parsing-off arm was not part of the benchmark run \\
     M5 & exploratory: category, source, size & released with the artifacts; size not varied within a series \\
     \midrule
     F1 & B alone leaves held-out bypass $\ge 50\%$ & confirmed; $76.8\%$\ci{75.8\%}{77.8\%} \\
-    F2 & T generalises worse than B$+$T on held-out families & confirmed by the pre-registered criterion, with an effect under one point; T (mean of two seeds) $-$ B$+$T $= +0.7$ points\ci{$-0.1$}{$+1.5$}, one-sided $p=0.04$ ($n=290$); T seed 0 alone is below B$+$T \\
+    F2 & T generalises worse than B$+$T on held-out families & confirmed by the pre-registered criterion, with an effect under one point; T (mean of two seeds) $-$ B$+$T $= +0.7$ points\ci{$-0.1$}{$+1.5$}, one-sided $p=0.04$ ($n=290$); both T seeds above B$+$T on the paired items ($0.8\%$, $1.6\%$ vs $0.5\%$) \\
     F3 & B$+$T held-out bypass $\le 10\%$ & confirmed; $0.9\%$\ci{0.7\%}{1.1\%} \\
     F4 & B$+$T AUROC within $0.01$, recall within 2 points (on the interval of the difference) & not confirmed; AUROC $-0.010$\ci{$-0.041$}{$+0.021$}, recall $-0.1$\ci{$-5.0$}{$+4.8$}: point estimates inside the margins, intervals wider \\
     F5 & B$+$T over-refusal within 2 points (on the interval of the difference) & not confirmed; XSTest-safe $-2.7$\ci{$-11.1$}{$+5.4$}, OR-Bench-hard $+0.25$\ci{$-6.6$}{$+7.1$}, structured benign $0.0$\ci{$-3.0$}{$+3.0$}: no point estimate rises by more than $0.25$, intervals wider than the margin \\
-    F6 & naive adversarial training costs $\ge 3$ points structured-benign over-refusal or generalises worse & not confirmed with the fixed decoy ($0.0\%$ on a set overlapping its hard negatives, $0.9$--$1.1\%$ held-out); its costs are clean FPR and the trailing-pair blind spot \\
+    F6 & naive adversarial training costs $\ge 3$ points structured-benign over-refusal or generalises worse & refuted with the fixed decoy ($0.0\%$ on a set overlapping its hard negatives, $0.9$--$1.1\%$ held-out); its costs are clean FPR and the trailing-pair blind spot \\
     \midrule
     A1 & GCG against B$+$T $\le 30\%$ & not tested on B$+$T; on T GCG clears 20/20 \\
     A2 & structural search against B$+$T $\le 20\%$ & confirmed; 4/50 ($8\%$\ci{3\%}{19\%}); the score-guided search, added in D4 without a prediction, clears 34/50 \\
@@ -53,7 +53,7 @@ The second protocol was frozen before any test-split run and has four recorded d
 \section{Benchmark Grammar}
 \label{app:grammar}
 
-The attack grammar has the axes below. The full grammar yields 659 forms (654 attacks, 5 controls), and the core panel has 63. % src: src/bench/attacks_grammar.py grammar(core=False) 659, grammar(core=True) 63, CONTROLS (5)
+The attack grammar has the axes below. The full grammar has 654 attack forms and 5 controls, one of which is the no-attack condition. Its core panel has 63 forms: 58 attack forms in 52 families (five guard-native families have two or three forms each) and the same 5 controls. % src: src/bench/attacks_grammar.py len(grammar(core=False)) = 659 (654 attack + 5 control incl. control|none), len(grammar(core=True)) = 63 = 58 attack forms + 5 controls, 57 families = 52 attack + 5 control; guard_native query_doc n=1 append families with forms 2,2,2,3,2
 A family is held out if its syntax is JSON, YAML, markdown bold or control token, if its language is neither English nor Spanish, or if it has at least three forged pairs. Spanish-label families are therefore held out only through the syntax or pair-count rule. The defense is trained on the remaining families. % src: src/bench/attacks_grammar.py is_heldout
 \begin{itemize}[leftmargin=1.5em,itemsep=1pt]
   \item label syntax: guard-native tags, angle brackets, square brackets, markdown, plain colon, abbreviations, JSON, XML, YAML, control tokens;
@@ -66,10 +66,11 @@ Per-family, per-category and per-source bypass and threshold sensitivity are rel
 \label{app:extra}
 
 \paragraph{Activation patching.}
-Activation patching on Shieldstral is consistent with rebinding but does not identify the circuit that implements it.
+Activation patching on Shieldstral does not locate the mechanism, and we treat it as uninformative about rebinding.
 We run the attacked input and the same input with request and decoy swapped ($n=100$), using for each request a decoy of the closest token length and matching positions by role, not by index, which keeps any remaining length mismatch from misaligning them.
-Patching the residual stream at the final position flips the verdict on at least $99\%$ of inputs at every layer from 20 onward (of 26, numbered from 0). % src: src/mech/patching.py (match_decoy, role-matched position sets); patching_test_n100.json n_layers 26, final.into_attacked.flip_rate[20..25] = 0.99-1.0
-Patching the forged labels, the forged query or the decoy's positions at any layer moves the yes/no logit margin by at most $0.05$ of the gap between the two inputs and flips at most $3\%$ of verdicts. % src: patching_test_n100.json summary.final.into_attacked.flip_rate[20]=0.99; forged_* peak_effect <= 0.043, max flip_rate 0.03
+Patching the residual stream at the final position flips the verdict on at least $99\%$ of inputs at every layer from 20 onward (of 26, numbered from 0), which shows only that the verdict is read out there. % src: src/mech/patching.py (match_decoy, role-matched position sets); patching_test_n100.json n_layers 26, final.into_attacked.flip_rate[20..25] = 0.99-1.0
+Patching the forged labels, alone or with the forged query between them, at any layer moves the yes/no logit margin by at most $0.05$ of the gap between the two inputs and flips at most $3\%$ of verdicts. % src: patching_test_n100.json summary forged_query, forged_document, forged_markers, forged_frame, both directions: max |effect_mean| 0.0496 (forged_frame into_attacked, layer 12), max flip_rate 0.03
+These positions hold the same text in both runs; we did not patch the request or decoy positions, so the experiment does not test whether the guard grades the last document. % src: src/mech/patching.py positions(): forged_query/forged_document are the 3 marker tokens, forged_frame = markers + forged query; no set covers H or D
 
 \paragraph{Benchmark variations.}
 Real control-token syntax changes bypass relative to angle-bracket labels by $-1.5$ to $+10.4$ points, which only partly supports our prediction that it would raise bypass. % src: bypass.csv control_token vs angle, query_doc and full_triple: shieldstral +10.4/+6.3, llama +1.6/+0.5, shieldgemma +6.1/+4.6, qwen -1.5/+1.3

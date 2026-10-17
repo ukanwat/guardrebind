@@ -2,10 +2,10 @@
 \label{sec:discussion}\label{sec:limitations}
 
 \paragraph{Limitations.}
-The confirmatory study covers one guard, one English corpus and short documents, and the Llama Guard~4 and role-boundary checks use 30 requests (\cref{sec:crossmodel}). Bypass counts only flagged items (Shieldstral's clean recall is $47\%$), bounds end-to-end harm from above, and was not tested on retrieval, tool or multi-turn channels. % src: r2_test_base.json recall 0.471
+The confirmatory study covers one guard, one English corpus and short documents, and the Llama Guard~4 and role-boundary checks use 30 requests (\cref{sec:crossmodel}). Bypass counts only flagged items (Shieldstral's clean recall is $47\%$ on our clean test sample, $50\%$ on the core set), bounds end-to-end harm from above, and was not tested on retrieval, tool or multi-turn channels. % src: r2_test_base.json recall 0.471; tab:benchmark-main clean FNR 50.0 (300/600 flagged)
 Some results rest on small runs: the Qwen3Guard probe (40 items), the adaptive attacks (50 items; GCG on 20, not on B$+$T), and single seeds for all trained conditions but T and naive adversarial training.
-On the defense side, our held-out results cover appended forms only, and the defense only partly blunts searched benign prompts (35/50 to 26/50 items, \cref{sec:adaptive}). % src: tab:adaptive plain-text control base 35/50, T 26/50
+Our held-out defense results cover appended forms only, and the defense only partly blunts searched benign prompts (35/50 to 26/50 items, \cref{sec:adaptive}). % src: tab:adaptive plain-text control base 35/50, T 26/50
 Segment-max keeps only combined harm the base guard detects, we ran no composition attack, and we claim no general prompt-injection robustness~\citep{pant2026inseparability}.
 
 \paragraph{Conclusion.}
-Guards that read their task and the content as one plain-text stream can be made to grade a forged task. Segment-max training nearly closes the appended channel we enumerate, but not against an adaptive attacker with score access. Deployers should train the guard and never act on its verdict alone.
+Guards that read their task and the content as one plain-text stream can be made to grade a forged task. Segment-max training cuts appended-attack bypass to about $1\%$, but an adaptive attacker with score access still beats it. Deployers should train the guard and never act on its verdict alone.

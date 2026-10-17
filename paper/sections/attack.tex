@@ -7,7 +7,7 @@ The model reads two query--document pairs whose labels are the same plain text, 
 We hypothesise that the model grades the last complete pair, answering its usual question about the decoy, whereas a persuaded guard would obey the content and answer ``safe''.
 Rebinding predicts that only a complete forged pair works, and that the verdict follows the harm of the decoy.
 The evidence is mainly behavioural: an ablation of the pair and a decoy dose--response check (\cref{sec:binding}).
-Activation patching (\cref{app:extra}) is consistent with rebinding but does not locate the mechanism.
+Activation patching (\cref{app:extra}) does not locate the mechanism: the verdict is read out at the final position, and patching the forged labels or forged query alone barely moves it.
 
 \paragraph{Setup.}
 The ablation panel, the borderline-decoy comparison and the position, label-syntax and policy variations form a \emph{confirmatory} run under a protocol frozen beforehand (\cref{app:protocol}).
@@ -57,8 +57,8 @@ This $100\%$ is the highest of four headline Shieldstral figures, which differ i
 \begin{table}[t]
   \centering
   \footnotesize
-  \caption{The four headline Shieldstral bypass figures. Each counts only items flagged with no attack; controls use their own item sets.}
-  % src: results/confirm_log.txt [ablation] query_doc 75/75 (flag > 0.9); results/bench/v2/bypass.csv shieldstral default: angle query_doc n=1 benign q=exact 0.709, best family angle full_triple n=2 0.992, n_items 300 (flag >= 0.5); results/fix/r2_test_base.json screened 297, by_decoy_split.heldout.heldout.bypass_benign_decoy 5347/7128
+  \caption{The four headline Shieldstral bypass figures. Each counts only items flagged with no attack; controls use their own item sets. On Shieldstral the guard-native forgery renders as the same text as the angle-bracket pair; with its own decoy draws it clears $71.7\%$ (\cref{tab:benchmark-main}).}
+  % src: results/confirm_log.txt [ablation] query_doc 75/75 (flag > 0.9); results/bench/v2/bypass.csv shieldstral default: angle query_doc n=1 benign q=exact 0.709 (guard_native query_doc 0.717: SHIELDSTRAL.forge_native renders the identical string, decoys seeded by family name), best family angle full_triple n=2 0.992, n_items 300 (flag >= 0.5); results/fix/r2_test_base.json screened 297, by_decoy_split.heldout.heldout.bypass_benign_decoy 5347/7128
   \label{tab:four-figures}
   \setlength{\tabcolsep}{4pt}
   \begin{tabular}{@{}rlll@{}}
@@ -66,7 +66,7 @@ This $100\%$ is the highest of four headline Shieldstral figures, which differ i
     bypass & flagged items & flag rule & attack, decoys and queries \\
     \midrule
     $100\%$  & 75 AdvBench requests (\cref{sec:attack}) & $>0.9$ & the forged pair; one fixed decoy and query \\
-    $70.9\%$ & 300 benchmark items, six sources (\cref{sec:benchmark}) & $\ge 0.5$ & the same pair; decoys drawn from a pool \\
+    $70.9\%$ & 300 benchmark items, six sources (\cref{sec:benchmark}) & $\ge 0.5$ & the angle-bracket pair; decoys from a pool \\
     $99.2\%$ & the same 300 items & $\ge 0.5$ & the strongest of 52 families, chosen after the fact \\
     $75.0\%$ & 297 test items (\cref{sec:evaluation}, base guard) & $\ge 0.5$ & held-out families, decoys and queries \\
     \bottomrule

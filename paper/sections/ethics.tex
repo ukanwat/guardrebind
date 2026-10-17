@@ -6,5 +6,5 @@ We reported the attack to the vendors of the affected guards before writing this
 An informal version of the attack has been public since an earlier blog post~\citep{kanwat2026blog}, so we release the paper, the benchmark and the defense without an embargo. Vendors can adopt the defense as a mitigation.
 
 \paragraph{Harms and benefits.}
-The attack is simple and transfers across guards, so we document it and offer a partial mitigation, one that nearly closes the enumerated appended channel but not adaptive attacks, instead of leaving it latent.
+The attack is simple and transfers across guards, so we document it and offer a partial mitigation, one that nearly closes the enumerated appended channel but not adaptive attacks, instead of leaving it unmeasured.
 Every harmful request we test comes from published benchmarks (\cref{sec:benchmark}). The only harmful text we wrote is eight one-line harmful decoys in the style of AdvBench goals, with no operational detail, used to show that the guard still flags a harmful last document. % src: src/bench/attacks_grammar.py HARMFUL_DECOYS
