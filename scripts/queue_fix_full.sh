@@ -36,6 +36,15 @@ wait_free
 
 PY="uv run --frozen python"
 
+# Shared by the main and seeds parts.
+train() { kind=$1; s=$2; data=$3; fmt=$4
+  trained models/fix/${kind}_seed$s || run train_${kind}_seed$s $PY -m src.fix.distill train --data $data \
+    --fmt $fmt --seed $s --out models/fix/${kind}_seed$s; }
+evalm() { kind=$1; s=$2; cond=$3
+  ! trained models/fix/${kind}_seed$s || [ -f results/fix/test_${kind}_seed$s.json ] || \
+    run eval_${kind}_seed$s $PY -m src.fix.evaluate --cond $cond --adapter models/fix/${kind}_seed$s \
+      --split test --allow-test --out results/fix/test_${kind}_seed$s.json; }
+
 if want main; then
 # 0. Mechanism, TEST split (the reported numbers; same settings as the dev runs) -- #
 M="uv run --frozen --with matplotlib python -m src.mech"
@@ -67,14 +76,6 @@ R=results/mech
 #   CC = stock format  + clean-copy target  (data/fix/clean_copy.jsonl); ablation against T. Evaluated as cond T.
 # Seed 0 of everything is trained, evaluated and attacked first, so the deciding results arrive ~1.5 days
 # before the extra seeds (T/AT seed 1, BT seeds 1-2), which only add error bars.
-train() { kind=$1; s=$2; data=$3; fmt=$4
-  trained models/fix/${kind}_seed$s || run train_${kind}_seed$s $PY -m src.fix.distill train --data $data \
-    --fmt $fmt --seed $s --out models/fix/${kind}_seed$s; }
-evalm() { kind=$1; s=$2; cond=$3
-  ! trained models/fix/${kind}_seed$s || [ -f results/fix/test_${kind}_seed$s.json ] || \
-    run eval_${kind}_seed$s $PY -m src.fix.evaluate --cond $cond --adapter models/fix/${kind}_seed$s \
-      --split test --allow-test --out results/fix/test_${kind}_seed$s.json; }
-
 train t  0 data/fix/full.jsonl       stock
 train bt 0 data/fix/full.jsonl       bounded
 train at 0 data/fix/naive_at.jsonl   bounded
