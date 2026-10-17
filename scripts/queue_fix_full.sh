@@ -25,12 +25,18 @@ wait_free() {
   done
 }
 
-echo "$(date '+%H:%M:%S') QUEUE_FIX start" >> $L/queue_fix.log
+# PART=main (Shieldstral: mechanism, data, models, evals, controls, adaptive, extra seeds), PART=generality (fix on
+# LG3-1B and Qwen3Guard-0.6B) or PART=all (default), so two machines can split the work. A file
+# logs/queue/FIX_ELSEWHERE.<part> on this machine skips that part here (it runs on another machine).
+PART=${PART:-all}
+want() { { [ "$PART" = all ] || [ "$PART" = "$1" ]; } && [ ! -f $L/FIX_ELSEWHERE.$1 ]; }
+echo "$(date '+%H:%M:%S') QUEUE_FIX start (PART=$PART)" >> $L/queue_fix.log
 pgrep -f mem_guard.sh > /dev/null || (nohup sh scripts/mem_guard.sh > /dev/null 2>&1 &)
 wait_free
 
 PY="uv run --frozen python"
 
+if want main; then
 # 0. Mechanism, TEST split (the reported numbers; same settings as the dev runs) -- #
 M="uv run --frozen --with matplotlib python -m src.mech"
 R=results/mech
@@ -108,6 +114,9 @@ trained models/fix/bt_seed0 && adaptive BT bt_seed0 --adapter models/fix/bt_seed
   run adaptive_bt_seed0_gcg500 $PY -m src.fix.adaptive --cond BT --adapter models/fix/bt_seed0 --split test \
     --n 10 --attack gcg --steps 500 --batch 32 --out results/fix/adaptive_bt_seed0_gcg500.json
 
+fi
+
+if want generality; then
 # Generality: T (stock format, seed 0) on two more guards, each with its own teacher, template and labels.
 # Separate data and caches per guard (the teacher cache is keyed by text only).
 for pair in llama_guard_3_1b:lg3 qwen3guard_0_6b:qg3; do
@@ -123,13 +132,19 @@ for pair in llama_guard_3_1b:lg3 qwen3guard_0_6b:qg3; do
       --split test --allow-test --out results/fix/test_${S}_t_seed0.json
 done
 
+fi
+
+if want main; then
 # Extra seeds (PROTOCOL_v2 D3: BT 3 seeds, T and AT 2).
 train t  1 data/fix/full.jsonl     stock;   evalm t  1 T
 train bt 1 data/fix/full.jsonl     bounded; evalm bt 1 BT
 train at 1 data/fix/naive_at.jsonl bounded; evalm at 1 BT
 train bt 2 data/fix/full.jsonl     bounded; evalm bt 2 BT
 
+fi
+
 F=results/fix
+R=results/mech
 m=$(missing $F/test_base.json $F/test_B.json $F/test_t_seed0.json $F/test_t_seed1.json $F/test_at_seed0.json \
   $F/test_at_seed1.json $F/test_bt_seed0.json $F/test_bt_seed1.json $F/test_bt_seed2.json \
   $F/adaptive_base_gcg.json $F/adaptive_base_structural.json $F/adaptive_B_gcg.json $F/adaptive_B_structural.json \
@@ -137,6 +152,8 @@ m=$(missing $F/test_base.json $F/test_B.json $F/test_t_seed0.json $F/test_t_seed
   $F/adaptive_bt_seed0_structural.json $F/adaptive_bt_seed0_gcg500.json \
   $R/patching_test_n100.json $R/similarity_test_n150.json $R/probe_test_n150_train600.json \
   $R/dose_response_test_n150_d40.json $F/test_cc_seed0.json $F/forgery_controls_base.json \
-  $F/forgery_controls_t_seed0.json $F/forgery_controls_bt_seed0.json \
-  $F/test_lg3_base.json $F/test_lg3_t_seed0.json $F/test_qg3_base.json $F/test_qg3_t_seed0.json)
+  $F/forgery_controls_t_seed0.json $F/forgery_controls_bt_seed0.json)
+want main || m=""
+want generality && m="$m $(missing $F/test_lg3_base.json $F/test_lg3_t_seed0.json $F/test_qg3_base.json $F/test_qg3_t_seed0.json)"
+m=$(echo $m)
 [ -z "$m" ] && echo "$(date '+%H:%M:%S') QUEUE_FIX done" >> $QLOG || { echo "fix missing: $m" >> $QLOG; exit 1; }
