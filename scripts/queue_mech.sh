@@ -5,7 +5,7 @@ set -u
 cd "$(dirname "$0")/.."
 L=logs/queue
 mkdir -p $L results/mech
-export PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.75 PYTORCH_MPS_LOW_WATERMARK_RATIO=0.6
+export PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.5 PYTORCH_MPS_LOW_WATERMARK_RATIO=0.4
 run() { name=$1; shift; echo "$(date '+%H:%M:%S') START $name" >> $L/queue.log
   nice -n 10 "$@" > $L/$name.log 2>&1; echo "$(date '+%H:%M:%S') END $name exit=$?" >> $L/queue.log; }
 M="uv run --frozen --with matplotlib python -m src.mech"

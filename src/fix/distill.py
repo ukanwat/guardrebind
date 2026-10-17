@@ -111,7 +111,7 @@ def build(out: Path, per_item: int = 3, max_items: int | None = None, seed: int 
 
     from ..bench.guards import load_guard
 
-    label_targets(examples, load_guard("shieldstral", batch_size=32), out.with_suffix(".teacher_cache.jsonl"))
+    label_targets(examples, load_guard("shieldstral", batch_size=16), out.with_suffix(".teacher_cache.jsonl"), batch=16)
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w") as f:
         for ex in examples:
