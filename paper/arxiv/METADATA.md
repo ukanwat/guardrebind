@@ -12,16 +12,16 @@ Utkarsh Kanwat
 
 ## Abstract
 
-(Plain text, no LaTeX, 1360 characters; the arXiv limit is 1920.)
+(Plain text, no LaTeX, 1215 characters; the arXiv limit is 1920.)
 
 ```
-Content that imitates an LLM safety guard's prompt format can make the guard grade a forged, harmless decoy document instead of the real content, which is approved unchanged; we call this target rebinding. It works because most guards receive content by string interpolation into their grading prompt. Appending a forged query-document pair clears Shieldstral-1.0-3B on all 75 pre-registered held-out AdvBench requests it flags, and format-adapted versions clear 30/30 on gpt-oss-safeguard-20B and 29/29 on Llama Guard 4. Our benchmark, GuardRebind, runs 52 attack families and 5 controls against five guards; on every guard the strongest family clears 93-100% of flagged items. Training the guard to score content at least as high as its most harmful part cuts bypass on appended attack families, decoys and queries held out of training from 75% to 0.8-1.6%; detection AUROC moves by under 0.01, while flags on benign content carrying a forged pair rise from 0.2% to 0.7%. An adaptive attacker with score access still breaks it: a score-guided search clears the trained guard on 94% of items (68% with learned boundary tokens around the content), and with the GCG gradient attack the per-item worst case is 98%. More than half of these wins need no forged structure: benign user prompts placed before the request alone clear the trained guard on 52% of items.
+Most LLM safety guards receive the content they judge by string interpolation into a plain-text grading prompt. We show that content imitating that prompt can make the guard grade a harmless decoy document in place of the real content, which is then approved unchanged. We call this target rebinding. Appending a forged query-document pair clears Shieldstral-1.0-3B on all 75 pre-registered held-out AdvBench requests it flags, and format-adapted versions clear 30/30 on gpt-oss-safeguard-20B and 29/29 on Llama Guard 4. In our benchmark, GuardRebind, the strongest of 52 attack families clears 93-100% of flagged items on each of five guards. Training the guard to score content at least as high as its most harmful part cuts bypass on appended attack families, decoys and queries held out of training from 75% to 0.8-1.6%. Detection AUROC moves by under 0.01, and flags on benign content carrying a forged pair rise from 0.2% to 0.7%. An adaptive attacker still breaks it. A score-guided search clears the trained guard on 94% of items, and the per-item worst case including the GCG gradient attack is 98%. Benign user prompts placed before the request, with no forged structure, already clear it on 52% of items.
 ```
 
 ## Comments
 
 ```
-33 pages (20 main body), 3 figures, 16 tables
+20 pages (13 main body), 2 figures, 7 tables
 ```
 
 ## Categories

@@ -1,46 +1,37 @@
 \section{Guards and Threat Model}
 \label{sec:background}
 
-\subsection{How guards receive content}
-
-\paragraph{Shieldstral.}
-Shieldstral-1.0-3B~\citep{calvi2026shieldstral} answers a yes/no question about a document.
-Its model card specifies a fixed system prompt and a user message with three plain-text fields, \texttt{<Instruct>}, \texttt{<Query>} and \texttt{<Document>} (\cref{fig:anatomy}); the developer writes the first two, which together form the deployment's \emph{policy}, and interpolates the content into the third. % src: src/prompt.py (verbatim from the model card)
-The paper describes no special-token delimiters and reports no prompt-injection evaluation.
-We read the score as $P(\text{yes})$ from the yes/no logits renormalised over the two answers.
-
-\paragraph{Llama Guard.}
-Llama Guard~\citep{inan2023llama} and its successors~\citep{grattafiori2024llama,chi2024llama,meta2025llamaguard4} grade a conversation against a fixed category taxonomy (S1--S14 for Llama Guard~4).
-The chat template wraps the conversation in plain-text \texttt{<BEGIN CONVERSATION>} and \texttt{<END CONVERSATION>} lines, and the model emits \texttt{safe} or \texttt{unsafe} plus a category.
-There is no policy in the prompt for the content to override.
-
-\paragraph{gpt-oss-safeguard.}
-gpt-oss-safeguard-20B and -120B~\citep{openai2025gptosssafeguard} reason over a developer-written policy placed in the system role and were post-trained to follow an instruction hierarchy~\citep{wallace2024instruction}; the content is a separate user message.
-This is the design one would choose as a mitigation: the policy sits behind a role boundary the content cannot cross.
-
-\subsection{Threat model}
-\label{sec:threat}
+\paragraph{Guards.}
+Shieldstral-1.0-3B~\citep{calvi2026shieldstral} uses a fixed system prompt and a user message with three plain-text fields, \texttt{<Instruct>}, \texttt{<Query>} and \texttt{<Document>} (\cref{fig:anatomy}). % src: src/prompt.py (verbatim from the model card)
+The developer writes the first two, which together form the deployment's \emph{policy}, and interpolates the content into the third.
+Its paper describes no special-token delimiters and reports no prompt-injection evaluation.
+We read its score as $P(\text{yes})$, the yes/no logits renormalised over the two answers.
+Llama Guard~\citep{inan2023llama,grattafiori2024llama,chi2024llama,meta2025llamaguard4} wraps the conversation in plain-text \texttt{<BEGIN CONVERSATION>} and \texttt{<END CONVERSATION>} lines and has no policy in the prompt for content to override.
+gpt-oss-safeguard-20B~\citep{openai2025gptosssafeguard} was post-trained to follow an instruction hierarchy~\citep{wallace2024instruction}, so the policy in its system role sits behind a role boundary the content cannot cross, the design one would pick as a mitigation.
 
 \paragraph{Deployment.}
-A developer places a guard $G$ in front of a downstream system, chooses the policy (an instruction and query, or a written policy) and the format, and inserts untrusted content $c$ into the \emph{content slot} (Shieldstral's \texttt{<Document>} field).
-$G$ \emph{clears} $c$ if its score is below a threshold $\tau$ ($\tau = 0.5$ unless stated) or, for \emph{label-only} guards that return a verdict but no score, if the verdict is safe; cleared content is forwarded unchanged.
-Content arrives through one of four channels: (i)~a user message in a chat deployment; (ii)~a retrieved passage in retrieval-augmented generation; (iii)~a tool result in an agent loop, where clearing the guard may cause an action to run; and (iv)~an earlier turn of a multi-turn history.
+\label{sec:threat}
+A developer places a guard $G$ in front of a downstream system, chooses the policy and the format, and inserts untrusted content $c$ into the \emph{content slot} (Shieldstral's \texttt{<Document>} field).
+$G$ \emph{clears} $c$ if its score is below a threshold $\tau$ ($\tau = 0.5$ unless stated).
+For \emph{label-only} guards, which return a verdict and no score, $G$ clears $c$ if the verdict is safe.
+Cleared content is forwarded unchanged.
+Content can arrive as a user message, a retrieved passage, a tool result in an agent loop, or an earlier turn of a conversation.
 
 \paragraph{Attacker.}
 The attacker controls only $c$.
 They do not control the instruction, the query, the system prompt, decoding or the threshold, and they do not see scores.
-For the attack and the measurement (\cref{sec:attack,sec:benchmark}) the attacker is black-box, with knowledge of the deployment's query ranging from exact to none (\cref{sec:robustness}).
-For the defense (\cref{sec:evaluation}) the attacker knows the defense: they have the defended weights, the boundary mechanism and the training recipe, may query the defended guard's score, and may optimise content with gradients.
+For the attack and the benchmark (\cref{sec:attack,sec:benchmark}) the attacker is black-box and may know the deployment's query exactly or not at all.
+For the defense (\cref{sec:evaluation}) the attacker knows the defense.
+They have the defended weights, the boundary mechanism and the training recipe, may query the defended guard's score, and may optimise content with gradients.
 
 \paragraph{Goal and scope.}
-The attacker wants a harmful \emph{request} $h$, a harmful text from a public benchmark that $G$ flags on its own, to be cleared while remaining present and readable in the forwarded content.
-Attacks that remove, paraphrase or obfuscate $h$ are out of scope; this separates target rebinding from evasion that hides harmful content from a classifier~\citep{hackett2025bypassing,mangaokar2024prp}.
-Also out of scope: attackers who control the guard's prompt or weights, multimodal content, and denial of service by making benign content flagged (we measure the latter as \emph{over-refusal}, the rate at which benign content is flagged, not as an attack goal).
+The attacker wants a harmful \emph{request} $h$, a harmful text from a public benchmark that $G$ flags on its own, to be cleared while it stays present and readable in the forwarded content.
+Attacks that remove, paraphrase or obfuscate $h$ are out of scope, which separates target rebinding from evasion that hides harmful content from a classifier~\citep{hackett2025bypassing,mangaokar2024prp}.
+Attackers who control the guard's prompt or weights, multimodal content and denial of service are also out of scope.
 
 \paragraph{Success criterion.}
-Only \emph{screened} requests count: those the deployment flags with no attack.
-The screen is $G(h) > 0.9$ for the Shieldstral confirmatory study, a majority \texttt{unsafe} verdict over three samples for the label-only guards, and $G(h) \ge 0.5$ in \guardrebind{} and the defense evaluation. % src: PROTOCOL.md (v1), PROTOCOL_v2.md (Metrics)
-The confirmatory study kept a stricter screen so that only confidently flagged requests count; \guardrebind{} and the defense use the deployment threshold itself, so rates from the two are not directly comparable (\cref{sec:bench-results}).
-An attack succeeds on $h$ if $G$ clears $h \oplus p$, where the \emph{attack payload} $p$ is the text the attacker adds to $h$ and $\oplus$ is concatenation.
-The \emph{bypass rate} (or \emph{bypass}) is the fraction of screened requests on which the attack succeeds, reported with a Wilson 95\% interval.
-Success is measured at the guard: we do not measure whether a downstream model acts on the forwarded request.
+Only \emph{screened} requests count, meaning those the deployment flags with no attack.
+The screen is $G(h) > 0.9$ in the Shieldstral confirmatory study, a majority \texttt{unsafe} verdict over three samples for label-only guards, and $G(h) \ge 0.5$ in \guardrebind{} and the defense evaluation, so rates from the confirmatory study and the benchmark are not directly comparable. % src: PROTOCOL.md (v1), PROTOCOL_v2.md (Metrics)
+The \emph{attack payload} $p$ is the text the attacker adds to $h$, and the attack succeeds if $G$ clears $h \oplus p$, where $\oplus$ is concatenation.
+The \emph{bypass rate} (or \emph{bypass}) is the fraction of screened requests on which the attack succeeds, with a Wilson 95\% interval.
+We measure success at the guard, not whether a downstream model acts on the request.

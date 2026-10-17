@@ -8,13 +8,12 @@ We compare $\{$none, B, T, B$+$T$\}$ with training-free baselines (\cref{sec:eva
 
 \paragraph{Part B: a boundary the content cannot produce.}
 The \emph{bounded format} renders the guard's \emph{stock format} (its unmodified chat template) with an empty document slot, keeping the trusted prefix and suffix as they are.
-The content is tokenized on its own with special-token parsing disabled, so any control-token string inside it (\cref{sec:control}) becomes ordinary text tokens.
-The flag applies only to tokens the tokenizer declares special, so added tokens not marked special stay atomic~\citep{zhan2026samebytes,yang2026nameless}; on Shieldstral, which the defense is trained on, no added or special id is reachable from content under this encoder (\cref{app:content-tokens}).
+The content is tokenized on its own with special-token parsing disabled, so any control-token string inside it becomes ordinary text tokens.
+The flag applies only to tokens the tokenizer declares special, so added tokens not marked special stay atomic~\citep{zhan2026samebytes,yang2026nameless}; on Shieldstral, which the defense is trained on, no added or special id is reachable from content under this encoder (\cref{app:defense-impl}).
 The content's token ids are then wrapped in two reserved \emph{boundary tokens}, ids that are unused in pretraining and that no input text tokenizes to; they mark the open and the close of the document. % src: src/fix/inputs.py (bounded_ids, DOC_OPEN_ID/DOC_CLOSE_ID)
 Nothing is removed from the content: a literal \texttt{<Query>:} or \texttt{[/INST]} reaches the model as plain text inside the boundary.
-This is the parameterised-query idea from SQL injection, in the reserved-delimiter form of StruQ and SecAlign~\citep{chen2024struq,chen2024secalign} and close to the learned delimiters of DefensiveTokens and of learnable trust-boundary delimiters (LTBD)~\citep{chen2025defending,zhao2026ltbd}, applied to a classifier's content slot.
-Because the boundary tokens are unused, their meaning has to be learned.
-B alone (bounded format, base weights, untrained boundary embeddings) therefore tests only whether the format change helps without training; the trained-boundary condition is B$+$T, in which the two boundary embeddings are learned together with T.
+This is the reserved-delimiter idea of StruQ and SecAlign~\citep{chen2024struq,chen2024secalign}, applied to a classifier's content slot.
+Because the boundary tokens are unused, B alone (untrained boundary embeddings) tests only whether the format change helps without training; in B$+$T the two boundary embeddings are learned together with T.
 
 \paragraph{Part T: segment-max self-distillation.}
 The training target makes the \emph{student}, the guard being trained, score the whole content at least as high as its most harmful part.
@@ -25,21 +24,16 @@ For content $c$ with segments $S(c)$,
   \label{eq:target}
 \end{equation}
 For an attacked training example the segments are the original request and the decoy; clean content has no segments beyond itself, so it is distilled to the teacher's own score. % src: src/fix/distill.py (_variants, label_targets)
-Including the whole content $T(c)$ means the target is never below the teacher's reading of the full text, which bounds compositional harm that appears only in combination~\citep{zhou2026prompt}.
-The max is safety-conservative (content is unsafe if any part is, the multiple-instance rule that a bag is positive if any instance is~\citep{ilse2018attention}), and it is well defined without knowing which segment is the injection.
-Scanning a long input in segments and acting on any flagged one is existing inference-time guidance~\citep{meta2025promptguard2}; we run it as a baseline (\emph{inference-time segment-max}: split the content at label-like strings, score every segment and the whole, take the max). Here the max is a training target, so the defended guard reads the content in one pass and needs no segmenter at inference.
-When the decoy is benign the target reduces to the teacher's score on the original request, which is clean-context distillation~\citep{peng2026secopd,dhouib2026raised}; the two differ only where the decoy or the whole attacked content scores above the original item on its own.
-A clean-copy ablation, trained the same way as T but with the teacher reading only the original item, tests whether the max matters (\cref{tab:fix-main}).
+Including the whole content $T(c)$ bounds compositional harm that appears only in combination~\citep{zhou2026prompt}, and the max is well defined without knowing which segment is the injection.
+Scanning a long input in segments at inference is existing guidance~\citep{meta2025promptguard2}, and we run it as a baseline (\cref{sec:evaluation}); here the max is a training target, so the defended guard reads the content in one pass and needs no segmenter.
+When the decoy is benign the target reduces to clean-context distillation~\citep{peng2026secopd,dhouib2026raised}; a \emph{clean-copy} ablation, with the teacher reading only the original item, tests whether the max matters.
 The student reads the whole content through the chosen format and is trained with binary cross-entropy between the yes/no logit margin and the target.
-Training uses low-rank adaptation (LoRA) on the attention and MLP projections with the embedding matrix frozen; in B$+$T the two boundary-token embedding rows are also trained, and T uses the stock format (\cref{app:defense-impl}).
-
-\paragraph{Hard negatives.}
-Training also includes benign text that carries label-like structure, generated from nine templates (FAQs, forms, chat logs, support tickets, meeting notes, markdown, JSON, YAML and documents that quote guard tags such as \texttt{<Query>:}) filled with benign train-split text; they are disjoint from the structured-benign test set.
-Their targets come from the teacher, so the model learns that structure alone is not a reason to flag, in the spirit of NotInject/InjecGuard~\citep{li2024injecguard}. % src: src/fix/distill.py (structured_benign); src/bench/data.py TEMPLATES
-The structured-benign test set of \cref{sec:evaluation} uses the same templates with test-split fill text, so over-refusal on it measures new content in familiar templates.
+Training uses low-rank adaptation (LoRA) on the attention and multilayer-perceptron (MLP) projections with the embedding matrix frozen; in B$+$T the two boundary-token embedding rows are also trained, and T uses the stock format (\cref{app:defense-impl}).
 
 \paragraph{Training data.}
+Training also includes \emph{hard negatives}: benign text that carries label-like structure, generated from nine templates (FAQs, forms, chat logs, markdown, JSON and others) filled with benign train-split text.
+Their targets come from the teacher, so the model learns that structure alone is not a reason to flag, in the spirit of NotInject/InjecGuard~\citep{li2024injecguard}. % src: src/fix/distill.py (structured_benign); src/bench/data.py TEMPLATES
+The structured-benign test set uses the same templates with test-split fill text, so over-refusal on it measures new content in familiar templates.
 Segments are known at training time because the training attacks are generated: each of 5{,}000 train-split harmful or benign items appears clean and with two attacks sampled from the training attack families, plus 1{,}250 structured-benign items, for 16{,}250 examples. % src: PROTOCOL_v2.md (Fixed training recipe, D3: 5000 items x 2 attacks); src/fix/distill.py (build --decoy-split train)
-Each attack's decoy and forged query are drawn, per example, from the training half of their pools: 20 of the 40 benign decoys, 3 of 6 borderline and 4 of 8 harmful decoys, and 4 of the 8 forged queries at each relatedness level. % src: src/bench/attacks_grammar.py POOL_SPLIT, draw_split
+Each attack's decoy and forged query are drawn, per example, from the training half of their pools (\cref{app:defense-impl}). % src: src/bench/attacks_grammar.py POOL_SPLIT, draw_split
 No test item, no held-out attack family and no held-out decoy or forged query is seen in training.
-At inference the defended guard needs no segmentation: it reads the bounded content once.

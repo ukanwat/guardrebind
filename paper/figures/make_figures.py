@@ -8,7 +8,6 @@ the newtx text font); colours are Okabe-Ito (colour-blind safe).
 
 from __future__ import annotations
 
-import json
 import os
 from pathlib import Path
 
@@ -111,50 +110,6 @@ def fig_scores() -> None:
     plt.close(fig)
 
 
-def fig_mech() -> None:
-    """(a) Activation patching on the test split; (b) decoy dose-response on the test split."""
-    p = json.loads((RESULTS / "mech" / "patching_test_n100.json").read_text())
-    d = json.loads((RESULTS / "mech" / "dose_response_test_n150_d40.json").read_text())
-
-    fig, (a, b) = plt.subplots(1, 2, figsize=(6.3, 2.35), gridspec_kw={"wspace": 0.3})
-    layers = np.arange(p["n_layers"])
-    series = [("final", "into_attacked", "final position, flag restored", OKABE["vermillion"], "-"),
-              ("final", "into_swapped", "final position, bypass transferred", OKABE["blue"], "-"),
-              ("forged_markers", "into_attacked", "forged labels, flag restored", OKABE["orange"], "--"),
-              ("forged_frame", "into_attacked", "forged query + labels, flag restored", OKABE["green"], ":")]
-    for key, direction, label, colour, ls in series:
-        e = p["summary"][key][direction]
-        a.plot(layers, e["flip_rate"], color=colour, ls=ls, lw=1.2, label=label)
-        a.fill_between(layers, e["flip_lo"], e["flip_hi"], color=colour, alpha=0.15, lw=0)
-    a.set_xlabel("layer patched")
-    a.set_ylabel("share of verdicts flipped")
-    a.set_ylim(-0.03, 1.03)
-    a.legend(loc="upper left", frameon=False, handlelength=1.6, fontsize=7)
-    a.set_title(f"(a) activation patching, $n={p['n_items']}$", loc="left")
-
-    rungs = d["rungs"]
-    x = np.array([r["standalone"] for r in rungs])
-    y = np.array([r["bypass"] for r in rungs])
-    b.scatter(x, y, s=12, color=OKABE["blue"], linewidths=0, zorder=3, label="one decoy")
-    bins = d["binned"]
-    bx = [r["mean_standalone"] for r in bins]
-    by = [r["bypass"] for r in bins]
-    err = np.array([[r["bypass"] - r["ci"][0] for r in bins], [r["ci"][1] - r["bypass"] for r in bins]])
-    b.errorbar(bx, by, yerr=err, color=OKABE["black"], lw=0.9, capsize=2, zorder=4, label="binned (95% CI)")
-    b.set_xlabel("decoy's standalone score")
-    b.set_ylabel("bypass")
-    b.set_xlim(-0.03, 1.03)
-    b.set_ylim(-0.03, 1.03)
-    b.legend(loc="upper right", frameon=False, fontsize=7)
-    b.set_title(f"(b) {d['n_rungs']} decoys, $n={d['n_requests']}$, " + r"$\rho=" + f"{d['spearman_rho_bypass']:.2f}$",
-                loc="left")
-
-    fig.savefig(HERE / "fig_mech.pdf")
-    plt.close(fig)
-
-
 if __name__ == "__main__":
     fig_scores()
     print("wrote", HERE / "fig_scores.pdf")
-    fig_mech()
-    print("wrote", HERE / "fig_mech.pdf")

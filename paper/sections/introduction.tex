@@ -1,19 +1,23 @@
 \section{Introduction}
 \label{sec:intro}
 
-Safety guards for large language model (LLM) applications are small language models trained to answer one question about one piece of text: does this content violate a policy?
-They sit in front of chat assistants, on retrieval pipelines and around agent tool calls, and their verdict is used as a control: cleared content is passed on, and in an agent loop an action may run without further review.
-Recent guards make the policy itself an input.
-Shieldstral~\citep{calvi2026shieldstral,mistral2026shieldstralblog} is a query--document guard: the developer supplies an \emph{instruction} (how strict to be) and a \emph{query} (a yes/no grading question such as ``does this content assist harmful activity?''), the untrusted content is inserted as the \emph{document}, and the guard answers whether the document is unsafe with respect to the query (\cref{fig:anatomy}); gpt-oss-safeguard~\citep{openai2025gptosssafeguard} reasons over a developer-written policy in the system role; Llama Guard~\citep{inan2023llama,meta2025llamaguard4} grades a conversation against a fixed taxonomy inside its own delimiters.
-In all three, the content under review reaches the model through the same token stream as the structure that tells the model what to do with it.
-The original Llama Guard paper already warns that the model ``may be susceptible to prompt injection attacks''~\citep{inan2023llama}, and the gpt-oss-safeguard report rates the 20B model's prompt-injection robustness at 0.512~\citep{openai2025gptosssafeguard}; neither says what such an attack looks like against a guard, or how to build a guard that resists it.
+Safety guards for large language model (LLM) applications are small models trained to decide whether a piece of text violates a policy.
+They sit in front of chat assistants, retrieval pipelines and agent tool calls, and their verdict acts as a control: cleared content is passed on, and in an agent loop an action may run without further review.
+Recent guards also take the policy as an input.
+Shieldstral~\citep{calvi2026shieldstral,mistral2026shieldstralblog} is a query--document guard.
+The developer writes an \emph{instruction} (how strict to be) and a \emph{query} (a yes/no question such as ``does this content assist harmful activity?''), the untrusted content goes in as the \emph{document}, and the guard answers whether the document is unsafe with respect to the query (\cref{fig:anatomy}).
+gpt-oss-safeguard~\citep{openai2025gptosssafeguard} reasons over a developer-written policy in the system role, and Llama Guard~\citep{inan2023llama,meta2025llamaguard4} grades a conversation against a fixed taxonomy inside its own delimiters.
+In all three, the content under review reaches the model in the same token stream as the text that tells the model what to do with it.
+The Llama Guard paper warns that the model ``may be susceptible to prompt injection attacks''~\citep{inan2023llama}, and the gpt-oss-safeguard report rates the 20B model's prompt-injection robustness at 0.512~\citep{openai2025gptosssafeguard}.
+Neither says what such an attack looks like against a guard, or how to build a guard that resists it.
 
-The \emph{labels} that delimit the query and the document (\texttt{<Query>:}, \texttt{<Document>:}) are, in the formats we study, plain text that the developer interpolates around untrusted content.
+In the formats we study, the labels that delimit the query and the document (\texttt{<Query>:}, \texttt{<Document>:}) are plain text that the developer interpolates around the content.
 Nothing stops the content from containing the same labels.
-When it does, the guard sees two complete grading tasks and grades the document in the last one (\cref{fig:anatomy}).
-The harmful request is not removed, rewritten or hidden: it stays in the message that the guard approves and the downstream model receives.
-We call this \emph{target rebinding}: the content changes which document the guard is grading, not the guard's judgement of that document.
-We call the attacker's forged query and document a \emph{forged pair}, and the text of its document, which the guard grades in place of the content, the \emph{decoy}.
+When it does, the guard sees two complete grading tasks and grades the document in the last one.
+The harmful request is not removed or rewritten.
+It stays in the message that the guard approves and the downstream model receives.
+We call this \emph{target rebinding}, because the content changes which document the guard grades and leaves its judgement of that document alone.
+The attacker's forged query and document form a \emph{forged pair}, and the text of the forged document, which the guard grades in place of the content, is the \emph{decoy}.
 
 \begin{figure}[t]
   \centering
@@ -37,26 +41,16 @@ We call the attacker's forged query and document a \emph{forged pair}, and the t
   \label{fig:anatomy}
 \end{figure}
 
-Forging a completed task followed by a new one is a known prompt-injection pattern against LLM-integrated applications~\citep{liu2024formalizing}, and forged template, conversational or judge-output structure is documented against agents, chat models and LLM judges~\citep{deng2026automating,chang2025chatinject,chen2024goal,li2025separator,shi2024optimizationbased,li2025llms,gros2026evaluating,tamber2025illusions,mccauley2025hat}; concurrent work forges verdict and authority fields in a judge's input~\citep{li2026same}.
-An informal version of the core attack appeared in an earlier blog post~\citep{kanwat2026blog}.
-We do not claim a new class of injection (\cref{sec:related} positions this work).
-What has been missing is a guard-specific measurement: whether the failure is rebinding or persuasion, how widely it occurs across guard designs, and whether a guard can be trained to resist it.
-
-\paragraph{Evidence.}
-In a pre-registered study on Shieldstral, the forged pair clears 75 of 75 harmful AdvBench requests that the guard flags with no attack, drawn from rows held out of all exploratory runs ($100\%$\ci{95\%}{100\%}); a forged document alone clears $9\%$ and an instruction alone $0\%$ (\cref{sec:attack}). % src: results/confirm_log.txt
-Across 40 decoys, bypass (the share of flagged requests that the attack gets cleared) falls as the decoy's own score rises (Spearman $\rho=-0.84$, decoy-bootstrap 95\% interval $[-0.93, -0.67]$), the dose--response that rebinding predicts (\cref{sec:binding}). % src: results/mech/dose_response_test_n150_d40_rho_ci.json
-The construction transfers to gpt-oss-safeguard-20B and Llama Guard~4 (30/30 and 29/29 flagged AdvBench requests), and in our benchmark, \guardrebind{}, the strongest attack family clears $93$--$100\%$ of flagged items on each of five guards (\cref{sec:benchmark}). % src: results/confirm_crossmodel.csv; results/bench/v2/bypass.csv; paper/data/gpt_oss_strict.md
-Segment-max self-distillation, which trains the guard to score content at least as high as the base guard scores its most harmful part, is trained on one half of the decoy and forged-query pools and tested on the other half.
-On Shieldstral it changes bypass on appended attack families and decoys held out of training from $75.0\%$ to $0.8$--$1.6\%$ (two seeds). When the content is also wrapped in two learned \emph{boundary tokens} that content cannot produce (B$+$T), detection and over-refusal point estimates stay within the pre-registered margins, though the intervals are too wide to confirm non-inferiority; with training alone (T) one seed exceeds the over-refusal margin on OR-Bench-hard ($+2.7$ points against $\pm 2$). Flags on benign content carrying a forged pair rise from $0.2\%$ to $0.7\%$ ($0.8\%$ for B$+$T), a small but statistically detectable cost. An attacker who enumerates all 654 attack forms, in any position, clears it on $8\%$ of items (\cref{sec:evaluation}). % src: r2_test_{base,t_seed0,t_seed1,bt_seed0}.json attacked_benign_fpr_benign_decoy, fixed decoy, train+heldout: 4, 16, 16, 19 of 2400; Fisher exact vs base p = 0.012 (T), 0.003 (B+T)
-An attacker who can query the defended guard's score still breaks it: a score-guided search clears the trained guard on $94\%$ of items and B$+$T on $68\%$; with the Greedy Coordinate Gradient (GCG) attack~\citep{zou2023universal} the per-item worst case is $98\%$ (\cref{sec:adaptive,app:gcg}).
-More than half of these wins need no forged structure: benign user prompts placed before the request, with no labels, clear the trained guard on $52\%$ of items and the base guard on $70\%$.
-
-\paragraph{Contributions.}
+Forging a completed task followed by a new one is a known prompt-injection pattern~\citep{liu2024formalizing}, and forged template, conversation and judge-output structure has been used against agents, chat models and LLM judges (\cref{sec:related}).
+An informal version of our attack appeared in an earlier blog post~\citep{kanwat2026blog}.
+We do not claim a new class of injection.
+What has been missing is a measurement specific to guards: whether the failure is rebinding or persuasion, how widely it occurs across guard designs, and whether a guard can be trained to resist it.
+Our contributions are:
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt]
-  \item[\textbf{C1}] \textbf{Target rebinding is structural.} On Shieldstral, only a complete forged query--document pair clears the guard; the bypass tracks the harm of the decoy; and it is not explained by recency, a single label syntax or the policy wording (\cref{sec:attack}).
-  \item[\textbf{C2}] \textbf{It is widespread.} The attack transfers across three guard input designs, and \guardrebind{}, a grammar of 52 attack families and 5 controls, measures it across five guards with clean (no-attack) miss and false-positive rates alongside; every guard has a family above $93\%$ (\cref{sec:benchmark}).
-  \item[\textbf{C3}] \textbf{Training generalises to held-out attacks but not to an adaptive attacker.} Segment-max self-distillation (T), with or without trained boundary tokens, closes the structural channel on appended attack families, decoys and forged queries held out of training, where a fail-closed structure detector and inference-time segment-max (taking the max over the content's parts at run time) both let $23\%$ of these attacks through and the detector also blocks about half of benign structured content. It does not hold against a score-guided search or GCG, and a plain-text control shows that more than half of the search's wins need no forged structure (\cref{sec:defense,sec:evaluation}).
+  \item[\textbf{C1}] \textbf{The attack and why it works.} On Shieldstral only a complete forged pair clears the guard, and bypass falls as the decoy itself becomes more harmful (\cref{sec:attack}).
+  \item[\textbf{C2}] \textbf{It is widespread.} It transfers to two other guard input designs, and our benchmark, \guardrebind{}, finds an attack family above $93\%$ on each of five guards (\cref{sec:benchmark}).
+  \item[\textbf{C3}] \textbf{A defense that holds against held-out attacks and fails against an adaptive one.} Segment-max self-distillation closes the structural channel on appended attack families, decoys and forged queries held out of training, but a score-guided search still breaks it, and more than half of its wins need no forged structure (\cref{sec:defense,sec:evaluation}).
 \end{itemize}
-Pre-registered predictions are labelled P1--P9 (confirmatory study), M1--M5 (benchmark), F1--F6 and A1--A3 (defense); \cref{app:protocol} lists each with its outcome.
+Predictions were pre-registered, and \cref{app:protocol} lists each one with its outcome.
 % ADAPTERS: pending author decision
-We release the code (benchmark, harness and defense), the training commands and the result files behind every number (\cref{app:open-science}).
+We release the code, the benchmark, the training commands and the result files behind every number (\cref{app:open-science}).

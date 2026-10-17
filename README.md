@@ -50,19 +50,19 @@ read files in `results/`.
 | 100-request run (text) | `results/confirm_hundred.csv`, `results/hundred_log.txt` | `python -m src.hundred` (GPU) |
 | softened-query control (text) | `results/confirm_soften.csv`, `results/soften_log.txt` | `python -m src.soften` (GPU) |
 | forged verdict vs forged task (text) | `results/fix/forgery_controls_base.json` | `python -m src.fix.forgery_controls --cond base --split test --allow-test --out results/fix/forgery_controls_base.json` (GPU; in `scripts/queue_fix_full.sh`) |
-| Table 2 (robustness) | `results/confirm_log.txt` [recency], [markers], [policy]; `results/supp_log.txt` [A] | `python -m src.confirm`, `python -m src.supp` (GPU) |
-| Figure 3 and Section 3.4 (mechanism) | `results/mech/patching_test_n100.json`, `probe_test_n150_train600.json`, `similarity_test_n150.json`, `dose_response_test_n150_d40.json`, `dose_response_test_n150_d40_rho_ci.json` (dev-split runs `*_dev_*` for comparison) | `src.mech.{patching,probe,similarity,dose_response}` (GPU; step 0 of `scripts/queue_fix_full.sh`, PART=main); rho intervals: `python -m src.mech.dose_response --recompute results/mech/dose_response_test_n150_d40.json` (CPU); figure: `make_figures.py` |
-| Tables 8-10 (sensitivity) | `results/sensitivity.md` | `python -m src.sensitivity` (CPU, reads `confirm_shieldstral.csv`) |
+| robustness paragraph (Section 3 text) | `results/confirm_log.txt` [recency], [markers], [policy]; `results/supp_log.txt` [A] | `python -m src.confirm`, `python -m src.supp` (GPU) |
+| Section 3 mechanism paragraph (patching, dose-response) | `results/mech/patching_test_n100.json`, `dose_response_test_n150_d40.json`, `dose_response_test_n150_d40_rho_ci.json` (dev-split runs `*_dev_*` for comparison) | `src.mech.{patching,dose_response}` (GPU; step 0 of `scripts/queue_fix_full.sh`, PART=main); rho intervals: `python -m src.mech.dose_response --recompute results/mech/dose_response_test_n150_d40.json` (CPU) |
+| threshold sensitivity (Section 3 text, tau = 0.1) | `results/sensitivity.md` | `python -m src.sensitivity` (CPU, reads `confirm_shieldstral.csv`) |
 
 **Section 4, GuardRebind (`PROTOCOL_v2.md`)**
 
 | paper | result files | produced by |
 |---|---|---|
-| Table 3 (three guard designs) | `results/confirm_crossmodel.csv`, `results/confirm_gpt_oss_mechanism.csv`, `results/gpt_oss_mechanism_log.txt` | `python -m src.crossmodel 30`, `python -m src.gpt_oss_mechanism 30` (OpenRouter API, no GPU) |
-| Table 4 (benchmark, local guards) | `results/bench/v2/<guard>__default.jsonl` (raw scores, item ids only), `results/bench/v2/bypass.csv`, `run_config.json` | `scripts/queue_bench.sh` (GPU) -> `python -m src.bench.run_bench_v2 ...`, then `python -m src.bench.analyze --inp results/bench/v2` (CPU) |
-| Table 4 (gpt-oss-safeguard row), Tables 13-14 | `results/bench/v2/gpt_oss_safeguard_20b.jsonl`, `results/bench/v2/gpt_oss_summary.md`, `results/bench/v2/gpt_oss/*`, `paper/data/gpt_oss_strict.md` | `python -m src.bench.api_bench` (OpenRouter), `python -m src.bench.api_summary` (CPU), `python paper/data/gpt_oss_strict.py > paper/data/gpt_oss_strict.md` (CPU) |
-| Table 11 (every family x guard) | `results/bench/v2/bypass.csv` (default policy, `bypass` column); gpt-oss from `paper/data/gpt_oss_strict.md` | `python -m src.bench.analyze` (CPU) |
-| Table 12 (threshold sensitivity) | `results/bench/v2/bypass_tau.csv` | `python -m src.bench.analyze` (CPU) |
+| three guard designs (Section 4 text) | `results/confirm_crossmodel.csv`, `results/confirm_gpt_oss_mechanism.csv`, `results/gpt_oss_mechanism_log.txt` | `python -m src.crossmodel 30`, `python -m src.gpt_oss_mechanism 30` (OpenRouter API, no GPU) |
+| Table 2 (benchmark, local guards) | `results/bench/v2/<guard>__default.jsonl` (raw scores, item ids only), `results/bench/v2/bypass.csv`, `run_config.json` | `scripts/queue_bench.sh` (GPU) -> `python -m src.bench.run_bench_v2 ...`, then `python -m src.bench.analyze --inp results/bench/v2` (CPU) |
+| Table 2 (gpt-oss-safeguard row), gpt-oss paragraph (Section 4.2) | `results/bench/v2/gpt_oss_safeguard_20b.jsonl`, `results/bench/v2/gpt_oss_summary.md`, `results/bench/v2/gpt_oss/*`, `paper/data/gpt_oss_strict.md` | `python -m src.bench.api_bench` (OpenRouter), `python -m src.bench.api_summary` (CPU), `python paper/data/gpt_oss_strict.py > paper/data/gpt_oss_strict.md` (CPU) |
+| per-family bypass (Section 4.2 text; full table released, not in the paper) | `results/bench/v2/bypass.csv` (default policy, `bypass` column); gpt-oss from `paper/data/gpt_oss_strict.md` | `python -m src.bench.analyze` (CPU) |
+| benchmark threshold sensitivity (released, not in the paper) | `results/bench/v2/bypass_tau.csv` | `python -m src.bench.analyze` (CPU) |
 | policy paraphrases (text) | `results/bench/v2/<guard>__para{1,2}.jsonl`, `results/bench/v2/policy_range.csv` | `scripts/queue_bench.sh`, `src.bench.analyze` |
 | Qwen3Guard "what counts as a task" probe | `results/bench/explore/qwen3guard.md` | `python -m src.bench.explore.qwen3guard --n 40` (GPU, train split) |
 
@@ -70,13 +70,14 @@ read files in `results/`.
 
 | paper | result files | produced by |
 |---|---|---|
-| Table 5 (defense, main) and Table 6 (utility) | `results/fix/r2_test_{base,B,detector,segmax_infer,t_seed0,t_seed1,bt_seed0,cc_seed0}.json` | `scripts/queue_round2.sh` (GPU; steps 1-3 and 5): `src.fix.distill build/train`, `src.fix.evaluate ... --decoy-split fixed,heldout` |
+| Table 3 (defense, main) and Table 4 (utility) | `results/fix/r2_test_{base,B,detector,segmax_infer,t_seed0,t_seed1,bt_seed0,cc_seed0}.json` | `scripts/queue_round2.sh` (GPU; steps 1-3 and 5): `src.fix.distill build/train`, `src.fix.evaluate ... --decoy-split fixed,heldout` |
 | intervals and paired tests in Section 6.2 | same files | `python scripts/analysis_r2/tab.py`, `delta.py`, `boot.py` (CPU) |
-| Table 7 (adaptive attacks) | `results/fix/r2_adaptive_{base,t_seed0,bt_seed0}_{search,structural_heldout}.json(.jsonl)`, `r2_adaptive_{base,t_seed0}_search_null.json(.jsonl)`, `r2_adaptive_t_seed0_gcg.json(.jsonl)` | `scripts/queue_round2.sh` step 4 (GPU) plus the plain-text control (command below) |
+| Table 5 (adaptive attacks) | `results/fix/r2_adaptive_{base,t_seed0,bt_seed0}_{search,structural_heldout}.json(.jsonl)`, `r2_adaptive_{base,t_seed0}_search_null.json(.jsonl)`, `r2_adaptive_t_seed0_gcg.json(.jsonl)` | `scripts/queue_round2.sh` step 4 (GPU) plus the plain-text control (command below) |
 | winning decoys (Section 6.3 text) | `paper/data/search_decoys.md` | `python paper/data/search_decoys.py > paper/data/search_decoys.md` (loads base Shieldstral on CPU) |
-| Table 15 (fixed-decoy conditions: naive AT, Llama Guard 3, Qwen3Guard) | `results/fix/test_{at_seed0,at_seed1,lg3_base,lg3_t_seed0,qg3_base,qg3_t_seed0}.json` | `scripts/queue_fix_full.sh` (round 1; PART=main, seeds and generality) |
-| Table 16 (GCG) | `results/fix/adaptive_{base,B}_gcg.json`, `adaptive_base_gcg_nopair.json`, `r2_adaptive_t_seed0_gcg.json` | `scripts/queue_fix_full.sh` (round 1) and `scripts/queue_round2.sh`; the no-pair control is `src.fix.adaptive --attack gcg --no-pair` |
-| content-token check (Appendix) | `results/fix/content_token_check.json` | `python scripts/check_content_tokens.py` (CPU, tokenizers only) |
+| Table 6 (pre-registered predictions and outcomes) | `PROTOCOL.md`, `PROTOCOL_v2.md` and the result files listed here | none (collected by hand) |
+| Table 7 (fixed-decoy conditions: naive AT, Llama Guard 3, Qwen3Guard) | `results/fix/test_{at_seed0,at_seed1,lg3_base,lg3_t_seed0,qg3_base,qg3_t_seed0}.json` | `scripts/queue_fix_full.sh` (round 1; PART=main, seeds and generality) |
+| GCG, counted in Table 5 "all attacks" (Section 6.3 text) | `results/fix/adaptive_{base,B}_gcg.json`, `adaptive_base_gcg_nopair.json`, `r2_adaptive_t_seed0_gcg.json` | `scripts/queue_fix_full.sh` (round 1) and `scripts/queue_round2.sh`; the no-pair control is `src.fix.adaptive --attack gcg --no-pair` |
+| content-token check (Appendix C) | `results/fix/content_token_check.json` | `python scripts/check_content_tokens.py` (CPU, tokenizers only) |
 
 Pilot, dev-split and other exploratory outputs that the paper does not cite are not included.
 
