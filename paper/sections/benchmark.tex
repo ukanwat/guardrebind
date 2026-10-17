@@ -71,6 +71,7 @@ Its long template protects it against cheap forgeries, though not against the gu
 
 Two guards depart from the Shieldstral pattern.
 Llama Guard~3 is partly swayed by any trailing text: benign text appended with no forged pair clears it $41.2\%$\ci{36.1\%}{46.0\%}, against $4.3\%$ on Shieldstral. Part of its bypass is therefore recency, although the forged pair still adds up to $59$ points. % src: bypass.csv control|benign_tail
+Under the benchmark's looser flag rule, a forged document alone clears $25$--$37\%$ of Shieldstral's flagged items against $70$--$72\%$ for the matching pair, so there the query roughly doubles bypass; on Llama Guard~3 a lone document already clears $53$--$69\%$. % src: bypass.csv default, struct=doc_only vs query_doc n=1 benign q=exact, syntax angle/colon/bracket lang=en: shieldstral 37.2/35.2/24.7 vs 70.9/71.7/70.3; llama_guard_3_1b 69.4/53.2/57.0
 ShieldGemma barely responds to the decoy. The forged triple of instruction, query and document clears $84.3\%$ with a harmful decoy and $83.3\%$ with a benign one, which is closer to generic evasion than to rebinding. % src: bypass.csv shieldgemma angle full_triple decoy=harmful 84.3 vs angle full_triple 83.3
 ShieldGemma's best family, like Qwen3Guard's, is the guard-native forgery in the middle position, and it beats the same forgery appended ($100\%$ against $73.6\%$ on ShieldGemma). % src: bypass.csv shieldgemma_2b guard_native query_doc pos=middle 1.0 vs guard_native query_doc 0.736; qwen3guard_0_6b pos=middle 0.934 vs 0.817
 

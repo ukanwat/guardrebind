@@ -143,7 +143,6 @@ All hyperparameters, splits and the full protocol are in \cref{app:protocol,app:
 \section{Open Science}
 \label{app:open-science}
 
-% ADAPTERS: pending author decision
-We release the \guardrebind{} benchmark and harness, the attack grammar, the defense code, the training commands and data recipe, and the result files behind every number in this paper, at \url{https://github.com/ukanwat/guardrebind}.
+We release the \guardrebind{} benchmark and harness, the attack grammar, the defense code, the training commands and data recipe, and the result files behind every number in this paper, at \url{https://github.com/ukanwat/guardrebind}. We also release a T adapter for Shieldstral at \url{https://huggingface.co/ukanwat/shieldstral-1.0-3b-rebinding-fix}. Its weights come from a retraining with the same recipe and seed as T seed~0, on newer library versions; on the held-out-decoy measure it is cleared on $0.95\%$ ($67/7{,}032$) of attacked inputs, against $0.81\%$ for the run reported here, and its AUROC is $0.799$. % src: results/fix/r2_test_t_seed0_retrain.json
 The released results contain item ids and scores, plus text only from the public benchmarks we used (such as the AdvBench requests of the confirmatory run and the benign development-split prompts that won as search decoys) and model outputs that quote it. We release no new harmful content.
 The pre-registered protocol and its deviations are included so that predictions can be checked against outcomes.

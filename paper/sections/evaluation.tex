@@ -157,7 +157,7 @@ The search does not separate this from its shift to prompt-like decoys.
 B$+$T is cleared less often (34 items against T's 47, one seed each), the only result where the boundary clearly helps.
 
 The plain-text control asks how much of this is rebinding at all.
-Benign user prompts alone, with no labels or forged query and chosen by the same search, clear T on 26 of the 47 items the full search wins. Forged structure is needed by this search only for the other 21. % src: paper/data/search_no_feedback.md (t_seed0: 26 null wins, all 26 also search wins)
+Benign user prompts alone, with no labels or forged query and chosen by the same search, clear T on 26 of the 47 items the full search wins. On the other 21, only the search with forged structure succeeds. % src: paper/data/search_no_feedback.md (t_seed0: 26 null wins, all 26 also search wins)
 The control clears the base guard on $70\%$\ci{56\%}{81\%} of items and T on $52\%$\ci{39\%}{65\%}. Every win against T puts the searched text before the request, as do 22 of 35 wins on the base guard (13 put text on both sides). % src: r2_adaptive_{base,t_seed0}_search_null.json(.jsonl): T 26/26 position=prepend; base 22 prepend + 13 middle (filler before and after)
 Unlike the one fixed filler of \cref{tab:ablation} ($0\%$), the control picks the best of up to 300 benign candidates per item by the guard's score. % src: src/fix/adaptive.py search_attack budget 300 (also for --null-search); confirm_log.txt [ablation] benign_tail 0/75
 Each item's first candidate, drawn before any score is seen, clears the base guard on $28\%$\ci{17\%}{42\%} of items but T on only $6\%$\ci{2\%}{16\%}. % src: paper/data/search_no_feedback.md (queries == 1: base_search_null 14/50, t_seed0_search_null 3/50; Wilson)

@@ -7,7 +7,7 @@ The model reads two query--document pairs whose labels are the same plain text, 
 We hypothesise that the model grades the last complete pair, answering its usual question about the decoy, whereas a persuaded guard would obey the content and answer ``safe''.
 Rebinding predicts that only a complete forged pair works, and that the verdict follows the harm of the decoy.
 The evidence is mainly behavioural: an ablation of the pair and a decoy dose--response check (\cref{sec:binding}).
-Activation patching (\cref{app:extra}) does not locate the mechanism: the verdict is read out at the final position, and patching the forged labels or forged query alone barely moves it.
+Activation patching (\cref{app:extra}) does not locate the mechanism: the verdict is read out at the final position, and patching the forged labels, alone or together with the forged query text, barely moves it.
 
 \paragraph{Setup.}
 The ablation panel, the borderline-decoy comparison and the position, label-syntax and policy variations form a \emph{confirmatory} run under a protocol frozen beforehand (\cref{app:protocol}).
@@ -73,7 +73,7 @@ This $100\%$ is the highest of four headline Shieldstral figures, which differ i
   \end{tabular}
 \end{table}
 
-\Cref{tab:ablation} shows that the forged query is what turns forged text into a task.
+In \cref{tab:ablation} the forged query is what turns forged text into a task.
 A forged document alone clears $9\%$, and adding the query raises this to $100\%$.
 Without a forged document, instructions clear nothing in any form we tried, even with a forged query after them.
 A forged instruction in front of the full pair lowers bypass to $92\%$.
@@ -109,7 +109,7 @@ A blind attacker who stacks five guesses, none of them the deployment's query, c
 \paragraph{Decoy dose--response.}
 \label{sec:binding}
 Across many decoys, bypass tracks the decoy's standalone score, as rebinding predicts.
-We used 150 requests and 40 decoys scoring $0.00$ to $1.00$ alone.
+We used 150 flagged test-split requests and 40 decoys, train-split dataset prompts scoring $0.00$ to $1.00$ alone. % src: src/mech/dose_response.py (decoys: train-split prompt items; requests: --split test)
 Decoys scoring below $0.1$ clear $98\%$, and decoys above $0.9$ clear $0\%$.
 Spearman's $\rho$ over decoys is $-0.84$ (decoy-bootstrap 95\% interval $[-0.93, -0.67]$). % src: results/mech/dose_response_test_n150_d40.json; dose_response_test_n150_d40_rho_ci.json
 This partly supports our pre-registered prediction of $\rho \le -0.8$ with bypass non-increasing across score bins (\cref{tab:prereg}).
