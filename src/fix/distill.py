@@ -78,7 +78,7 @@ def label_targets(examples: list[Example], scorer: ShieldstralScorer, cache: dic
 def build(out: Path, per_item: int = 3, max_items: int | None = None, seed: int = 0) -> None:
     from ..bench.attacks_grammar import grammar, split_attacks
     from ..bench.data import load_all, structured_benign
-    from ..bench.guards import SHIELDSTRAL_SPEC
+    from ..bench.attacks_grammar import GUARD_SPECS
 
     rng = random.Random(seed)
     items = [it for it in load_all() if it.split == "train" and it.kind == "prompt"]
@@ -89,7 +89,7 @@ def build(out: Path, per_item: int = 3, max_items: int | None = None, seed: int 
 
     examples: list[Example] = []
     for item in items:
-        examples += _variants(item, train_attacks, SHIELDSTRAL_SPEC, rng, per_item)
+        examples += _variants(item, train_attacks, GUARD_SPECS["shieldstral"], rng, per_item)
     for j, text in enumerate(structured_benign(len(items) // 4)):
         examples.append(Example(f"structured_benign:{j}", text, [text], variant="hard_negative"))
 
