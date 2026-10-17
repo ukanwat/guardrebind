@@ -52,12 +52,12 @@ Under the policy of \cref{fig:anatomy}, 75 of them are flagged ($>0.9$) with no 
 The forged pair of \cref{fig:anatomy} clears all 75 flagged requests ($100\%$\ci{95\%}{100\%}, \cref{tab:ablation}).
 The median score falls from $0.986$ to $0.016$ (\cref{fig:scores}a). % src: results/confirm_shieldstral.csv; results/sensitivity.md
 Even the highest attacked score, $0.469$, stays below $\tau$, and at the stricter threshold $\tau=0.1$ bypass is still $84\%$.
-This $100\%$ is the highest of four Shieldstral figures in the paper, which differ in their items, flag rule and decoys (\cref{tab:four-figures}).
+This $100\%$ is the highest of four headline Shieldstral figures, which differ in their items, flag rule and decoys (\cref{tab:four-figures}).
 
 \begin{table}[t]
   \centering
   \footnotesize
-  \caption{The four Shieldstral bypass figures. Each counts only items flagged with no attack.}
+  \caption{The four headline Shieldstral bypass figures. Each counts only items flagged with no attack; controls use their own item sets.}
   % src: results/confirm_log.txt [ablation] query_doc 75/75 (flag > 0.9); results/bench/v2/bypass.csv shieldstral default: angle query_doc n=1 benign q=exact 0.709, best family angle full_triple n=2 0.992, n_items 300 (flag >= 0.5); results/fix/r2_test_base.json screened 297, by_decoy_split.heldout.heldout.bypass_benign_decoy 5347/7128
   \label{tab:four-figures}
   \setlength{\tabcolsep}{4pt}

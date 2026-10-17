@@ -34,7 +34,7 @@ We also exclude multimodal content and denial of service.
 
 \paragraph{Success criterion.}
 Only \emph{flagged} requests count, meaning those the deployment flags with no attack.
-The flag rule depends on the setting: $G(h) > 0.9$ in the Shieldstral confirmatory study, $G(h) \ge 0.5$ in \guardrebind{} and the defense evaluation, and a majority of three sampled \texttt{unsafe} verdicts for label-only guards. % src: PROTOCOL.md (v1), PROTOCOL_v2.md (Metrics)
+The flag rule depends on the setting: $G(h) > 0.9$ in the Shieldstral confirmatory study, $G(h) \ge 0.5$ in \guardrebind{} and the defense evaluation, and a majority of three API calls returning \texttt{unsafe} for label-only guards (temperature 0). % src: PROTOCOL.md (v1), PROTOCOL_v2.md (Metrics)
 The \emph{attack payload} $p$ is the text the attacker adds to $h$.
 The attack succeeds if $G$ clears $h \oplus p$, where $\oplus$ is concatenation.
 The \emph{bypass rate} (or \emph{bypass}) is the fraction of flagged requests on which it succeeds, reported with a Wilson 95\% interval.

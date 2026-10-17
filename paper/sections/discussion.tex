@@ -2,11 +2,10 @@
 \label{sec:discussion}\label{sec:limitations}
 
 \paragraph{Limitations.}
-The confirmatory study covers one guard, one English corpus and short text-only documents, and the pre-benchmark role-boundary and Llama Guard~4 checks are label-only on 30 requests (\cref{sec:crossmodel}). Bypass counts only items the guard flags without an attack, and Shieldstral misses about half of harmful items to begin with (clean recall $47\%$ on the test split). % src: r2_test_base.json recall 0.471
-Bypass is an upper bound on end-to-end harm, and we did not test retrieval, tool-result or multi-turn channels.
-Several results rest on small or single runs: the Qwen3Guard task probe (40 items), the adaptive attacks (50 items; GCG on 20 and not on B$+$T), and every trained condition except T and naive adversarial training, which have two seeds.
+The confirmatory study covers one guard, one English corpus and short documents, and the Llama Guard~4 and role-boundary checks use 30 requests (\cref{sec:crossmodel}). Bypass counts only flagged items (Shieldstral's clean recall is $47\%$), bounds end-to-end harm from above, and was not tested on retrieval, tool or multi-turn channels. % src: r2_test_base.json recall 0.471
+Some results rest on small runs: the Qwen3Guard probe (40 items), the adaptive attacks (50 items; GCG on 20, not on B$+$T), and single seeds for all trained conditions but T and naive adversarial training.
 On the defense side, our held-out results cover appended forms only, and the defense only partly blunts searched benign prompts (35/50 to 26/50 items, \cref{sec:adaptive}). % src: tab:adaptive plain-text control base 35/50, T 26/50
- Segment-max keeps only the combined harm that the base guard itself detects, and we ran no composition attack. We do not claim general prompt-injection robustness~\citep{pant2026inseparability}.
+Segment-max keeps only combined harm the base guard detects, we ran no composition attack, and we claim no general prompt-injection robustness~\citep{pant2026inseparability}.
 
 \paragraph{Conclusion.}
-Guards that read their task and the content as one plain-text stream can be made to grade a forged task, so a harmful request is approved unchanged. On Shieldstral and gpt-oss-safeguard the verdict follows the decoy, as rebinding predicts. Segment-max training nearly closes the enumerated appended channel with little change in clean detection, but an adaptive attacker with score access still wins, partly without rebinding. Deployers should train the guard, treat a content boundary as a cheap extra, and never let an agent act on a guard verdict alone. Defenses against rebinding should be tested against prepended structure and reported next to a plain-text control.
+Guards that read their task and the content as one plain-text stream can be made to grade a forged task. Segment-max training nearly closes the appended channel we enumerate, but not against an adaptive attacker with score access. Deployers should train the guard and never act on its verdict alone.

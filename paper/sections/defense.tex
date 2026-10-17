@@ -2,7 +2,7 @@
 \label{sec:defense}
 
 Target rebinding needs the content to produce the labels that delimit the document and the model to treat a nested labelled pair as a new grading task.
-Our defense targets both preconditions: Part~B (boundary) marks the document with tokens that content cannot produce, and Part~T (training) teaches the guard to grade everything inside that region as one document and to score it at least as high as its most harmful part.
+Our defense targets both preconditions: Part~B (boundary) marks the document with tokens that content cannot produce, and Part~T (training) teaches the guard to grade the whole content (the region inside the boundary, when B is used) as one document and to score it at least as high as its most harmful part.
 We compare $\{$none, B, T, B$+$T$\}$ with training-free baselines (\cref{sec:evaluation}).
 
 \paragraph{Part B: a boundary the content cannot produce.}
