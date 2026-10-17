@@ -9,7 +9,7 @@ Second, treat a guard verdict as a filter, not an authorization: a cleared verdi
 Third, an anti-injection directive and syntax-specific label stripping did not stop the attack (\cref{sec:evaluation,app:protocol}), and a role boundary around the policy is not sufficient on its own (\cref{sec:crossmodel}).
 A fail-closed detector for label-like strings is cheap and catches the syntaxes it lists, but it blocks about half of benign structured content and misses syntaxes it does not list (\cref{sec:evaluation}).
 Where retraining is possible, train against the maximum over the content's parts (\cref{sec:evaluation}), and check over-refusal on benign content that carries forged structure: on two smaller guards the same recipe raised it to $22$--$26\%$.
-Test the result against an attacker who can query the guard's score, and against benign user prompts placed before the request, which clears even the base guard on most items (\cref{sec:adaptive}).
+Test the result against an attacker who can query the guard's score, and against benign user prompts placed before the request, which clear even the base guard on most items (\cref{sec:adaptive}).
 
 \subsection{Limitations}
 \label{sec:limitations}

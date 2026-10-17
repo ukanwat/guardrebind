@@ -137,7 +137,7 @@ Writing the forgery with the guard's real control tokens instead of plain-text l
 \label{sec:binding}
 
 The behavioural results locate the effect in the pair structure but not in the network.
-Mechanistic work on guards has localised a content-insertion shortcut to a few attention heads and MLP neurons~\citep{feng2026refusal} and attack-induced overconfidence to later layers~\citep{hong2026guard}.
+Mechanistic work on guards has localised a content-insertion shortcut to a few attention heads and multilayer-perceptron (MLP) neurons~\citep{feng2026refusal} and attack-induced overconfidence to later layers~\citep{hong2026guard}.
 We run four analyses on Shieldstral over harmful test items that it flags alone, each paired with a benign decoy it clears alone, except where the decoy is varied (\cref{fig:mech}); they are consistent with rebinding but do not identify the circuit that implements it.
 \emph{Activation patching} ($n=100$): we take the attacked input (request, then the forged pair with the decoy) and the same input with the request and decoy swapped (the guard then grades the request and flags it), and for each layer copy the residual stream at one set of positions from one run into the other. % src: results/mech/patching_test_n100.json; src/mech/patching.py
 Patching the final position restores the flag on $77\%$ of attacked inputs from layer 15 and on $99\%$ from layer 20, and transfers the bypass in the other direction on $99\%$ from layer 20. % src: patching_test_n100.json summary.final.into_attacked.flip_rate[15]=0.77, [20]=0.99; into_swapped.flip_rate[20]=0.99 (layers 0-indexed, 26 layers)

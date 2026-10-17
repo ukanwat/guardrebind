@@ -1,0 +1,464 @@
+\begin{thebibliography}{74}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Athalye et~al.(2018)Athalye, Carlini, and
+  Wagner]{athalye2018obfuscated}
+Anish Athalye, Nicholas Carlini, and David Wagner.
+\newblock {Obfuscated Gradients Give a False Sense of Security: Circumventing
+  Defenses to Adversarial Examples}, 2018.
+
+\bibitem[Calvi et~al.(2026)Calvi, Sooriyarachchi, Pistilli, Lample, Buyl,
+  Augustin, M{\"u}ller, Stock, Bewley, Bouaziz, et~al.]{calvi2026shieldstral}
+Antonia Calvi, Avinash Sooriyarachchi, Giada Pistilli, Guillaume Lample,
+  Maarten Buyl, Maximilian Augustin, Maximilian M{\"u}ller, Pierre Stock, Tom
+  Bewley, Wassim Bouaziz, et~al.
+\newblock {Shieldstral}, 2026.
+
+\bibitem[Carlini et~al.(2019)Carlini, Athalye, Papernot, Brendel, Rauber,
+  Tsipras, Goodfellow, Madry, and Kurakin]{carlini2019evaluating}
+Nicholas Carlini, Anish Athalye, Nicolas Papernot, Wieland Brendel, Jonas
+  Rauber, Dimitris Tsipras, Ian Goodfellow, Aleksander Madry, and Alexey
+  Kurakin.
+\newblock {On Evaluating Adversarial Robustness}, 2019.
+
+\bibitem[Chang et~al.(2025)Chang, Jun, and Lee]{chang2025chatinject}
+Hwan Chang, Yonghyun Jun, and Hwanhee Lee.
+\newblock {ChatInject: Abusing Chat Templates for Prompt Injection in LLM
+  Agents}, 2025.
+
+\bibitem[Chen et~al.(2024{\natexlab{a}})Chen, Piet, Sitawarin, and
+  Wagner]{chen2024struq}
+Sizhe Chen, Julien Piet, Chawin Sitawarin, and David Wagner.
+\newblock {StruQ: Defending Against Prompt Injection with Structured Queries},
+  2024{\natexlab{a}}.
+
+\bibitem[Chen et~al.(2024{\natexlab{b}})Chen, Zharmagambetov, Mahloujifar,
+  Chaudhuri, Wagner, and Guo]{chen2024secalign}
+Sizhe Chen, Arman Zharmagambetov, Saeed Mahloujifar, Kamalika Chaudhuri, David
+  Wagner, and Chuan Guo.
+\newblock {SecAlign: Defending Against Prompt Injection with Preference
+  Optimization}, 2024{\natexlab{b}}.
+
+\bibitem[Chen et~al.(2025{\natexlab{a}})Chen, Wang, Carlini, Sitawarin, and
+  Wagner]{chen2025defending}
+Sizhe Chen, Yizhu Wang, Nicholas Carlini, Chawin Sitawarin, and David Wagner.
+\newblock {Defending Against Prompt Injection With a Few DefensiveTokens},
+  2025{\natexlab{a}}.
+
+\bibitem[Chen et~al.(2025{\natexlab{b}})Chen, Zharmagambetov, Wagner, and
+  Guo]{chen2025metasecalign}
+Sizhe Chen, Arman Zharmagambetov, David Wagner, and Chuan Guo.
+\newblock {Meta-SecAlign: Training LLMs against Prompt Injection for Robust
+  Agents}, 2025{\natexlab{b}}.
+
+\bibitem[Chen and Yao(2024)]{chen2024goal}
+Zheng Chen and Buhui Yao.
+\newblock {Goal Hijacking Attack on Large Language Models via
+  Pseudo-Conversation Injection}, 2024.
+\newblock 2025 IEEE 24th International Conference on Trust, Security and
+  Privacy in Computing and Communications (TrustCom), 2025.
+
+\bibitem[Chi et~al.(2024)Chi, Karn, Zhan, Smith, Rando, Zhang, Plawiak,
+  Coudert, Upasani, and Pasupuleti]{chi2024llama}
+Jianfeng Chi, Ujjwal Karn, Hongyuan Zhan, Eric Smith, Javier Rando, Yiming
+  Zhang, Kate Plawiak, Zacharie~Delpierre Coudert, Kartikeya Upasani, and
+  Mahesh Pasupuleti.
+\newblock {Llama Guard 3 Vision: Safeguarding Human-AI Image Understanding
+  Conversations}, 2024.
+
+\bibitem[Cui et~al.(2024)Cui, Chiang, Stoica, and Hsieh]{cui2024orbench}
+Justin Cui, Wei-Lin Chiang, Ion Stoica, and Cho-Jui Hsieh.
+\newblock {OR-Bench: An Over-Refusal Benchmark for Large Language Models},
+  2024.
+
+\bibitem[Deng et~al.(2026)Deng, Wu, Chen, Xiao, Xu, and Li]{deng2026automating}
+Xinhao Deng, Jiaqing Wu, Miao Chen, Yue Xiao, Ke~Xu, and Qi~Li.
+\newblock {Automating Agent Hijacking via Structural Template Injection}, 2026.
+
+\bibitem[Dhouib et~al.(2026)Dhouib, Elliker, Canesse, Jenny, Thil, Sharkawy,
+  Vanier, and Bursztein]{dhouib2026raised}
+Mohamed Dhouib, Clement Elliker, Alexi Canesse, Ma{\"e}l Jenny, Lucas-Andrei
+  Thil, Mahammed~El Sharkawy, Sonia Vanier, and Elie Bursztein.
+\newblock {RAISED: Self-Distillation for Robustness to Prompt Injection in LLM
+  Agents}, 2026.
+
+\bibitem[Feng et~al.(2026)Feng, Zang, Shen, Miao, Teng, Cai, and
+  Ye]{feng2026refusal}
+Yu~Feng, Chunting Zang, Chen Shen, Rui Miao, Ge~Teng, Weidong Cai, and Jieping
+  Ye.
+\newblock {When Refusal Looks Safe: The Refusal-Cue Shortcut in Safety Guard
+  Models}, 2026.
+
+\bibitem[Ghosh et~al.(2025)Ghosh, Varshney, Sreedhar, Padmakumar, Rebedea,
+  Varghese, and Parisien]{ghosh2025aegis}
+Shaona Ghosh, Prasoon Varshney, Makesh~Narsimhan Sreedhar, Aishwarya
+  Padmakumar, Traian Rebedea, Jibin~Rajan Varghese, and Christopher Parisien.
+\newblock {Aegis2.0: A Diverse AI Safety Dataset and Risks Taxonomy for
+  Alignment of LLM Guardrails}, 2025.
+
+\bibitem[Grattafiori et~al.(2024)Grattafiori, Dubey, Jauhri, Pandey, Kadian,
+  Al-Dahle, Letman, Mathur, Schelten, Vaughan, et~al.]{grattafiori2024llama}
+Aaron Grattafiori, Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey, Abhishek
+  Kadian, Ahmad Al-Dahle, Aiesha Letman, Akhil Mathur, Alan Schelten, Alex
+  Vaughan, et~al.
+\newblock {The Llama 3 Herd of Models}, 2024.
+
+\bibitem[Greshake et~al.(2023)Greshake, Abdelnabi, Mishra, Endres, Holz, and
+  Fritz]{greshake2023not}
+Kai Greshake, Sahar Abdelnabi, Shailesh Mishra, Christoph Endres, Thorsten
+  Holz, and Mario Fritz.
+\newblock {Not what you've signed up for: Compromising Real-World
+  LLM-Integrated Applications with Indirect Prompt Injection}, 2023.
+
+\bibitem[Gros and Gleave(2026)]{gros2026evaluating}
+David Gros and Adam Gleave.
+\newblock {Evaluating using Mock Tool Calls to Quarantine Untrusted Prompt
+  Inputs}, 2026.
+
+\bibitem[Hackett et~al.(2025)Hackett, Birch, Trawicki, Suri, and
+  Garraghan]{hackett2025bypassing}
+William Hackett, Lewis Birch, Stefan Trawicki, Neeraj Suri, and Peter
+  Garraghan.
+\newblock {Bypassing LLM Guardrails: An Empirical Analysis of Evasion Attacks
+  against Prompt Injection and Jailbreak Detection Systems}, 2025.
+
+\bibitem[Hines et~al.(2024)Hines, Lopez, Hall, Zarfati, Zunger, and
+  Kiciman]{hines2024defending}
+Keegan Hines, Gary Lopez, Matthew Hall, Federico Zarfati, Yonatan Zunger, and
+  Emre Kiciman.
+\newblock {Defending Against Indirect Prompt Injection Attacks With
+  Spotlighting}, 2024.
+
+\bibitem[Hong et~al.(2026)Hong, Jung, and Kim]{hong2026guard}
+Jonghyun Hong, MinJae Jung, and Minwoo Kim.
+\newblock {Guard Models Are Overconfident Where Base Models Are Uncertain},
+  2026.
+
+\bibitem[Ilse et~al.(2018)Ilse, Tomczak, and Welling]{ilse2018attention}
+Maximilian Ilse, Jakub~M. Tomczak, and Max Welling.
+\newblock {Attention-based Deep Multiple Instance Learning}.
+\newblock In \emph{Proceedings of the 35th International Conference on Machine
+  Learning (ICML)}, volume~80 of \emph{PMLR}, 2018.
+
+\bibitem[Inan et~al.(2023)Inan, Upasani, Chi, Rungta, Iyer, Mao, Tontchev, Hu,
+  Fuller, Testuggine, et~al.]{inan2023llama}
+Hakan Inan, Kartikeya Upasani, Jianfeng Chi, Rashi Rungta, Krithika Iyer,
+  Yuning Mao, Michael Tontchev, Qing Hu, Brian Fuller, Davide Testuggine,
+  et~al.
+\newblock {Llama Guard: LLM-based Input-Output Safeguard for Human-AI
+  Conversations}, 2023.
+
+\bibitem[Ji et~al.(2023)Ji, Liu, Dai, Pan, Zhang, Bian, Zhang, Sun, Wang, and
+  Yang]{ji2023beavertails}
+Jiaming Ji, Mickel Liu, Juntao Dai, Xuehai Pan, Chi Zhang, Ce~Bian, Chi Zhang,
+  Ruiyang Sun, Yizhou Wang, and Yaodong Yang.
+\newblock {BeaverTails: Towards Improved Safety Alignment of LLM via a
+  Human-Preference Dataset}, 2023.
+
+\bibitem[Jia et~al.(2025)Jia, Shao, Liu, Jia, Song, and Gong]{jia2025critical}
+Yuqi Jia, Zedian Shao, Yupei Liu, Jinyuan Jia, Dawn Song, and Neil~Zhenqiang
+  Gong.
+\newblock {A Critical Evaluation of Defenses against Prompt Injection Attacks},
+  2025.
+
+\bibitem[Kanwat(2026)]{kanwat2026blog}
+Utkarsh Kanwat.
+\newblock {A safety model will grade whichever text you show it last}.
+\newblock \url{https://utkarshkanwat.com/writing/safety-guards-wrong-document},
+  September 2026.
+
+\bibitem[Li and Liu(2024)]{li2024injecguard}
+Hao Li and Xiaogeng Liu.
+\newblock {InjecGuard: Benchmarking and Mitigating Over-defense in Prompt
+  Injection Guardrail Models}, 2024.
+
+\bibitem[Li et~al.(2025{\natexlab{a}})Li, Xu, Wang, Gong, Chen, Zhang, Wang,
+  Lam, and Ji]{li2025llms}
+Songze Li, Chuokun Xu, Jiaying Wang, Xueluan Gong, Chen Chen, Jirui Zhang, Jun
+  Wang, Kwok-Yan Lam, and Shouling Ji.
+\newblock {LLMs Cannot Reliably Judge (Yet?): A Comprehensive Assessment on the
+  Robustness of LLM-as-a-Judge}, 2025{\natexlab{a}}.
+
+\bibitem[Li et~al.(2026)Li, Huang, Zhang, and Liu]{li2026same}
+Xiang Li, Aichun Huang, Mingming Zhang, and Zheli Liu.
+\newblock {Same Attack, Different Judge: A First Controlled Adversarial
+  Comparison of Jev, LLM Judges, and Purpose-Built Safety Classifiers}, 2026.
+
+\bibitem[Li et~al.(2025{\natexlab{b}})Li, Wang, Wu, and Liu]{li2025separator}
+Xitao Li, Haijun Wang, Jiang Wu, and Ting Liu.
+\newblock {Separator Injection Attack: Uncovering Dialogue Biases in Large
+  Language Models Caused by Role Separators}, 2025{\natexlab{b}}.
+
+\bibitem[Lin et~al.(2023)Lin, Wang, Tong, Wang, Guo, Wang, and
+  Shang]{lin2023toxicchat}
+Zi~Lin, Zihan Wang, Yongqi Tong, Yangkun Wang, Yuxin Guo, Yujia Wang, and
+  Jingbo Shang.
+\newblock {ToxicChat: Unveiling Hidden Challenges of Toxicity Detection in
+  Real-World User-AI Conversation}, 2023.
+\newblock EMNLP findings 2023.
+
+\bibitem[Liu et~al.(2024)Liu, Jia, Geng, Jia, and Gong]{liu2024formalizing}
+Yupei Liu, Yuqi Jia, Runpeng Geng, Jinyuan Jia, and Neil~Zhenqiang Gong.
+\newblock {Formalizing and Benchmarking Prompt Injection Attacks and Defenses}.
+\newblock In \emph{33rd USENIX Security Symposium (USENIX Security 24)}, 2024.
+
+\bibitem[Maloyan and Namiot(2025)]{maloyan2025adversarial}
+Narek Maloyan and Dmitry Namiot.
+\newblock {Adversarial Attacks on LLM-as-a-Judge Systems: Insights from Prompt
+  Injections}, 2025.
+
+\bibitem[Mangaokar et~al.(2024)Mangaokar, Hooda, Choi, Chandrashekaran, Fawaz,
+  Jha, and Prakash]{mangaokar2024prp}
+Neal Mangaokar, Ashish Hooda, Jihye Choi, Shreyas Chandrashekaran, Kassem
+  Fawaz, Somesh Jha, and Atul Prakash.
+\newblock {PRP: Propagating Universal Perturbations to Attack Large Language
+  Model Guard-Rails}, 2024.
+
+\bibitem[Markov et~al.(2022)Markov, Zhang, Agarwal, Eloundou, Lee, Adler,
+  Jiang, and Weng]{markov2022holistic}
+Todor Markov, Chong Zhang, Sandhini Agarwal, Tyna Eloundou, Teddy Lee, Steven
+  Adler, Angela Jiang, and Lilian Weng.
+\newblock {A Holistic Approach to Undesired Content Detection in the Real
+  World}, 2022.
+
+\bibitem[Mazeika et~al.(2024)Mazeika, Phan, Yin, Zou, Wang, Mu, Sakhaee, Li,
+  Basart, Li, et~al.]{mazeika2024harmbench}
+Mantas Mazeika, Long Phan, Xuwang Yin, Andy Zou, Zifan Wang, Norman Mu, Elham
+  Sakhaee, Nathaniel Li, Steven Basart, Bo~Li, et~al.
+\newblock {HarmBench: A Standardized Evaluation Framework for Automated Red
+  Teaming and Robust Refusal}, 2024.
+
+\bibitem[McCauley and Schulz(2025)]{mccauley2025hat}
+Conor McCauley and Kasimir Schulz.
+\newblock {Same Model, Different Hat}.
+\newblock HiddenLayer research blog,
+  \url{https://www.hiddenlayer.com/research/same-model-different-hat}, October
+  2025.
+
+\bibitem[McKenzie et~al.(2025)McKenzie, Hollinsworth, Tseng, Davies, Casper,
+  Tucker, Kirk, and Gleave]{mckenzie2025stack}
+Ian~R. McKenzie, Oskar~J. Hollinsworth, Tom Tseng, Xander Davies, Stephen
+  Casper, Aaron~D. Tucker, Robert Kirk, and Adam Gleave.
+\newblock {STACK: Adversarial Attacks on LLM Safeguard Pipelines}, 2025.
+
+\bibitem[{Meta}(2025{\natexlab{a}})]{meta2025llamaguard4}
+{Meta}.
+\newblock {Llama Guard 4 Model Card}.
+\newblock \url{https://huggingface.co/meta-llama/Llama-Guard-4-12B}, April
+  2025{\natexlab{a}}.
+
+\bibitem[{Meta}(2025{\natexlab{b}})]{meta2025promptguard2}
+{Meta}.
+\newblock {Llama Prompt Guard 2 model card}.
+\newblock \url{https://huggingface.co/meta-llama/Llama-Prompt-Guard-2-86M},
+  April 2025{\natexlab{b}}.
+
+\bibitem[{Mistral AI}(2026)]{mistral2026shieldstralblog}
+{Mistral AI}.
+\newblock {Shieldstral}.
+\newblock \url{https://mistral.ai/news/shieldstral/}, August 2026.
+
+\bibitem[Nasr et~al.(2025)Nasr, Carlini, Sitawarin, Schulhoff, Hayes, Ilie,
+  Pluto, Song, Chaudhari, Shumailov, et~al.]{nasr2025attacker}
+Milad Nasr, Nicholas Carlini, Chawin Sitawarin, Sander~V. Schulhoff, Jamie
+  Hayes, Michael Ilie, Juliette Pluto, Shuang Song, Harsh Chaudhari, Ilia
+  Shumailov, et~al.
+\newblock {The Attacker Moves Second: Stronger Adaptive Attacks Bypass Defenses
+  Against Llm Jailbreaks and Prompt Injections}, 2025.
+
+\bibitem[{OpenAI}(2025)]{openai2025gptosssafeguard}
+{OpenAI}.
+\newblock {Technical Report: Research Preview of gpt-oss-safeguard}.
+\newblock
+  \url{https://cdn.openai.com/pdf/08b7dee4-8bc6-4955-a219-7793fb69090c/Technical_report__Research_Preview_of_gpt_oss_safeguard.pdf},
+  October 2025.
+
+\bibitem[Outeda et~al.(2026)Outeda, Betarte, Campo, and
+  Cravero]{outeda2026decoding}
+Fernando Outeda, Gustavo Betarte, Juan~Diego Campo, and Fiorella Cravero.
+\newblock {Decoding Guardrails: XAI-Guided Perturbation Analysis of Prompt
+  Injection Detection}, 2026.
+
+\bibitem[Pandya et~al.(2025)Pandya, Labunets, Gao, and
+  Fernandes]{pandya2025may}
+Nishit~V. Pandya, Andrey Labunets, Sicun Gao, and Earlence Fernandes.
+\newblock {May I have your Attention? Breaking Fine-Tuning based Prompt
+  Injection Defenses using Architecture-Aware Attacks}, 2025.
+
+\bibitem[Pant et~al.(2026)Pant, Lohani, and Kumar]{pant2026inseparability}
+Dewank Pant, Shruti Lohani, and Avijit Kumar.
+\newblock {On the Inseparability of Instructions and Data in Shared-Embedding
+  Sequence Models}, 2026.
+
+\bibitem[Park et~al.(2026)Park, Kim, and Shim]{park2026policyguard}
+Kyutae Park, Jungwon Kim, and Daeyeol Shim.
+\newblock {PolicyGuard: Prompt-Configurable Semantic DLP for LLM Coding
+  Agents}, 2026.
+\newblock arXiv:2608.02687v1; withdrawn 5 Aug 2026.
+
+\bibitem[Peng et~al.(2026)Peng, Lian, Wagner, and Chen]{peng2026secopd}
+Yibo Peng, Long Lian, David Wagner, and Sizhe Chen.
+\newblock {SecOPD: Mitigating Adaptive Prompt Injections by On-Policy
+  Distillation}, 2026.
+
+\bibitem[R{\"o}ttger et~al.(2023)R{\"o}ttger, Kirk, Vidgen, Attanasio, Bianchi,
+  and Hovy]{rottger2023xstest}
+Paul R{\"o}ttger, Hannah~Rose Kirk, Bertie Vidgen, Giuseppe Attanasio, Federico
+  Bianchi, and Dirk Hovy.
+\newblock {XSTest: A Test Suite for Identifying Exaggerated Safety Behaviours
+  in Large Language Models}, 2023.
+
+\bibitem[Sadhu et~al.(2026{\natexlab{a}})Sadhu, Sengupta, Sankarapu, and
+  Seth]{sadhu2026compliance}
+Saisab Sadhu, Aadit Sengupta, Vinay~Kumar Sankarapu, and Pratinav Seth.
+\newblock {What Do Compliance Detectors Read? An Audit of Activation Probes and
+  Guard Models}, 2026{\natexlab{a}}.
+
+\bibitem[Sadhu et~al.(2026{\natexlab{b}})Sadhu, Sengupta, Sankarapu, and
+  Seth]{sadhu2026verdict}
+Saisab Sadhu, Aadit Sengupta, Vinay~Kumar Sankarapu, and Pratinav Seth.
+\newblock {Verdict Without the Rule: Diagnosing and Auditing Regulatory Rule
+  Sensitivity in LLM Compliance Systems}, 2026{\natexlab{b}}.
+
+\bibitem[Shi et~al.(2024)Shi, Yuan, Liu, Huang, Zhou, Sun, and
+  Gong]{shi2024optimizationbased}
+Jiawen Shi, Zenghui Yuan, Yinuo Liu, Yue Huang, Pan Zhou, Lichao Sun, and
+  Neil~Zhenqiang Gong.
+\newblock {Optimization-based Prompt Injection Attack to LLM-as-a-Judge}, 2024.
+
+\bibitem[Tamber and Lin(2025)]{tamber2025illusions}
+Manveer~Singh Tamber and Jimmy Lin.
+\newblock {Illusions of Relevance: Arbitrary Content Injection Attacks Deceive
+  Retrievers, Rerankers, and LLM Judges}, 2025.
+
+\bibitem[Tramer et~al.(2020)Tramer, Carlini, Brendel, and
+  Madry]{tramer2020adaptive}
+Florian Tramer, Nicholas Carlini, Wieland Brendel, and Aleksander Madry.
+\newblock {On Adaptive Attacks to Adversarial Example Defenses}, 2020.
+
+\bibitem[Usama et~al.(2026)Usama, Nisa, and Jung]{usama2026control}
+Muhammad Usama, Khair~Un Nisa, and Summer~Yeoreum Jung.
+\newblock {Control-Token Injection Suppresses Chain-of-Thought and Defeats
+  Reasoning-Based Oversight in Tool-Using Agents}, 2026.
+
+\bibitem[Wallace et~al.(2024)Wallace, Xiao, Leike, Weng, Heidecke, and
+  Beutel]{wallace2024instruction}
+Eric Wallace, Kai Xiao, Reimar Leike, Lilian Weng, Johannes Heidecke, and Alex
+  Beutel.
+\newblock {The Instruction Hierarchy: Training LLMs to Prioritize Privileged
+  Instructions}, 2024.
+
+\bibitem[Wang et~al.(2025)Wang, Jiang, Yu, and Huang]{wang2025illusion}
+Zihao Wang, Yibo Jiang, Jiahao Yu, and Heqing Huang.
+\newblock {The Illusion of Role Separation: Hidden Shortcuts in LLM Role
+  Learning (and How to Fix Them)}, 2025.
+
+\bibitem[Wu et~al.(2024)Wu, Zhang, Song, Xu, Zhao, Agrawal, Indurthi, Xiang,
+  Mittal, and Zhou]{wu2024instructional}
+Tong Wu, Shujian Zhang, Kaiqiang Song, Silei Xu, Sanqiang Zhao, Ravi Agrawal,
+  Sathish~Reddy Indurthi, Chong Xiang, Prateek Mittal, and Wenxuan Zhou.
+\newblock {Instructional Segment Embedding: Improving LLM Safety with
+  Instruction Hierarchy}, 2024.
+\newblock ICLR 2025.
+
+\bibitem[Yang et~al.(2026)Yang, Jang, and Lim]{yang2026nameless}
+Kisu Yang, Yoonna Jang, and Heuiseok Lim.
+\newblock {Nameless Tokenization: A Lossless Tokenizer-Level Defense Against
+  Control-Token Forgery in Open-Weight LLMs}, 2026.
+
+\bibitem[Yang et~al.(2025)Yang, Stevanoski, Meeus, and
+  de~Montjoye]{yang2025auditing}
+Xiaoxue Yang, Bozhidar Stevanoski, Matthieu Meeus, and Yves-Alexandre
+  de~Montjoye.
+\newblock {Auditing Prompt Injection Defenses Before They Reach Users: What
+  Strong Adversaries Reveal}, 2025.
+
+\bibitem[Ye et~al.(2026)Ye, Cui, and Hadfield-Menell]{ye2026prompt}
+Charles Ye, Jasmine Cui, and Dylan Hadfield-Menell.
+\newblock {Prompt Injection as Role Confusion}, 2026.
+
+\bibitem[Yi et~al.(2023)Yi, Xie, Zhu, Kiciman, Sun, Xie, and
+  Wu]{yi2023benchmarking}
+Jingwei Yi, Yueqi Xie, Bin Zhu, Emre Kiciman, Guangzhong Sun, Xing Xie, and
+  Fangzhao Wu.
+\newblock {Benchmarking and Defending Against Indirect Prompt Injection Attacks
+  on Large Language Models}, 2023.
+
+\bibitem[Yin et~al.(2026)Yin, Geng, Wang, and Jia]{yin2026pismith}
+Chenlong Yin, Runpeng Geng, Yanting Wang, and Jinyuan Jia.
+\newblock {PISmith: Reinforcement Learning-based Red Teaming for Prompt
+  Injection Defenses}, 2026.
+
+\bibitem[Young(2025)]{young2025evaluating}
+Richard~J. Young.
+\newblock {Evaluating the Robustness of Large Language Model Safety Guardrails
+  Against Adversarial Attacks}, 2025.
+
+\bibitem[Zeng et~al.(2024)Zeng, Liu, Mullins, Peran, Fernandez, Harkous,
+  Narasimhan, Proud, Kumar, Radharapu, et~al.]{zeng2024shieldgemma}
+Wenjun Zeng, Yuchi Liu, Ryan Mullins, Ludovic Peran, Joe Fernandez, Hamza
+  Harkous, Karthik Narasimhan, Drew Proud, Piyush Kumar, Bhaktipriya Radharapu,
+  et~al.
+\newblock {ShieldGemma: Generative AI Content Moderation Based on Gemma}, 2024.
+
+\bibitem[Zhan et~al.(2026)Zhan, Song, Hou, Zhang, Liu, and
+  Gao]{zhan2026samebytes}
+Yan Zhan, Yunze Song, Mengkai Hou, Wanting Zhang, Shaobo Liu, and Zhijun Gao.
+\newblock {Same Bytes, Different Authority: Reserved-Token Representations in
+  Chat-Template Prompt Injection}, 2026.
+
+\bibitem[Zhang et~al.(2026)Zhang, Huang, and Gu]{zhang2026origin}
+Yuxuan Zhang, Jeff Huang, and Guofei Gu.
+\newblock {Origin Is All You Need: Provenance-Aware Transformers for Structural
+  Trust-Boundary Separation}, 2026.
+
+\bibitem[Zhao et~al.(2025{\natexlab{a}})Zhao, Yuan, Huang, Hu, Zhang, Yang, Yu,
+  Liu, Zhou, Lin, et~al.]{zhao2025qwenguard}
+Haiquan Zhao, Chenhan Yuan, Fei Huang, Xiaomeng Hu, Yichang Zhang, An~Yang,
+  Bowen Yu, Dayiheng Liu, Jingren Zhou, Junyang Lin, et~al.
+\newblock {Qwen3Guard Technical Report}, 2025{\natexlab{a}}.
+
+\bibitem[Zhao et~al.(2026)Zhao, Xu, Zhang, and Yang]{zhao2026ltbd}
+Luman Zhao, Minghui Xu, Yue Zhang, and Yijun Yang.
+\newblock {LTBD: Learnable Trust-Boundary Delimiters for Prompt Injection
+  Defense}, 2026.
+
+\bibitem[Zhao et~al.(2025{\natexlab{b}})Zhao, Liu, Yu, Kung, Chen, Mi, and
+  Yu]{zhao2025one}
+Yulai Zhao, Haolin Liu, Dian Yu, Sunyuan Kung, Meijia Chen, Haitao Mi, and Dong
+  Yu.
+\newblock {One Token to Fool LLM-as-a-Judge}, 2025{\natexlab{b}}.
+
+\bibitem[Zhou et~al.(2026)Zhou, Zhu, Wang, He, Zhai, Sun, Wei, and
+  Xiong]{zhou2026prompt}
+Yuanbo Zhou, Changjia Zhu, Junyu Wang, Xu~He, Yan Zhai, Kun Sun, Mingkui Wei,
+  and Junjie Xiong.
+\newblock {Prompt Overflow: What the Guardrail Inspects Is Not What the Model
+  Infers}, 2026.
+
+\bibitem[Zou et~al.(2023)Zou, Wang, Carlini, Nasr, Kolter, and
+  Fredrikson]{zou2023universal}
+Andy Zou, Zifan Wang, Nicholas Carlini, Milad Nasr, J.~Zico Kolter, and Matt
+  Fredrikson.
+\newblock {Universal and Transferable Adversarial Attacks on Aligned Language
+  Models}, 2023.
+
+\bibitem[Zverev et~al.(2024)Zverev, Abdelnabi, Tabesh, Fritz, and
+  Lampert]{zverev2024llms}
+Egor Zverev, Sahar Abdelnabi, Soroush Tabesh, Mario Fritz, and Christoph~H.
+  Lampert.
+\newblock {Can LLMs Separate Instructions From Data? And What Do We Even Mean
+  By That?}, 2024.
+
+\bibitem[Zverev et~al.(2025)Zverev, Kortukov, Panfilov, Volkova, Tabesh,
+  Lapuschkin, Samek, and Lampert]{zverev2025aside}
+Egor Zverev, Evgenii Kortukov, Alexander Panfilov, Alexandra Volkova, Soroush
+  Tabesh, Sebastian Lapuschkin, Wojciech Samek, and Christoph~H. Lampert.
+\newblock {ASIDE: Architectural Separation of Instructions and Data in Language
+  Models}, 2025.
+
+\end{thebibliography}
