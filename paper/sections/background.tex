@@ -2,36 +2,39 @@
 \label{sec:background}
 
 \paragraph{Guards.}
-Shieldstral-1.0-3B~\citep{calvi2026shieldstral} uses a fixed system prompt and a user message with three plain-text fields, \texttt{<Instruct>}, \texttt{<Query>} and \texttt{<Document>} (\cref{fig:anatomy}). % src: src/prompt.py (verbatim from the model card)
-The developer writes the first two, which together form the deployment's \emph{policy}, and interpolates the content into the third.
+Shieldstral-1.0-3B~\citep{calvi2026shieldstral} takes a fixed system prompt and a user message with three plain-text fields, \texttt{<Instruct>}, \texttt{<Query>} and \texttt{<Document>} (\cref{fig:anatomy}). % src: src/prompt.py (verbatim from the model card)
+The developer writes the first two fields, which together form the deployment's \emph{policy}, and interpolates the content into the third.
 Its paper describes no special-token delimiters and reports no prompt-injection evaluation.
 We read its score as $P(\text{yes})$, the yes/no logits renormalised over the two answers.
-Llama Guard~\citep{inan2023llama,grattafiori2024llama,chi2024llama,meta2025llamaguard4} wraps the conversation in plain-text \texttt{<BEGIN CONVERSATION>} and \texttt{<END CONVERSATION>} lines and has no policy in the prompt for content to override.
-gpt-oss-safeguard-20B~\citep{openai2025gptosssafeguard} was post-trained to follow an instruction hierarchy~\citep{wallace2024instruction}, so the policy in its system role sits behind a role boundary the content cannot cross, the design one would pick as a mitigation.
+Llama Guard~\citep{inan2023llama,grattafiori2024llama,chi2024llama,meta2025llamaguard4} wraps the conversation in plain-text \texttt{<BEGIN CONVERSATION>} and \texttt{<END CONVERSATION>} lines, and its prompt holds no policy for content to override.
+gpt-oss-safeguard-20B~\citep{openai2025gptosssafeguard} was post-trained to follow an instruction hierarchy~\citep{wallace2024instruction}.
+Its policy sits in the system role, behind a role boundary the content cannot cross, which is the design one would choose as a mitigation.
 
 \paragraph{Deployment.}
 \label{sec:threat}
-A developer places a guard $G$ in front of a downstream system, chooses the policy and the format, and inserts untrusted content $c$ into the \emph{content slot} (Shieldstral's \texttt{<Document>} field).
+A developer places a guard $G$ in front of a downstream system and chooses its policy and input format.
+Untrusted content $c$ goes into the \emph{content slot} (Shieldstral's \texttt{<Document>} field), and may be a user message, a retrieved passage, a tool result in an agent loop or an earlier turn of a conversation.
 $G$ \emph{clears} $c$ if its score is below a threshold $\tau$ ($\tau = 0.5$ unless stated).
-For \emph{label-only} guards, which return a verdict and no score, $G$ clears $c$ if the verdict is safe.
+A \emph{label-only} guard returns a verdict and no score, and clears $c$ if the verdict is safe.
 Cleared content is forwarded unchanged.
-Content can arrive as a user message, a retrieved passage, a tool result in an agent loop, or an earlier turn of a conversation.
 
 \paragraph{Attacker.}
 The attacker controls only $c$.
-They do not control the instruction, the query, the system prompt, decoding or the threshold, and they do not see scores.
-For the attack and the benchmark (\cref{sec:attack,sec:benchmark}) the attacker is black-box and may know the deployment's query exactly or not at all.
-For the defense (\cref{sec:evaluation}) the attacker knows the defense.
+They do not control the instruction, the query, the system prompt, decoding or the threshold.
+Against the attack and the benchmark (\cref{sec:attack,sec:benchmark}) they are black-box: they see no scores, and they may know the deployment's query exactly or not at all.
+Against the defense (\cref{sec:evaluation}) they know the defense.
 They have the defended weights, the boundary mechanism and the training recipe, may query the defended guard's score, and may optimise content with gradients.
 
 \paragraph{Goal and scope.}
-The attacker wants a harmful \emph{request} $h$, a harmful text from a public benchmark that $G$ flags on its own, to be cleared while it stays present and readable in the forwarded content.
+The attacker wants a harmful \emph{request} $h$ to be cleared while it stays present and readable in the forwarded content.
+A request is a harmful text from a public benchmark that $G$ flags on its own.
 Attacks that remove, paraphrase or obfuscate $h$ are out of scope, which separates target rebinding from evasion that hides harmful content from a classifier~\citep{hackett2025bypassing,mangaokar2024prp}.
-Attackers who control the guard's prompt or weights, multimodal content and denial of service are also out of scope.
+We also exclude attackers who control the guard's prompt or weights, multimodal content, and denial of service.
 
 \paragraph{Success criterion.}
 Only \emph{screened} requests count, meaning those the deployment flags with no attack.
-The screen is $G(h) > 0.9$ in the Shieldstral confirmatory study, a majority \texttt{unsafe} verdict over three samples for label-only guards, and $G(h) \ge 0.5$ in \guardrebind{} and the defense evaluation, so rates from the confirmatory study and the benchmark are not directly comparable. % src: PROTOCOL.md (v1), PROTOCOL_v2.md (Metrics)
-The \emph{attack payload} $p$ is the text the attacker adds to $h$, and the attack succeeds if $G$ clears $h \oplus p$, where $\oplus$ is concatenation.
-The \emph{bypass rate} (or \emph{bypass}) is the fraction of screened requests on which the attack succeeds, with a Wilson 95\% interval.
-We measure success at the guard, not whether a downstream model acts on the request.
+The screen is $G(h) > 0.9$ in the Shieldstral confirmatory study, a majority \texttt{unsafe} verdict over three samples for label-only guards, and $G(h) \ge 0.5$ in \guardrebind{} and the defense evaluation. % src: PROTOCOL.md (v1), PROTOCOL_v2.md (Metrics)
+Rates from the confirmatory study and the benchmark are therefore not directly comparable.
+The \emph{attack payload} $p$ is the text the attacker adds to $h$.
+The attack succeeds if $G$ clears $h \oplus p$, where $\oplus$ is concatenation, and the \emph{bypass rate} (or \emph{bypass}) is the fraction of screened requests on which it succeeds, with a Wilson 95\% interval.
+We measure success at the guard and do not test whether a downstream model acts on the request.
