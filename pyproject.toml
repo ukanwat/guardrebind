@@ -1,7 +1,7 @@
 [project]
 name = "guard-policy-injection"
 version = "0.1.0"
-description = "Does content-controlled text redefine the policy of policy-adaptive guard models?"
+description = "Nothing to See Here: Fooling LLM Safety Guards into Judging the Wrong Text (code and data)"
 requires-python = ">=3.11"
 dependencies = [
     "torch>=2.4",
@@ -13,6 +13,8 @@ dependencies = [
     "peft>=0.21.2",
     "datasets>=5.1.0",
     "scikit-learn>=1.9.1",
+    "numpy>=2.0",
+    "scipy>=1.11",
 ]
 
 [tool.setuptools]

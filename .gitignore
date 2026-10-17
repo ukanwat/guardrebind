@@ -3,7 +3,12 @@
 __pycache__/
 *.pyc
 .DS_Store
-uv.lock
+# model weights, trained adapters, dataset caches and distillation data (rebuilt by the scripts)
 models/
-results/*.csv
 data/
+# results/*.csv was ignored while experiments ran; files the paper cites are force-added
+results/*.csv
+results/bench/v2_smoke/
+results/**/*.done
+# queue and pod run state (step logs, markers, locks); not part of the release
+logs/
