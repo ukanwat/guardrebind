@@ -18,7 +18,8 @@ while pgrep -f "sh scripts/queue_fix_full.sh" > /dev/null; do sleep 30; done
 for pass in 1 2 3 4 5; do
   echo "$(date '+%F %T') POD pass $pass" >> logs/queue/queue.log
   ok=1
-  for P in $PARTS; do PART=$P sh scripts/queue_fix_full.sh || ok=0; done
+  if [ -n "${QUEUE:-}" ]; then sh scripts/$QUEUE || ok=0
+  else for P in $PARTS; do PART=$P sh scripts/queue_fix_full.sh || ok=0; done; fi
   if [ $ok = 1 ]; then touch logs/queue/FIX_DONE; break; fi
   sleep 60
 done
