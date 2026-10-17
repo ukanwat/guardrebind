@@ -1,0 +1,35 @@
+\section{Limitations and Ethics}
+\label{sec:limitations}
+
+\subsection{Limitations}
+
+\paragraph{Confirmatory scope.}
+The final results (\cref{sec:attack}) are one guard (Shieldstral), one corpus (AdvBench held-out rows 200--299), English, text-only, short documents.
+The cross-model results are label-only (no logits) and, for Llama Guard~4, the rebinding mechanism is not isolated from chat-template malformation (\cref{sec:crossmodel}).
+Not covered: multimodal inputs (Shieldstral is multimodal), non-English, long realistic documents ($>1$k tokens), and a true non-guard baseline. % src: PROTOCOL.md out-of-scope
+The ecosystem-scale claims (\cref{sec:benchmark}), the causal mechanism (\cref{sec:mechanism}) and the fix (\cref{sec:fix,sec:adaptive}) are planned and marked \tbd{}; the present draft commits to the method, not the numbers.
+
+\paragraph{Segment-max.}
+Max-over-segments can miss harm that appears only in the composition of otherwise-benign segments~\citep{zhou2026prompt}.
+Including the whole content as a segment (\cref{eq:target}) bounds this, but does not eliminate it; the composition attack in \cref{sec:adaptive} tests it directly.
+
+\paragraph{Shortcut risk.}
+A trained guard could learn ``score the first pair'' rather than ``treat the content as one document''~\citep{wang2025illusion}; our benign-first evaluation is designed to detect this but a negative result there would not fully rule it out.
+
+\paragraph{No promise of completeness.}
+We close one structural channel; we do not claim general prompt-injection robustness, which is argued to be unattainable in shared-embedding models without enforced separation~\citep{pant2026inseparability}.
+
+\subsection{Ethics}
+
+\paragraph{Responsible disclosure.}
+The affected guards are shipped products.
+Disclosure to the vendors precedes public release; the benchmark and adapters are released on the disclosure timeline.
+
+\paragraph{Dual use.}
+The attack is simple and transferable, which is precisely why it must be documented and fixed rather than left latent; the paper's net contribution is a defense evaluated against adaptive attackers.
+We release a trained mitigation alongside the measurement.
+
+\paragraph{No harmful content authored.}
+We author no harmful text.
+Every harmful payload is drawn from published, citable benchmarks (AdvBench for the confirmatory run; the \cref{sec:benchmark} corpora for the benchmark), so the definition of ``harmful'' is standard and auditable, and the benign decoys and hard negatives are innocuous strings fixed in code.
+Raw harmful strings are not reproduced in this paper beyond short, already-published examples.

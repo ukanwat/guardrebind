@@ -1,0 +1,18 @@
+\section{Adaptive Attacks (Planned)}
+\label{sec:adaptive}
+
+A fix that strips tokens before the model sees them performs non-differentiable preprocessing, which can give a false sense of security through gradient masking~\citep{athalye2018obfuscated}.
+We therefore grant the attacker white-box access to the defended weights and the boundary mechanism, and run every gradient attack on the \emph{post-stripping} input, so stripping hides no gradients.
+This follows the adaptive-evaluation norms that break defenses reporting near-zero ASR~\citep{tramer2020adaptive,nasr2025attacker,jia2025critical}: the attacker moves second.
+
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt]
+  \item \textbf{Forged-boundary attempts.} Literal reserved-token strings and Unicode lookalikes in the content, to confirm the boundary cannot be reconstructed from text. Expected: \tbd{bypass}.
+  \item \textbf{GCG on the post-strip input.} Greedy coordinate-gradient suffix search~\citep{zou2023universal} in the content region minimising $P(\text{unsafe})$. Expected: \tbd{bypass}.
+  \item \textbf{Checkpoint-GCG.} GCG seeded from intermediate LoRA checkpoints~\citep{yang2025auditing}, which we hold. Expected: \tbd{bypass}.
+  \item \textbf{Attention-aware attack.} An architecture-aware attack of the kind that breaks StruQ/SecAlign~\citep{pandya2025may}. Expected: \tbd{bypass}.
+  \item \textbf{LLM / structural search attacker.} An LLM attacker that sees the defense and a random/LLM-driven search over label syntaxes, in the spirit of template search~\citep{deng2026automating}; optionally the RL attacker PISmith~\citep{yin2026pismith}. Expected: \tbd{bypass}.
+  \item \textbf{Composition attack.} Harm split across segments to test segment-max directly~\citep{zhou2026prompt}. Expected: \tbd{bypass}.
+\end{itemize}
+
+We will report ASR for each, and state explicitly that stripping is preprocessing and that attacks were optimised against the post-strip input.
+The headline target is that the strongest adaptive attack leaves bypass at \tbd{Z\%} while the detection and over-refusal numbers of \cref{tab:fix-main} are retained.

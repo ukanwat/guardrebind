@@ -1,0 +1,14 @@
+\begin{abstract}
+LLM-based safety guards are deployed as access controls: a small classifier reads a message, a retrieved passage or a tool result, and decides whether it may pass.
+Most guards receive the content to be judged by string interpolation into a fixed prompt whose structure (a policy, a grading question, a document) is written in plain text.
+We show that content which reproduces that structure changes \emph{which task} the guard performs.
+Appending a forged question--document pair with a benign trailing document to a harmful request makes the guard grade the forged pair instead of the real one.
+On Shieldstral-1.0-3B this clears 100 of 100 flagged AdvBench requests (median score $0.986 \rightarrow 0.016$); % src: results/hundred_log.txt, results/confirm_hundred.csv
+the same construction, adapted to each input format, clears 30/30 on gpt-oss-safeguard-20B, which isolates the policy in the system role (28/30 with no imperative text at all), and 29/29 on Llama Guard~4, which has a fixed taxonomy. % src: results/confirm_crossmodel.csv, PROTOCOL.md
+We call this \emph{target rebinding}.
+A pre-registered confirmatory study separates it from instruction following and recency: a forged document alone clears 9\%, a forged question plus document clears 100\%, and the bypass rate falls from 100\% to 33\% to 0\% as the trailing document becomes more harmful. % src: results/confirm_log.txt, results/groundtruth_log.txt
+We also find that standard Hugging Face chat templates turn control-token text inside the content into real control tokens, a second channel that lowers scores further (exploratory). % src: PLAN.md findings log
+We then measure the effect across \tbd{N} guards and \tbd{N} attack forms in \guardrebind{}, where median bypass is \tbd{X\%}; localize the binding with activation patching (\tbd{layer range}); and propose a fix that combines reserved, unforgeable boundary tokens with segment-max self-distillation.
+The fixed Shieldstral reduces bypass on held-out attack families from \tbd{X\%} to \tbd{Y\%}, and under adaptive attacks to \tbd{Z\%}, while changing detection AUROC by \tbd{$\Delta$} and over-refusal on XSTest and OR-Bench-hard by \tbd{$\Delta$}.
+We release the benchmark, harness, adapters and all raw scores.
+\end{abstract}

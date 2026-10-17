@@ -1,0 +1,61 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{newtxtext,newtxmath}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+
+\graphicspath{{figures/}}
+
+% Anything not yet measured is marked \tbd{...} and renders in red.
+\newcommand{\tbd}[1]{\textcolor{red}{[TBD: #1]}}
+\newcommand{\guardrebind}{\textsc{GuardRebind}}
+\newcommand{\ci}[2]{\,[#1,\,#2]}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single,
+  framerule=0.3pt,
+  rulecolor=\color{black!40},
+  showstringspaces=false,
+}
+
+\title{Last Pair Wins: Safety Guards Grade Whatever Task They See Last}
+\author{Utkarsh Kanwat}
+\date{Draft, October 2026}
+
+\begin{document}
+
+\maketitle
+
+\input{sections/abstract}
+\input{sections/introduction}
+\input{sections/background}
+\input{sections/attack}
+\input{sections/control_tokens}
+\input{sections/mechanism}
+\input{sections/benchmark}
+\input{sections/fix}
+\input{sections/adaptive}
+\input{sections/related}
+\input{sections/limitations}
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\appendix
+\input{sections/appendix}
+
+\end{document}

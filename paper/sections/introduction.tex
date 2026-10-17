@@ -1,0 +1,39 @@
+\section{Introduction}
+\label{sec:intro}
+
+Safety guards are small language models trained to answer one question about one piece of text: does this content violate a policy?
+They are placed in front of chat assistants, on retrieval pipelines and around agent tool calls, and their verdict is used as a control: content that is cleared is passed on, and in agentic settings an action may execute without further review.
+Recent guards make the policy itself an input.
+Shieldstral~\citep{calvi2026shieldstral,mistral2026shieldstralblog} frames moderation as binary question answering over an \texttt{<Instruct>}, a \texttt{<Query>} and a \texttt{<Document>}; gpt-oss-safeguard~\citep{openai2025gptosssafeguard} reasons over a developer-written policy in the system role; Llama Guard~\citep{inan2023llama,meta2025llamaguard4} grades a conversation against a fixed taxonomy inside its own delimiters.
+In each case the content under review reaches the model through the same token stream as the structure that tells the model what to do with it.
+
+This paper is about that shared channel.
+The structural markers that delimit the grading question and the document are, in the formats we study, plain text that the developer interpolates around untrusted content.
+Nothing prevents the content from containing the same markers.
+When it does, the guard sees two complete grading tasks and, as we show, answers the last one.
+The harmful request is not removed, rewritten or hidden; it remains in the message that the guard approves and that the downstream model receives.
+
+The attack class is not new.
+Forging conversational or template structure to redirect a model is well documented for agents and chat models: Structural Template Injection~\citep{deng2026automating}, ChatInject~\citep{chang2025chatinject}, pseudo-conversation injection~\citep{chen2024goal} and separator injection~\citep{li2025separator}.
+Injection into the content scored by an LLM judge is also established~\citep{shi2024optimizationbased,li2025llms,gros2026evaluating}, and concurrent work tests forgeries of the structured input of a question-answering safety judge and of Llama Guard~3~\citep{li2026same}.
+An informal account of the present attack was published by the author before that concurrent work~\citep{kanwat2026blog}.
+Our contribution is therefore not the observation that structure can be forged.
+It is a guard-specific account that is rigorous enough to act on: how often and on which guards the failure occurs, what the model is computing when it occurs, and a trained fix that is evaluated against attackers who know about it.
+
+\paragraph{Contributions.}
+\begin{itemize}[leftmargin=1.5em,itemsep=2pt]
+  \item[\textbf{C1}] \textbf{Measurement.}
+  A pre-registered confirmatory study on Shieldstral with held-out data, ablations, controls and failed predictions reported (\cref{sec:attack}); cross-model results on gpt-oss-safeguard and Llama Guard~4; an exploratory control-token channel (\cref{sec:control}); and \guardrebind{}, a grammar-generated benchmark across \tbd{N} guards, \tbd{N} attack forms and four deployment channels (\cref{sec:benchmark}).
+  \item[\textbf{C2}] \textbf{Mechanism.}
+  Behavioural evidence that the guard grades the last complete question--document pair (\emph{target rebinding}) rather than following an instruction or weighting recent text, together with causal tests by activation patching and linear probes (\cref{sec:mechanism}).
+  \item[\textbf{C3}] \textbf{A fix.}
+  Reserved boundary tokens that content cannot produce, plus segment-max self-distillation, a training objective that requires no clean copy of the input and is monotone in the harm of any segment (\cref{sec:fix}); evaluated with held-out attack families, adaptive attacks (\cref{sec:adaptive}), detection retention and over-refusal.
+  \item[\textbf{C4}] \textbf{Releases.}
+  The benchmark and harness, the fixed adapters, the training-data recipe and every raw score behind every number in this paper.
+\end{itemize}
+
+\paragraph{Scope of the claims.}
+Results in \cref{sec:attack} are final and come from a frozen protocol (\cref{app:protocol}).
+Results marked \tbd{} are planned and not yet measured; the corresponding sections describe the method and the exact table layouts.
+We do not claim that the fix techniques are new in isolation: reserved delimiters with training follow StruQ and SecAlign~\citep{chen2024struq,chen2024secalign}, and distillation toward clean-context behaviour is concurrent with SecOPD and RAISED~\citep{peng2026secopd,dhouib2026raised}.
+What we add is the instantiation for a scoring classifier, where the output is one calibrated probability and the clean counterfactual of a nested input is not known in advance.
