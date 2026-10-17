@@ -1,0 +1,56 @@
+{
+ "shieldstral": {
+  "added": 1000,
+  "special": 1000,
+  "nonspecial_added": 0,
+  "special_ids_reachable": [],
+  "n_special_reachable": 0,
+  "nonspecial_added_reachable": 0,
+  "example_nonspecial": []
+ },
+ "llama_guard_3_1b": {
+  "added": 256,
+  "special": 256,
+  "nonspecial_added": 0,
+  "special_ids_reachable": [],
+  "n_special_reachable": 0,
+  "nonspecial_added_reachable": 0,
+  "example_nonspecial": []
+ },
+ "qwen3guard_0_6b": {
+  "added": 26,
+  "special": 14,
+  "nonspecial_added": 12,
+  "special_ids_reachable": [],
+  "n_special_reachable": 0,
+  "nonspecial_added_reachable": 12,
+  "example_nonspecial": [
+   "<tool_call>",
+   "</tool_call>",
+   "<|fim_prefix|>",
+   "<|fim_middle|>",
+   "<|fim_suffix|>",
+   "<|fim_pad|>",
+   "<|repo_name|>",
+   "<|file_sep|>"
+  ]
+ },
+ "shieldgemma_2b": {
+  "added": 249,
+  "special": 7,
+  "nonspecial_added": 242,
+  "special_ids_reachable": [],
+  "n_special_reachable": 0,
+  "nonspecial_added_reachable": 242,
+  "example_nonspecial": [
+   "<2mass>",
+   "[@BOS@]",
+   "<unused0>",
+   "<unused1>",
+   "<unused2>",
+   "<unused3>",
+   "<unused4>",
+   "<unused5>"
+  ]
+ }
+}

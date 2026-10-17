@@ -51,7 +51,7 @@ class Example:
 
 # --- building -----------------------------------------------------------------
 
-BUILD_MODES = ("segment_max", "naive_at")
+BUILD_MODES = ("segment_max", "naive_at", "clean_copy")
 
 
 def _variants(item, attacks, guard, rng: random.Random, k: int, mode: str = "segment_max") -> list[Example]:
@@ -60,6 +60,10 @@ def _variants(item, attacks, guard, rng: random.Random, k: int, mode: str = "seg
         document = attack.apply(item.text, guard)
         decoy = attack.params.get("decoy_text")
         segments = [document, item.text] + ([decoy] if decoy else [])
+        if mode == "clean_copy":
+            # Ablation (clean-context distillation, as in SecOPD/RAISED): the teacher sees only the
+            # original item, so whatever the forged pair adds, including a harmful decoy, is ignored.
+            segments = [item.text]
         out.append(Example(f"{item.id}|{attack.name}", document, segments, variant=attack.name))
     if mode == "naive_at":
         # Hard labels (PROTOCOL_v2 F6): the item's ground-truth label for every
@@ -126,17 +130,17 @@ def build_examples(per_item: int, max_items: int | None, seed: int, max_chars: i
 
 
 def build(out: Path, per_item: int = 3, max_items: int | None = None, seed: int = 0,
-          max_chars: int = 1200, mode: str = "segment_max") -> None:
+          max_chars: int = 1200, mode: str = "segment_max", cache: Path | None = None) -> None:
     if mode not in BUILD_MODES:
         raise ValueError(f"mode must be one of {BUILD_MODES}")
     examples = build_examples(per_item, max_items, seed, max_chars, mode)
 
-    if mode == "segment_max":
+    if mode in ("segment_max", "clean_copy"):
         from ..bench.guards import load_guard
-        # Teacher scores live in a shared cache so naive_at and segment_max runs
-        # that share examples reuse each other's forward passes.
+        # Teacher scores live in a cache keyed by text; pass --cache to reuse another build's
+        # forward passes (clean_copy segments are a subset of segment_max's).
         label_targets(examples, load_guard("shieldstral", batch_size=16),
-                      out.with_suffix(".teacher_cache.jsonl"), batch=16)
+                      cache or out.with_suffix(".teacher_cache.jsonl"), batch=16)
     # naive_at targets are hard labels, already set in build_examples (no teacher).
 
     atomic_write_text(out, "".join(json.dumps(asdict(ex)) + "\n" for ex in examples))
@@ -286,7 +290,9 @@ def main() -> None:
     b.add_argument("--per-item", type=int, default=3)
     b.add_argument("--max-items", type=int)
     b.add_argument("--mode", choices=list(BUILD_MODES), default="segment_max",
-                   help="segment_max (self-distillation) or naive_at (hard labels, PROTOCOL_v2 F6)")
+                   help="segment_max (self-distillation), naive_at (hard labels, PROTOCOL_v2 F6) or clean_copy "
+                        "(teacher on the original item only; ablation)")
+    b.add_argument("--cache", type=Path, help="teacher score cache (default: next to --out)")
     t = sub.add_parser("train")
     t.add_argument("--data", type=Path, required=True)
     t.add_argument("--fmt", choices=list(FORMATS), required=True)
@@ -297,7 +303,7 @@ def main() -> None:
     t.add_argument("--seed", type=int, default=0)
     a = ap.parse_args()
     if a.cmd == "build":
-        build(a.out, a.per_item, a.max_items, mode=a.mode)
+        build(a.out, a.per_item, a.max_items, mode=a.mode, cache=a.cache)
     else:
         train(a.data, a.fmt, a.out, a.epochs, a.batch, a.lr, seed=a.seed)
 

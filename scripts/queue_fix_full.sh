@@ -30,7 +30,6 @@ pgrep -f mem_guard.sh > /dev/null || (nohup sh scripts/mem_guard.sh > /dev/null 
 wait_free
 
 PY="uv run --frozen python"
-SEEDS="0 1 2"   # BT gets 3 seeds; T and AT get seeds 0,1 (compute, PROTOCOL_v2 D3)
 
 # 0. Mechanism, TEST split (the reported numbers; same settings as the dev runs) -- #
 M="uv run --frozen --with matplotlib python -m src.mech"
@@ -48,46 +47,49 @@ R=results/mech
 # Naive adversarial-training set: same items/attacks, hard labels, no teacher.
 [ -s data/fix/naive_at.jsonl ] || \
   run build_naive $PY -m src.fix.distill build --out data/fix/naive_at.jsonl --max-items 5000 --per-item 2 --mode naive_at
+# Clean-copy ablation (teacher on the original item only, as in SecOPD/RAISED): same examples, targets from
+# the full build's teacher cache, so this costs no new forward passes.
+[ -s data/fix/clean_copy.jsonl ] || \
+  run build_cc $PY -m src.fix.distill build --out data/fix/clean_copy.jsonl --max-items 5000 --per-item 2 \
+    --mode clean_copy --cache data/fix/full.teacher_cache.jsonl
 
-# 2. Train T, BT, AT for seeds 0,1,2 ---------------------------------------- #
-#   T  = stock format  + segment-max      (data/fix/full.jsonl)
-#   BT = bounded format + segment-max      (data/fix/full.jsonl)
-#   AT = bounded format + naive hard labels (data/fix/naive_at.jsonl); the naive
-#        adversarial-training baseline (F6), bounded so only the labelling scheme
-#        differs from BT.
-for s in $SEEDS; do
-  [ "$s" = 2 ] || trained models/fix/t_seed$s || \
-    run train_t_seed$s $PY -m src.fix.distill train --data data/fix/full.jsonl --fmt stock \
-      --seed $s --out models/fix/t_seed$s
-  trained models/fix/bt_seed$s || \
-    run train_bt_seed$s $PY -m src.fix.distill train --data data/fix/full.jsonl --fmt bounded \
-      --seed $s --out models/fix/bt_seed$s
-  [ "$s" = 2 ] || trained models/fix/at_seed$s || \
-    run train_at_seed$s $PY -m src.fix.distill train --data data/fix/naive_at.jsonl --fmt bounded \
-      --seed $s --out models/fix/at_seed$s
-done
+# 2-4. Models, test evals, controls and adaptive attacks ---------------------- #
+#   T  = stock format  + segment-max       (data/fix/full.jsonl)
+#   BT = bounded format + segment-max       (data/fix/full.jsonl)
+#   AT = bounded format + naive hard labels (data/fix/naive_at.jsonl); the naive adversarial-training
+#        baseline (F6), bounded so only the labelling scheme differs from BT. Evaluated as cond BT.
+#   CC = stock format  + clean-copy target  (data/fix/clean_copy.jsonl); ablation against T. Evaluated as cond T.
+# Seed 0 of everything is trained, evaluated and attacked first, so the deciding results arrive ~1.5 days
+# before the extra seeds (T/AT seed 1, BT seeds 1-2), which only add error bars.
+train() { kind=$1; s=$2; data=$3; fmt=$4
+  trained models/fix/${kind}_seed$s || run train_${kind}_seed$s $PY -m src.fix.distill train --data $data \
+    --fmt $fmt --seed $s --out models/fix/${kind}_seed$s; }
+evalm() { kind=$1; s=$2; cond=$3
+  ! trained models/fix/${kind}_seed$s || [ -f results/fix/test_${kind}_seed$s.json ] || \
+    run eval_${kind}_seed$s $PY -m src.fix.evaluate --cond $cond --adapter models/fix/${kind}_seed$s \
+      --split test --allow-test --out results/fix/test_${kind}_seed$s.json; }
 
-# 3. Evaluate every model on the TEST split (--allow-test gates it) ---------- #
+train t  0 data/fix/full.jsonl       stock
+train bt 0 data/fix/full.jsonl       bounded
+train at 0 data/fix/naive_at.jsonl   bounded
+train cc 0 data/fix/clean_copy.jsonl stock
+
 [ -f results/fix/test_base.json ] || \
   run eval_base $PY -m src.fix.evaluate --cond base --split test --allow-test --out results/fix/test_base.json
 [ -f results/fix/test_B.json ] || \
   run eval_B $PY -m src.fix.evaluate --cond B --split test --allow-test --out results/fix/test_B.json
-for s in $SEEDS; do
-  [ "$s" = 2 ] || ! trained models/fix/t_seed$s || [ -f results/fix/test_t_seed$s.json ] || \
-    run eval_t_seed$s $PY -m src.fix.evaluate --cond T --adapter models/fix/t_seed$s \
-      --split test --allow-test --out results/fix/test_t_seed$s.json
-  ! trained models/fix/bt_seed$s || [ -f results/fix/test_bt_seed$s.json ] || \
-    run eval_bt_seed$s $PY -m src.fix.evaluate --cond BT --adapter models/fix/bt_seed$s \
-      --split test --allow-test --out results/fix/test_bt_seed$s.json
-  # AT is evaluated under the bounded (BT) condition with its own adapter.
-  [ "$s" = 2 ] || ! trained models/fix/at_seed$s || [ -f results/fix/test_at_seed$s.json ] || \
-    run eval_at_seed$s $PY -m src.fix.evaluate --cond BT --adapter models/fix/at_seed$s \
-      --split test --allow-test --out results/fix/test_at_seed$s.json
-done
+evalm t 0 T; evalm bt 0 BT; evalm at 0 BT; evalm cc 0 T
 
-# 4. Adaptive attacks on base, B, T-seed0, BT-seed0 ------------------------- #
-# GCG: 500 steps, 20-tok suffix, n=50 screened test items, batch 32 (Mac).
-# Structural search: n=100. Both resumable per item (<out>.jsonl).
+# Forged verdict vs forged task, and the split-payload probe (exploratory), on base and the seed-0 fixes.
+fc() { tag=$1; shift; [ -f results/fix/forgery_controls_$tag.json ] || \
+  run forgery_controls_$tag $PY -m src.fix.forgery_controls "$@" --split test --allow-test \
+    --out results/fix/forgery_controls_$tag.json; }
+fc base --cond base
+trained models/fix/t_seed0  && fc t_seed0  --cond T  --adapter models/fix/t_seed0
+trained models/fix/bt_seed0 && fc bt_seed0 --cond BT --adapter models/fix/bt_seed0
+
+# Adaptive attacks on base, B, T-seed0, BT-seed0. GCG: 250 steps, 20-token suffix, n=20 screened test items,
+# batch 32 (PROTOCOL_v2 D3). Structural search: n=50. Both resumable per item (<out>.jsonl).
 adaptive() { cond=$1; tag=$2; shift 2
   [ -f results/fix/adaptive_${tag}_gcg.json ] || \
     run adaptive_${tag}_gcg $PY -m src.fix.adaptive --cond $cond "$@" --split test \
@@ -106,6 +108,12 @@ trained models/fix/bt_seed0 && adaptive BT bt_seed0 --adapter models/fix/bt_seed
   run adaptive_bt_seed0_gcg500 $PY -m src.fix.adaptive --cond BT --adapter models/fix/bt_seed0 --split test \
     --n 10 --attack gcg --steps 500 --batch 32 --out results/fix/adaptive_bt_seed0_gcg500.json
 
+# Extra seeds (PROTOCOL_v2 D3: BT 3 seeds, T and AT 2).
+train t  1 data/fix/full.jsonl     stock;   evalm t  1 T
+train bt 1 data/fix/full.jsonl     bounded; evalm bt 1 BT
+train at 1 data/fix/naive_at.jsonl bounded; evalm at 1 BT
+train bt 2 data/fix/full.jsonl     bounded; evalm bt 2 BT
+
 F=results/fix
 m=$(missing $F/test_base.json $F/test_B.json $F/test_t_seed0.json $F/test_t_seed1.json $F/test_at_seed0.json \
   $F/test_at_seed1.json $F/test_bt_seed0.json $F/test_bt_seed1.json $F/test_bt_seed2.json \
@@ -113,5 +121,6 @@ m=$(missing $F/test_base.json $F/test_B.json $F/test_t_seed0.json $F/test_t_seed
   $F/adaptive_t_seed0_gcg.json $F/adaptive_t_seed0_structural.json $F/adaptive_bt_seed0_gcg.json \
   $F/adaptive_bt_seed0_structural.json $F/adaptive_bt_seed0_gcg500.json \
   $R/patching_test_n100.json $R/similarity_test_n150.json $R/probe_test_n150_train600.json \
-  $R/dose_response_test_n150_d40.json)
+  $R/dose_response_test_n150_d40.json $F/test_cc_seed0.json $F/forgery_controls_base.json \
+  $F/forgery_controls_t_seed0.json $F/forgery_controls_bt_seed0.json)
 [ -z "$m" ] && echo "$(date '+%H:%M:%S') QUEUE_FIX done" >> $QLOG || { echo "fix missing: $m" >> $QLOG; exit 1; }
