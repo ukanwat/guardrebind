@@ -99,6 +99,7 @@ Data: train-split prompt items, 3 train-family attacks per item, plus a structur
   (f) Stability check: re-score a 200-cell random subset twice (and batched vs unbatched) to bound numeric non-determinism on MPS.
   Predictions M1-M5 and F1-F6 are unchanged and are evaluated on the means. K, the decoy pool and the policy paraphrases are
   fixed in code before the test run (attacks_grammar.py, decoy pool v1).
+  Amended (2026-10-15 05:50 IST, before any test-split run): K=3 and policies-on-6-families, for compute (src/bench/run_bench_v2.py).
 - D2 (2026-10-15 05:30 IST, before any test-split run). Qwen3Guard native forgery corrected. The grammar's original
   conversation-only forgery mis-modelled Qwen3Guard's format, which wraps the conversation in an instruction block plus a
   tail. Train-split exploration (n=40, results/bench/explore/qwen3guard.md): conversation-only 5/40, full request block 40/40;
