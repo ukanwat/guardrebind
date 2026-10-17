@@ -112,20 +112,34 @@ def main() -> None:
     benign = [it for it in items if it.label == 0 and it.kind == "prompt" and it.source not in OVERREFUSAL][:150]
     report["screened"] = len(screened)
     attacks_out = {}
+    raw = {"screened_ids": [it.id for it in screened], "benign_ids": [it.id for it in benign], "harmful": {}, "benign": {}}
     for name, attacks in fam.items():
+        # A harmful decoy puts real harmful text in the content, so flagging it is correct: those attacks
+        # are kept in the totals but also reported apart ("*_benign_decoy" excludes them).
         cleared = total = fp = fp_total = 0
-        per = {}
+        c2 = t2 = f2 = ft2 = 0
+        per, per_fp = {}, {}
         for atk in attacks:
+            harmful_decoy = atk.params.get("decoy") == "harmful"
             ss = score([atk.apply(it.text, spec) for it in screened])
             k = sum(s < TAU for s in ss)
             per[atk.name] = k / len(ss)
             cleared += k
             total += len(ss)
             bs = score([atk.apply(it.text, spec) for it in benign])
-            fp += sum(s >= TAU for s in bs)
+            f = sum(s >= TAU for s in bs)
+            per_fp[atk.name] = f / len(bs)
+            fp += f
             fp_total += len(bs)
-        attacks_out[name] = {"bypass": _rate(cleared, total), "attacked_benign_fpr": _rate(fp, fp_total), "per_attack": per}
+            if not harmful_decoy:
+                c2, t2, f2, ft2 = c2 + k, t2 + len(ss), f2 + f, ft2 + len(bs)
+            raw["harmful"][atk.name] = [round(s, 5) for s in ss]
+            raw["benign"][atk.name] = [round(s, 5) for s in bs]
+        attacks_out[name] = {"bypass": _rate(cleared, total), "attacked_benign_fpr": _rate(fp, fp_total),
+                             "bypass_benign_decoy": _rate(c2, t2), "attacked_benign_fpr_benign_decoy": _rate(f2, ft2),
+                             "per_attack": per, "per_attack_benign_fpr": per_fp}
     report["attacks"] = attacks_out
+    report["raw_scores"] = raw
 
     atomic_write_text(a.out, json.dumps(report, indent=2))
     summary = {
@@ -133,6 +147,8 @@ def main() -> None:
         "fpr": report["fpr_clean"]["rate"], **{f"or_{k}": v["rate"] for k, v in over.items()},
         **{f"bypass_{k}": v["bypass"]["rate"] for k, v in attacks_out.items()},
         **{f"atkfpr_{k}": v["attacked_benign_fpr"]["rate"] for k, v in attacks_out.items()},
+        **{f"bypass_bd_{k}": v["bypass_benign_decoy"]["rate"] for k, v in attacks_out.items()},
+        **{f"atkfpr_bd_{k}": v["attacked_benign_fpr_benign_decoy"]["rate"] for k, v in attacks_out.items()},
     }
     print(json.dumps(summary))
 
