@@ -111,3 +111,10 @@ Data: train-split prompt items, 3 train-family attacks per item, plus a structur
   stopping early on success (success is monotone in budget, so the budget curve is unaffected); a convergence check on 10
   items at 500 steps for BT; structural search on n=50. Predictions unchanged. A1's n=100 becomes n=20, so its CI is wider;
   this is reported as such.
+- D4 (2026-10-17 09:14 IST, before the reported defense runs). Defense training samples each attack's decoy and forged
+  query from the TRAIN half of the decoy/query pools (benign 0-19, borderline 0-2, harmful 0-3, each query pool 0-3), and
+  the defense is evaluated on the fixed decoy and on the HELD-OUT halves (benign 20-39, borderline 3-5, harmful 4-7, queries
+  4-7). Structured-benign hard negatives come from the train split only. Added a score-guided adaptive search attack
+  (300 queries per item) and two training-free baselines (a label-pattern structure detector, inference-time segment-max).
+  The lean defense set (T seeds 0-1, B+T seed 0, clean-copy seed 0) replaces the D3 seed plan for the reported results.
+  Predictions unchanged; F1/A2 are scored on held-out families with held-out decoys.
