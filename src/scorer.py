@@ -92,5 +92,14 @@ class ShieldstralScorer:
         no = torch.logsumexp(logits[self.no_ids], dim=0)
         return torch.sigmoid(yes - no).item()
 
+    @torch.inference_mode()
+    def score_ids(self, ids: list[int]) -> float:
+        """Score a pre-built id sequence (see src/fix/inputs.py)."""
+        ids = torch.tensor([ids], device=self.model.device)
+        logits = self.model(input_ids=ids).logits[0, -1].float()
+        yes = torch.logsumexp(logits[self.yes_ids], dim=0)
+        no = torch.logsumexp(logits[self.no_ids], dim=0)
+        return torch.sigmoid(yes - no).item()
+
     def token_length(self, instruct: str, query: str, document: str) -> int:
         return int(self._encode(instruct, query, document).shape[-1])
