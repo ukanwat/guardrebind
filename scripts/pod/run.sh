@@ -5,7 +5,7 @@ set -u
 cd /workspace/gpi
 export PATH=/workspace/bin:$PATH UV_CACHE_DIR=/workspace/.uvcache UV_PROJECT_ENVIRONMENT=/workspace/venv
 export HF_HOME=/workspace/hf HF_HUB_OFFLINE=1 PART=main OFF=0 TRIES=3
-MAX_HOURS=${MAX_HOURS:-38}
+MAX_HOURS=${MAX_HOURS:-15}   # Secure 4090 at $0.89/h within the $15 budget
 START=$(cat logs/queue/POD_START 2>/dev/null || date +%s | tee logs/queue/POD_START)
 stop_pod() { echo "$(date '+%F %T') stopping pod: $1" >> logs/queue/queue.log; sleep 5
   runpodctl stop pod "$RUNPOD_POD_ID" || runpodctl pod stop "$RUNPOD_POD_ID"; }

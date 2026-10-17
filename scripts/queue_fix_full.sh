@@ -25,8 +25,8 @@ wait_free() {
   done
 }
 
-# PART=main (Shieldstral: mechanism, data, models, evals, controls, adaptive, extra seeds), PART=generality (fix on
-# LG3-1B and Qwen3Guard-0.6B) or PART=all (default), so two machines can split the work. A file
+# PART=main (Shieldstral seed 0: mechanism, data, models, evals, controls, adaptive), PART=seeds (extra seeds),
+# PART=generality (fix on LG3-1B and Qwen3Guard-0.6B) or PART=all (default), so two machines can split the work. A file
 # logs/queue/FIX_ELSEWHERE.<part> on this machine skips that part here (it runs on another machine).
 PART=${PART:-all}
 want() { { [ "$PART" = all ] || [ "$PART" = "$1" ]; } && [ ! -f $L/FIX_ELSEWHERE.$1 ]; }
@@ -134,7 +134,7 @@ done
 
 fi
 
-if want main; then
+if want seeds; then
 # Extra seeds (PROTOCOL_v2 D3: BT 3 seeds, T and AT 2).
 train t  1 data/fix/full.jsonl     stock;   evalm t  1 T
 train bt 1 data/fix/full.jsonl     bounded; evalm bt 1 BT
@@ -145,8 +145,7 @@ fi
 
 F=results/fix
 R=results/mech
-m=$(missing $F/test_base.json $F/test_B.json $F/test_t_seed0.json $F/test_t_seed1.json $F/test_at_seed0.json \
-  $F/test_at_seed1.json $F/test_bt_seed0.json $F/test_bt_seed1.json $F/test_bt_seed2.json \
+m=$(missing $F/test_base.json $F/test_B.json $F/test_t_seed0.json $F/test_at_seed0.json $F/test_bt_seed0.json \
   $F/adaptive_base_gcg.json $F/adaptive_base_structural.json $F/adaptive_B_gcg.json $F/adaptive_B_structural.json \
   $F/adaptive_t_seed0_gcg.json $F/adaptive_t_seed0_structural.json $F/adaptive_bt_seed0_gcg.json \
   $F/adaptive_bt_seed0_structural.json $F/adaptive_bt_seed0_gcg500.json \
@@ -154,6 +153,7 @@ m=$(missing $F/test_base.json $F/test_B.json $F/test_t_seed0.json $F/test_t_seed
   $R/dose_response_test_n150_d40.json $F/test_cc_seed0.json $F/forgery_controls_base.json \
   $F/forgery_controls_t_seed0.json $F/forgery_controls_bt_seed0.json)
 want main || m=""
+want seeds && m="$m $(missing $F/test_t_seed1.json $F/test_at_seed1.json $F/test_bt_seed1.json $F/test_bt_seed2.json)"
 want generality && m="$m $(missing $F/test_lg3_base.json $F/test_lg3_t_seed0.json $F/test_qg3_base.json $F/test_qg3_t_seed0.json)"
 m=$(echo $m)
 [ -z "$m" ] && echo "$(date '+%H:%M:%S') QUEUE_FIX done" >> $QLOG || { echo "fix missing: $m" >> $QLOG; exit 1; }
