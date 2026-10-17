@@ -1,47 +1,0 @@
-Loading weights:   0%|          | 0/458 [00:00<?, ?it/s]Loading weights:   2%|▏         | 10/458 [00:00<00:07, 56.13it/s]Loading weights:   4%|▍         | 20/458 [00:00<00:06, 66.40it/s]Loading weights:  38%|███▊      | 172/458 [00:00<00:00, 578.28it/s]Loading weights:  53%|█████▎    | 243/458 [00:01<00:01, 204.51it/s]Loading weights:  69%|██████▉   | 318/458 [00:01<00:00, 246.40it/s]Loading weights:  79%|███████▉  | 362/458 [00:01<00:00, 239.10it/s]Loading weights: 100%|██████████| 458/458 [00:01<00:00, 289.09it/s]
-cached 1184, to score 11517
-scored 16/11517 segments 7s
-scored 176/11517 segments 43s
-scored 336/11517 segments 68s
-scored 496/11517 segments 87s
-scored 656/11517 segments 106s
-scored 816/11517 segments 125s
-scored 976/11517 segments 144s
-scored 1136/11517 segments 163s
-scored 1296/11517 segments 182s
-scored 1456/11517 segments 201s
-scored 1616/11517 segments 222s
-scored 1776/11517 segments 243s
-scored 1936/11517 segments 267s
-scored 2096/11517 segments 292s
-scored 2256/11517 segments 315s
-scored 2416/11517 segments 341s
-scored 2576/11517 segments 367s
-scored 2736/11517 segments 392s
-scored 2896/11517 segments 418s
-scored 3056/11517 segments 444s
-scored 3216/11517 segments 469s
-scored 3376/11517 segments 494s
-scored 3536/11517 segments 521s
-scored 3696/11517 segments 552s
-scored 3856/11517 segments 582s
-scored 4016/11517 segments 612s
-scored 4176/11517 segments 640s
-scored 4336/11517 segments 671s
-scored 4496/11517 segments 702s
-scored 4656/11517 segments 731s
-scored 4816/11517 segments 759s
-scored 4976/11517 segments 789s
-scored 5136/11517 segments 816s
-scored 5296/11517 segments 843s
-scored 5456/11517 segments 874s
-scored 5616/11517 segments 901s
-scored 5776/11517 segments 930s
-scored 5936/11517 segments 960s
-scored 6096/11517 segments 996s
-scored 6256/11517 segments 1030s
-scored 6416/11517 segments 1068s
-scored 6576/11517 segments 1104s
-scored 6736/11517 segments 1142s
-scored 6896/11517 segments 1179s
-scored 7056/11517 segments 1217s
