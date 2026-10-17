@@ -7,9 +7,7 @@ We compare $\{$none, B, T, B$+$T$\}$ with training-free baselines (\cref{sec:eva
 
 \paragraph{Part B: a boundary the content cannot produce.}
 We build the \emph{bounded format} by rendering the guard's \emph{stock format}, its unmodified chat template, with an empty document slot, which leaves the trusted prefix and suffix as they are.
-We tokenize the content on its own with special-token parsing disabled, and any control-token string inside it becomes ordinary text tokens.
-Disabling special-token parsing affects only tokens marked special, and an added token that is not marked special is still emitted as one id~\citep{zhan2026samebytes,yang2026nameless}.
-On Shieldstral, the guard we train the defense on, no added or special id is reachable from content under this encoder (\cref{app:defense-impl}).
+We tokenize the content on its own with special-token parsing disabled, so a control-token string inside it becomes ordinary text tokens. (Added tokens not marked special can still slip through this switch~\citep{zhan2026samebytes,yang2026nameless}; on Shieldstral none is reachable from content, \cref{app:defense-impl}.)
 We then wrap the content's token ids in two reserved \emph{boundary tokens} that open and close the document.
 Both ids are unused in pretraining, and no input text tokenizes to them. % src: src/fix/inputs.py (bounded_ids, DOC_OPEN_ID/DOC_CLOSE_ID)
 We remove nothing from the content, so a literal \texttt{<Query>:} or \texttt{[/INST]} reaches the model as plain text inside the boundary.
@@ -26,7 +24,7 @@ For content $c$ with segments $S(c)$,
 \end{equation}
 In an attacked training example the segments are the original request and the decoy.
 Clean content has no segments beyond itself, and its target is the teacher's own score. % src: src/fix/distill.py (_variants, label_targets)
-The whole-content term keeps the target at least as high as the base guard's score on the whole content, which covers harm that appears only in combination when the base guard sees it~\citep{zhou2026prompt}. The max is defined without knowing which segment is the injection.
+The whole-content term keeps the target at least as high as the base guard's score on the whole content, which covers harm that appears only in combination~\citep{zhou2026prompt}. The target needs the segment boundaries but not which segment is the injection: the max treats the request and the decoy alike.
 Existing guidance already scans long inputs in segments at inference~\citep{meta2025promptguard2}, and we run that as a baseline (\cref{sec:evaluation}).
 Here the max is a training target: the defended guard reads the content in one pass and needs no segmenter.
 When the decoy is benign, the target reduces to clean-context distillation~\citep{peng2026secopd,dhouib2026raised}.
@@ -36,7 +34,7 @@ We use low-rank adaptation (LoRA) on the attention and multilayer-perceptron (ML
 In B$+$T we also train the two boundary-token embedding rows jointly, and T alone uses the stock format (\cref{app:defense-impl}).
 
 \paragraph{Training data.}
-We generate the training attacks and therefore know their segments.
+We generate the training attacks, so we know where their segments begin and end.
 Each of 5{,}000 train-split harmful or benign items appears once clean and twice with attacks sampled from the training attack families, and 1{,}250 \emph{structured-benign} items, benign text with label-like structure, bring the total to 16{,}250 examples. % src: PROTOCOL_v2.md (Fixed training recipe, D3: 5000 items x 2 attacks); src/fix/distill.py (build --decoy-split train)
 Each attack draws its decoy and forged query, per example, from the training half of the matching pool (\cref{app:defense-impl}). % src: src/bench/attacks_grammar.py POOL_SPLIT, draw_split
 The structured-benign items are \emph{hard negatives}, generated from nine templates (FAQs, forms, chat logs, markdown, JSON and others) filled with benign train-split text.
