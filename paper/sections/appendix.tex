@@ -217,7 +217,7 @@ Disabling special-token parsing leaves atomic any added token that the tokenizer
 For each guard tokenizer we encoded every added token's string on its own, embedded in plain text and in 500 random concatenations, with special-token parsing disabled, and recorded any added or special id in the output. % src: scripts/check_content_tokens.py, results/fix/content_token_check.json
 On Shieldstral (1000 added tokens, all special), the guard the defense is trained on, and on Llama Guard~3 1B (256, all special), no added or special id is reachable from content.
 On Qwen3Guard-0.6B, 12 of 26 added tokens are not marked special (among them the tool-call tags \texttt{<tool\_call>} and \texttt{</tool\_call>} and the fill-in-the-middle markers) and stay atomic; on ShieldGemma 2B, 242 of 249 are not special (the \texttt{<unused$k$>} and other reserved markers) and stay atomic.
-Content can produce these ids, so a boundary-token design on those tokenizers must also exclude them from the boundary. % TODO: Qwen3Guard-4B and Llama Guard 3 8B tokenizers were not checked separately (same families as the checked 0.6B and 1B).
+Content can produce these ids, so a boundary-token design on those tokenizers must also exclude them from the boundary.
 
 \section{Reproducibility}
 \label{app:repro}

@@ -3,7 +3,7 @@
 
 \subsection{Setup}
 
-The main model is Shieldstral-3B, with generality checks on Qwen3Guard-4B and Llama Guard~3~\citep{zhao2025qwenguard,grattafiori2024llama}.
+The main model is Shieldstral-3B, with a generality check of T on Llama Guard~3 1B and Qwen3Guard 0.6B~\citep{grattafiori2024llama,zhao2025qwenguard}.
 We report four quantities.
 \emph{Bypass} is measured on attack families held out of training (whole grammar branches never seen: see \cref{app:grammar}) and, separately, on the training families, on the screened core set at $\tau=0.5$.
 \emph{Detection} is AUROC and recall at $\tau$ on the clean test split, pooled and per source over \tbd{N} benchmarks.
@@ -44,7 +44,7 @@ B$+$T changes detection AUROC by \tbd{$\Delta$} and recall at $\tau$ by \tbd{$\D
 Over-refusal changes by \tbd{$\Delta$} points on XSTest-safe, \tbd{$\Delta$} on OR-Bench-hard and \tbd{$\Delta$} on the structured-benign set.
 Naive adversarial training reaches \tbd{X\%} train-family bypass but \tbd{Y\%} held-out bypass and \tbd{$\Delta$} over-refusal on structured benign, the cost B$+$T is designed to avoid.
 Replacing the segment-max target with the clean-copy target (teacher on the original item only) changes held-out bypass by \tbd{$\Delta$} and structured-benign over-refusal by \tbd{$\Delta$}; on attacks with a decoy the teacher flags, where the two targets differ, bypass is \tbd{X\%} for segment-max and \tbd{Y\%} for the clean copy.
-On Qwen3Guard-4B and Llama Guard~3, B$+$T changes held-out bypass to \tbd{X\%} and \tbd{Y\%}.
+On Llama Guard~3 1B and Qwen3Guard 0.6B, T changes held-out bypass from \tbd{X\%} to \tbd{Y\%} and from \tbd{X\%} to \tbd{Y\%}.
 
 \paragraph{Shortcut check.}
 A trained guard could learn ``score the first pair'' rather than ``treat the content as one document''~\citep{wang2025illusion}.
