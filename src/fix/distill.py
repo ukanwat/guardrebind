@@ -90,7 +90,8 @@ def build(out: Path, per_item: int = 3, max_items: int | None = None, seed: int 
     examples: list[Example] = []
     for item in items:
         examples += _variants(item, train_attacks, GUARD_SPECS["shieldstral"], rng, per_item)
-    for j, text in enumerate(structured_benign(len(items) // 4)):
+    for j, sb in enumerate(structured_benign(len(items) // 4)):
+        text = sb.text
         examples.append(Example(f"structured_benign:{j}", text, [text], variant="hard_negative"))
 
     scorer = ShieldstralScorer()
