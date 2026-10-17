@@ -60,28 +60,43 @@ def _variants(item, attacks, guard, rng: random.Random, k: int) -> list[Example]
     return out
 
 
-def label_targets(examples: list[Example], guard, batch: int = 64) -> None:
+def label_targets(examples: list[Example], guard, cache_path: Path, batch: int = 32) -> None:
     """Fill target = max teacher score over segments. Each unique segment is
-    scored once, batched, by the same guard class the evaluation uses."""
-    unique = sorted({seg for ex in examples for seg in ex.segments}, key=len)
+    scored once, batched, by the same guard class the evaluation uses. Scores
+    are appended to cache_path as they come in, so an interrupted build resumes
+    where it stopped."""
     cache: dict[str, float] = {}
+    if cache_path.exists():
+        for line in cache_path.open():
+            row = json.loads(line)
+            cache[row["text"]] = row["score"]
+    todo = sorted({seg for ex in examples for seg in ex.segments} - cache.keys(), key=len)
+    print(f"cached {len(cache)}, to score {len(todo)}", flush=True)
     t0 = time.time()
-    for i in range(0, len(unique), batch):
-        chunk = unique[i:i + batch]
-        cache.update(zip(chunk, guard.score(chunk)))
-        if (i // batch) % 20 == 0:
-            print(f"scored {i + len(chunk)}/{len(unique)} segments {time.time() - t0:.0f}s", flush=True)
+    with cache_path.open("a") as f:
+        for i in range(0, len(todo), batch):
+            chunk = todo[i:i + batch]
+            for text, score in zip(chunk, guard.score(chunk)):
+                cache[text] = score
+                f.write(json.dumps({"text": text, "score": score}) + "\n")
+            f.flush()
+            if (i // batch) % 10 == 0:
+                print(f"scored {i + len(chunk)}/{len(todo)} segments {time.time() - t0:.0f}s", flush=True)
     for ex in examples:
         ex.target = max(cache[seg] for seg in ex.segments)
 
 
-def build(out: Path, per_item: int = 3, max_items: int | None = None, seed: int = 0) -> None:
+def build(out: Path, per_item: int = 3, max_items: int | None = None, seed: int = 0,
+          max_chars: int = 1200) -> None:
     from ..bench.attacks_grammar import grammar, split_attacks
     from ..bench.data import load_all, structured_benign
     from ..bench.attacks_grammar import GUARD_SPECS
 
     rng = random.Random(seed)
-    items = [it for it in load_all() if it.split == "train" and it.kind == "prompt"]
+    # Very long prompts (some adversarial WildGuardMix rows run to thousands of
+    # tokens) dominate scoring time on MPS and are rare at deployment; cap them.
+    items = [it for it in load_all()
+             if it.split == "train" and it.kind == "prompt" and len(it.text) <= max_chars]
     rng.shuffle(items)
     items = items[:max_items] if max_items else items
     train_attacks, _ = split_attacks(grammar(core=False))
@@ -96,7 +111,7 @@ def build(out: Path, per_item: int = 3, max_items: int | None = None, seed: int 
 
     from ..bench.guards import load_guard
 
-    label_targets(examples, load_guard("shieldstral", batch_size=32))
+    label_targets(examples, load_guard("shieldstral", batch_size=32), out.with_suffix(".teacher_cache.jsonl"))
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w") as f:
         for ex in examples:
