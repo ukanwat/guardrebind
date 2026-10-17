@@ -30,7 +30,7 @@ Content arrives through one of four channels: (i)~a user message in a chat deplo
 The attacker controls only $c$.
 They do not control the instruction, the query, the system prompt, decoding or the threshold, and they do not see scores.
 For the attack and the measurement (\cref{sec:attack,sec:benchmark}) the attacker is black-box, with knowledge of the deployment's query ranging from exact to none (\cref{sec:robustness}).
-For the defense (\cref{sec:evaluation}) the attacker knows the defense: they have the defended weights, the boundary mechanism and the training recipe, and may optimise content with gradients.
+For the defense (\cref{sec:evaluation}) the attacker knows the defense: they have the defended weights, the boundary mechanism and the training recipe, may query the defended guard's score, and may optimise content with gradients.
 
 \paragraph{Goal and scope.}
 The attacker wants a harmful \emph{request} $h$, a harmful text from a public benchmark that $G$ flags on its own, to be cleared while remaining present and readable in the forwarded content.
@@ -40,5 +40,7 @@ Also out of scope: attackers who control the guard's prompt or weights, multimod
 \paragraph{Success criterion.}
 Only \emph{screened} requests count: those the deployment flags with no attack.
 The screen is $G(h) > 0.9$ for the Shieldstral confirmatory study, a majority \texttt{unsafe} verdict over three samples for the label-only guards, and $G(h) \ge 0.5$ in \guardrebind{} and the defense evaluation. % src: PROTOCOL.md (v1), PROTOCOL_v2.md (Metrics)
+The confirmatory study kept a stricter screen so that only confidently flagged requests count; \guardrebind{} and the defense use the deployment threshold itself, so rates from the two are not directly comparable (\cref{sec:bench-results}).
 An attack succeeds on $h$ if $G$ clears $h \oplus p$, where the \emph{attack payload} $p$ is the text the attacker adds to $h$ and $\oplus$ is concatenation.
 The \emph{bypass rate} (or \emph{bypass}) is the fraction of screened requests on which the attack succeeds, reported with a Wilson 95\% interval.
+Success is measured at the guard: we do not measure whether a downstream model acts on the forwarded request.

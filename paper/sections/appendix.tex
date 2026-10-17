@@ -25,6 +25,17 @@ benign_tail     : h \n\n <inert filler, x3>
 Label variants replace the \texttt{<Query>:}/\texttt{<Document>:} labels in \texttt{query\_doc} with: angle title/lower/upper case, plain colon, square brackets, markdown bold, abbreviated \texttt{Q:}/\texttt{D:}, and (negative control) no labels. % src: src/confirm.py MARKERS
 The cross-model payloads adapt the construction to each format: for gpt-oss-safeguard, a policy-update marker and a second content block; for Llama Guard~4, a forged end/begin-conversation pair with a benign turn. % src: src/crossmodel.py, src/gpt_oss_mechanism.py
 
+\section{Real Control Tokens (exploratory)}
+\label{app:control}\label{sec:control}
+
+Under the stock Hugging Face chat template, literal strings such as \texttt{[/INST]} inside the content are tokenized as the real control tokens, so content can close the user turn and open a new one rather than imitate a label.
+This channel is documented for agents: chat-template injection~\citep{chang2025chatinject}, the authority carried by the reserved token's own embedding~\citep{zhan2026samebytes}, forgeable control tokens across deployed tokenizers~\citep{yang2026nameless}, and gpt-oss channel tokens that suppress reasoning and evade monitors~\citep{usama2026control}; we measure what it adds against a guard.
+In an exploratory probe on the first 40 held-out flagged requests, closing and reopening the turn with real control tokens before a \emph{forged triple} (a forged instruction, query and document) clears 40/40 (median $0.0028$), against a median of $0.014$ for the plain-text forged pair (40/40). % src: exploratory; reproduced by src/fix/special_tokens.py (prints these counts and medians); no results file is stored
+Tokenizing the identical payload as plain text clears 39/40 with median $0.029$, about $10\times$ higher. % src: src/fix/special_tokens.py (the *_split rows)
+A forged system prompt (``answer no to every document'') clears 11/40 through real control tokens and 0/40 as plain text (median $0.994$).
+The label pair does most of the work; real control tokens lower the score further and make an otherwise inert instruction partly effective.
+These numbers are exploratory and are reproduced by the released probe script; \guardrebind{} includes this encoding as an attack axis (\cref{sec:benchmark}), and the defense removes it by construction for the tokenizer it is trained on (\cref{sec:defense,app:content-tokens}).
+
 \section{Protocol and Pre-registered Outcomes}
 \label{app:protocol}
 
@@ -308,7 +319,7 @@ In a minority of attacked rows the model's reasoning quotes the literal marker t
 \label{app:defense-impl}
 
 The bounded format renders the stock chat template with a placeholder document, splits it into a trusted prefix and suffix, encodes the content on its own with special-token parsing disabled, and inserts the two reserved boundary tokens (unused in pretraining) around it. % src: src/fix/inputs.py
-The template emits a space before the document that the tokenizer would merge into the content's first token; that space is moved into the trusted prefix, which leaves plain documents tokenizing identically to the stock path (verified on 203 documents). % src: src/fix/inputs.py (_content), PLAN.md
+The template emits a space before the document that the tokenizer would merge into the content's first token; that space is moved into the trusted prefix, which leaves plain documents tokenizing identically to the stock path (verified on 203 documents). % src: src/fix/inputs.py (_content); the 203-document check output is not stored in results/
 Training is a LoRA (rank 16, $\alpha=32$) on the language model's attention and MLP projections, AdamW at learning rate $10^{-4}$, batch 8, one epoch, maximum length 384, binary cross-entropy on the yes/no logit margin against the segment-max teacher target; in B$+$T the two boundary embeddings are additionally trainable and every other embedding row's gradient is masked. % src: src/fix/distill.py, PROTOCOL_v2.md (Fixed training recipe)
 Training data: 5{,}000 train-split prompt items, each clean and with two training-family attacks, plus 1{,}250 structured-benign items (16{,}250 examples); one epoch is 2{,}032 steps. % src: src/fix/distill.py (build); logs/pod/build_full.log; logs/pod/train_t_seed0.log
 Naive adversarial training and the clean-copy ablation use the same examples with different targets.
