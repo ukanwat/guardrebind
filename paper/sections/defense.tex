@@ -34,9 +34,9 @@ The student reads the whole content through the chosen format and is trained wit
 Training uses LoRA on the attention and MLP projections with the embedding matrix frozen; in B$+$T the two boundary-token embedding rows are also trained, and T uses the stock format (\cref{app:defense-impl}).
 
 \paragraph{Hard negatives.}
-Training also includes benign text that carries label-like structure, generated from nine templates (FAQs, forms, chat logs, support tickets, meeting notes, markdown, JSON, YAML and documents that quote guard tags such as \texttt{<Query>:}) filled with benign dataset text.
+Training also includes benign text that carries label-like structure, generated from nine templates (FAQs, forms, chat logs, support tickets, meeting notes, markdown, JSON, YAML and documents that quote guard tags such as \texttt{<Query>:}) filled with benign train-split text; they are disjoint from the structured-benign test set.
 Their targets come from the teacher, so the model learns that structure alone is not a reason to flag, in the spirit of NotInject/InjecGuard~\citep{li2024injecguard}. % src: src/fix/distill.py (structured_benign); src/bench/data.py TEMPLATES
-The structured-benign test set of \cref{sec:evaluation} comes from the same templates, so over-refusal on it is an in-template measure \tbd{r2: confirm hard negatives are drawn from train-split fill text only}.
+The structured-benign test set of \cref{sec:evaluation} uses the same templates with test-split fill text, so over-refusal on it measures new content in familiar templates.
 
 \paragraph{Training data.}
 Segments are known at training time because the training attacks are generated: each of 5{,}000 train-split harmful or benign items appears clean and with two attacks sampled from the training attack families, plus 1{,}250 structured-benign items, for 16{,}250 examples. % src: PROTOCOL_v2.md (Fixed training recipe, D3: 5000 items x 2 attacks); src/fix/distill.py (build --decoy-split train)
