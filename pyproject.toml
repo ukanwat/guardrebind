@@ -10,6 +10,9 @@ dependencies = [
     "huggingface-hub>=0.26",
     "sentencepiece>=0.2",
     "pandas>=2.2",
+    "peft>=0.21.2",
+    "datasets>=5.1.0",
+    "scikit-learn>=1.9.1",
 ]
 
 [tool.setuptools]
