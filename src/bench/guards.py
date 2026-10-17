@@ -113,6 +113,10 @@ class HFBackend:
     def next_token_logits(self, ids: Sequence[list[int]], candidate_ids: list[int]) -> torch.Tensor:
         device = self.model.device
         cand = torch.tensor(candidate_ids, device=device)
+        # Batch by length so short inputs are not padded to the longest one; rows are
+        # restored to input order at the end (right padding + mask, so scores don't change).
+        order = sorted(range(len(ids)), key=lambda i: len(ids[i]))
+        ids = [ids[i] for i in order]
         out = []
         for start in range(0, len(ids), self.batch_size):
             chunk = ids[start : start + self.batch_size]
@@ -128,7 +132,10 @@ class HFBackend:
             last = torch.tensor([len(seq) - 1 for seq in chunk], device=device)
             h = hidden[torch.arange(len(chunk), device=device), last]
             out.append(self._label_logits(h, cand).cpu())
-        return torch.cat(out)
+        logits = torch.cat(out)
+        restored = torch.empty_like(logits)
+        restored[torch.tensor(order)] = logits
+        return restored
 
     def _label_logits(self, hidden: torch.Tensor, cand: torch.Tensor) -> torch.Tensor:
         """The lm_head for just the label rows, in fp32. bf16 logits near 20 are
