@@ -253,6 +253,12 @@ def gcg_attack(
 
         if cur_margin < 0 and first_success is None:
             first_success = step
+            # Success is monotone in budget, so every later checkpoint is a bypass too;
+            # stop here instead of spending the rest of the budget.
+            for c in ckpts:
+                if c >= step:
+                    bypass_at[c] = True
+            break
         if step in ckpts:
             bypass_at[step] = best_margin < 0
         if log_every and step % log_every == 0:

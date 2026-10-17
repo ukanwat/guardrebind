@@ -35,15 +35,15 @@ pgrep -f mem_guard.sh > /dev/null || (nohup sh scripts/mem_guard.sh > /dev/null 
 wait_free
 
 PY="uv run --frozen python"
-SEEDS="0 1 2"
+SEEDS="0 1 2"   # BT gets 3 seeds; T and AT get seeds 0,1 (compute, PROTOCOL_v2 D3)
 
 # 1. Build data -------------------------------------------------------------- #
 # Segment-max full set (the teacher cache lands next to it and is reused).
 [ -s data/fix/full.jsonl ] || \
-  run build_full $PY -m src.fix.distill build --out data/fix/full.jsonl --max-items 8000
+  run build_full $PY -m src.fix.distill build --out data/fix/full.jsonl --max-items 5000 --per-item 2
 # Naive adversarial-training set: same items/attacks, hard labels, no teacher.
 [ -s data/fix/naive_at.jsonl ] || \
-  run build_naive $PY -m src.fix.distill build --out data/fix/naive_at.jsonl --max-items 8000 --mode naive_at
+  run build_naive $PY -m src.fix.distill build --out data/fix/naive_at.jsonl --max-items 5000 --per-item 2 --mode naive_at
 
 # 2. Train T, BT, AT for seeds 0,1,2 ---------------------------------------- #
 #   T  = stock format  + segment-max      (data/fix/full.jsonl)
@@ -52,13 +52,13 @@ SEEDS="0 1 2"
 #        adversarial-training baseline (F6), bounded so only the labelling scheme
 #        differs from BT.
 for s in $SEEDS; do
-  [ -f models/fix/t_seed$s/adapter_config.json ] || \
+  [ "$s" = 2 ] || [ -f models/fix/t_seed$s/adapter_config.json ] || \
     run train_t_seed$s $PY -m src.fix.distill train --data data/fix/full.jsonl --fmt stock \
       --seed $s --out models/fix/t_seed$s
   [ -f models/fix/bt_seed$s/adapter_config.json ] || \
     run train_bt_seed$s $PY -m src.fix.distill train --data data/fix/full.jsonl --fmt bounded \
       --seed $s --out models/fix/bt_seed$s
-  [ -f models/fix/at_seed$s/adapter_config.json ] || \
+  [ "$s" = 2 ] || [ -f models/fix/at_seed$s/adapter_config.json ] || \
     run train_at_seed$s $PY -m src.fix.distill train --data data/fix/naive_at.jsonl --fmt bounded \
       --seed $s --out models/fix/at_seed$s
 done
@@ -69,14 +69,14 @@ done
 [ -f results/fix/test_B.json ] || \
   run eval_B $PY -m src.fix.evaluate --cond B --split test --allow-test --out results/fix/test_B.json
 for s in $SEEDS; do
-  [ -f results/fix/test_t_seed$s.json ] || \
+  [ "$s" = 2 ] || [ -f results/fix/test_t_seed$s.json ] || \
     run eval_t_seed$s $PY -m src.fix.evaluate --cond T --adapter models/fix/t_seed$s \
       --split test --allow-test --out results/fix/test_t_seed$s.json
   [ -f results/fix/test_bt_seed$s.json ] || \
     run eval_bt_seed$s $PY -m src.fix.evaluate --cond BT --adapter models/fix/bt_seed$s \
       --split test --allow-test --out results/fix/test_bt_seed$s.json
   # AT is evaluated under the bounded (BT) condition with its own adapter.
-  [ -f results/fix/test_at_seed$s.json ] || \
+  [ "$s" = 2 ] || [ -f results/fix/test_at_seed$s.json ] || \
     run eval_at_seed$s $PY -m src.fix.evaluate --cond BT --adapter models/fix/at_seed$s \
       --split test --allow-test --out results/fix/test_at_seed$s.json
 done
@@ -87,14 +87,19 @@ done
 adaptive() { cond=$1; tag=$2; shift 2
   [ -f results/fix/adaptive_${tag}_gcg.json ] || \
     run adaptive_${tag}_gcg $PY -m src.fix.adaptive --cond $cond "$@" --split test \
-      --n 50 --attack gcg --steps 500 --batch 32 --out results/fix/adaptive_${tag}_gcg.json
+      --n 20 --attack gcg --steps 250 --batch 32 --out results/fix/adaptive_${tag}_gcg.json
   [ -f results/fix/adaptive_${tag}_structural.json ] || \
     run adaptive_${tag}_structural $PY -m src.fix.adaptive --cond $cond "$@" --split test \
-      --n 100 --attack structural --out results/fix/adaptive_${tag}_structural.json
+      --n 50 --attack structural --out results/fix/adaptive_${tag}_structural.json
 }
 adaptive base base
 adaptive B    B
 adaptive T    t_seed0  --adapter models/fix/t_seed0
 adaptive BT   bt_seed0 --adapter models/fix/bt_seed0
+
+# Convergence check (Carlini): doubling the GCG budget on a subset should change bypass by < 2 points.
+[ -f results/fix/adaptive_bt_seed0_gcg500.json ] || \
+  run adaptive_bt_seed0_gcg500 $PY -m src.fix.adaptive --cond BT --adapter models/fix/bt_seed0 --split test \
+    --n 10 --attack gcg --steps 500 --batch 32 --out results/fix/adaptive_bt_seed0_gcg500.json
 
 echo "$(date '+%H:%M:%S') QUEUE_FIX done" >> $L/queue_fix.log

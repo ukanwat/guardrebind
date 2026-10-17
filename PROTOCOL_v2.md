@@ -106,3 +106,8 @@ Data: train-split prompt items, 3 train-family attacks per item, plus a structur
   a harmful decoy in the same slot stays flagged (median 0.997), so it is rebinding. The full-block forgery replaces
   qwen3guard's guard_native. A len_control family (benign filler of matched length, no labels) is added for every guard,
   because the Qwen forgery is ~1.35k chars against ~60 for the others. The old conversation-only Qwen forgery is reported from the train-split exploration (n=40) only; the benchmark uses the corrected one. Qwen3Guard runs third in queue_bench (ShieldGemma last, since it is the slowest).
+- D3 (2026-10-15 06:35 IST, before any fix training on full data). Compute budget on the Mac: full fix data = 5000 train items
+  x 2 attacks (not 8000 x 3); BT gets 3 seeds, T and AT get 2 seeds (0,1). Adaptive: GCG n=20 items, 250 steps, batch 32,
+  stopping early on success (success is monotone in budget, so the budget curve is unaffected); a convergence check on 10
+  items at 500 steps for BT; structural search on n=50. Predictions unchanged. A1's n=100 becomes n=20, so its CI is wider;
+  this is reported as such.
