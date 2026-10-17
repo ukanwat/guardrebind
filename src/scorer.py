@@ -39,7 +39,7 @@ class ShieldstralScorer:
     def __init__(self, model_id: str = MODEL_ID, device: str | None = None):
         from transformers import AutoTokenizer
 
-        self.device = device or ("mps" if torch.backends.mps.is_available() else "cpu")
+        self.device = device or ("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
         self.model = self._load(model_id)
         self.model.eval()
