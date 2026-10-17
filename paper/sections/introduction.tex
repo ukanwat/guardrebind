@@ -39,7 +39,7 @@ We call the attacker's forged query and document a \emph{forged pair}, and the t
 
 Forging conversational or template structure to redirect a model is well documented for agents and chat models~\citep{deng2026automating,chang2025chatinject,chen2024goal,li2025separator}, injection into content scored by an LLM judge is established~\citep{shi2024optimizationbased,li2025llms,gros2026evaluating,tamber2025illusions}, and a forged judge-output block has bypassed a production LLM safety judge~\citep{mccauley2025hat}.
 Concurrent work forges verdict and authority fields in a typed judge's structured input; these fail on harmful-request moderation, and none introduces a new task to grade~\citep{li2026same}.
-We first described the core attack informally in a blog post, before that concurrent work appeared~\citep{kanwat2026blog}.
+An informal version of the core attack appeared in an earlier blog post~\citep{kanwat2026blog}.
 What has been missing is a guard-specific account: whether the failure is rebinding or persuasion, how widely it occurs across guard designs, and whether a guard can be trained to resist it against an attacker who knows the defense.
 
 \paragraph{Evidence.}
