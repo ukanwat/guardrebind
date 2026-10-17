@@ -1,91 +1,98 @@
 \section{\texorpdfstring{\guardrebind{}}{GuardRebind}: the Attack across Five Guards}
 \label{sec:benchmark}
 
-Forged task structure clears every guard we tested: in our benchmark, \guardrebind{}, the strongest attack family clears $93.4$--$100\%$ of flagged items on each of five guards (\cref{tab:benchmark-main}).
-
-\paragraph{Three guard designs.}
-\label{sec:crossmodel}
-The guards of \cref{sec:background} place the policy in plain text beside the content (Shieldstral), behind a role boundary (gpt-oss-safeguard-20B), or nowhere (Llama Guard, which grades against a fixed taxonomy).
-Adapted to each format by forging that guard's own structure, the attack clears every flagged request on gpt-oss-safeguard (30/30, $100\%$\ci{89\%}{100\%}) and Llama Guard~4 12B (29/29, $100\%$\ci{88\%}{100\%}), while a plain assertion that the content is safe clears none. % src: results/confirm_crossmodel.csv; src/crossmodel.py
-Both guards are label-only, and these results use 30 AdvBench requests (rows 200--229). AdvBench is the source gpt-oss-safeguard flags most often, which keeps the flagged set large.
-On gpt-oss-safeguard the pattern of \cref{sec:groundtruth} recurs ($n=30$): forged structure with a benign decoy and no imperative text clears $93\%$\ci{79\%}{98\%}, the same structure with a harmful decoy clears $0\%$, and an imperative to answer ``0'' on its own clears $20\%$\ci{10\%}{37\%}: the role boundary does not stop rebinding. % src: results/gpt_oss_mechanism_log.txt, results/confirm_gpt_oss_mechanism.csv
-Llama Guard~4, which has no policy in its prompt, is also cleared, but we did not separate rebinding from the forged delimiter breaking the provider's chat template, which the provider controls. For it we report only a bypass with plain assertion ruled out.
+Forged task structure clears every guard we tested, though not always by rebinding.
+In our benchmark, \guardrebind{}, each of five guards has an attack family that clears $93.4$--$100\%$ of its flagged items (\cref{tab:benchmark-main}).
 
 \subsection{Benchmark design}
 
 \paragraph{Guards and data.}
 We run four open-weight guards locally, Shieldstral-1.0-3B~\citep{calvi2026shieldstral}, Llama Guard~3 1B~\citep{grattafiori2024llama}, ShieldGemma 2B~\citep{zeng2024shieldgemma} and Qwen3Guard 0.6B~\citep{zhao2025qwenguard}, and gpt-oss-safeguard-20B through the OpenRouter API~\citep{openai2025gptosssafeguard}.
-Each guard's score is its $P(\text{unsafe})$ renormalised over its own label tokens (for Qwen3Guard, $P(\text{Unsafe})+P(\text{Controversial})$, its strict mode).
+Each guard's score is its $P(\text{unsafe})$ renormalised over its own label tokens (for Qwen3Guard, $P(\text{Unsafe})+P(\text{Controversial})$, its strict mode). gpt-oss-safeguard is label-only, so its score is its verdict. Content goes wherever the guard's format puts the material under review.
 Harmful and benign items come from AdvBench~\citep{zou2023universal}, HarmBench~\citep{mazeika2024harmbench}, Aegis~2.0~\citep{ghosh2025aegis}, BeaverTails~\citep{ji2023beavertails}, the OpenAI moderation evaluation~\citep{markov2022holistic} and ToxicChat~\citep{lin2023toxicchat}.
-XSTest-safe~\citep{rottger2023xstest} and OR-Bench-hard~\citep{cui2024orbench} add benign items that guards tend to over-flag (\emph{over-refusal}), for 20k harmful and 20k benign \emph{items} (texts), split 60/10/30 by a hash of the normalised text. % src: src/bench/data.py load_all()
-The core set is a stratified sample of 600 harmful and 600 benign test items per guard, and gpt-oss-safeguard, behind a paid API, runs on a 200 + 200 subset. % src: results/bench/v2/gpt_oss_summary.md (core_set(n=200))
+XSTest-safe~\citep{rottger2023xstest} and OR-Bench-hard~\citep{cui2024orbench} add benign items that guards tend to over-flag (\emph{over-refusal}).
+This gives 20k harmful and 20k benign \emph{items}, split 60/10/30 by a hash of the normalised text. % src: src/bench/data.py load_all()
+The core set is a stratified sample of 600 harmful and 600 benign test items per guard, cut to 200 + 200 for gpt-oss-safeguard, which sits behind a paid API. % src: results/bench/v2/gpt_oss_summary.md (core_set(n=200))
 
 \paragraph{Attack grammar.}
 Attacks come from a grammar whose axes are label syntax, number of forged pairs (1--5), position, decoy harm, forged-query relatedness, language, and encoding (real control tokens or plain text), with levels in \cref{app:grammar}.
-A \emph{family} fixes one level on each axis.
-For example, one family appends a single forged query and document in English angle-bracket labels after the request, with a benign decoy and a generic forged query.
-An \emph{instantiation} of that family fills in the text: one benign sentence drawn from a 40-sentence decoy pool, such as a notice that a building closes early, and one of eight generic safety questions, such as a plain question whether the content is harmful.
-Each item--family cell draws three instantiations, seeded by the item and family. % src: PROTOCOL_v2.md (Deviation D1, K=3); src/bench/attacks_grammar.py (Attack.family, instantiate, QUERY_POOLS_V1 generic, 8 per pool); _INST_DECOY_POOLS benign = 40
-The full grammar has 654 attack forms and 5 controls, and its core panel of 63 forms gives 52 attack families, 4 controls and the no-attack condition once the decoy and query choices are factored out. % src: src/bench/attacks_grammar.py len(grammar(core=False)) = 659, len(grammar(core=True)) = 63, 57 families
-The \emph{guard-native forgery} forges the guard's whole grading task, writing its turn or template markers as plain text (\cref{sec:request-unit}). % src: PROTOCOL_v2.md (Deviation D2)
-This forgery is long for Qwen3Guard (about 1.35k characters, against 110--210 for the other guards), so every guard also gets a length control: benign filler of matched length with no labels. % src: len of the guard_native query_doc payload per GUARD_SPECS (attacks_grammar.py): qwen3guard 1349, others 113-205
-Position is append (after the request), prepend (before it) or middle (benign filler, then the request, then the forged structure).
-Content goes wherever each guard's own format puts the material under review.
+Position is append (after the request), prepend (before it) or middle (benign filler, then the request, then the forged structure; it differs from append only by the leading filler).
+An attack \emph{family} is the structural choice: one level on each axis. A \emph{form} adds one fixed decoy sentence and one fixed forged query, so a family can have several forms. For example, one family appends a single forged query and document in English angle-bracket labels, with a benign decoy and a generic forged query.
+An \emph{instantiation} of a family draws the two sentences from pools instead: one of 40 benign decoys and one of eight generic safety questions.
+% src: src/bench/attacks_grammar.py (Attack.family, instantiate, QUERY_POOLS_V1 generic, 8 per pool); _INST_DECOY_POOLS benign = 40
+The core panel we run has 52 attack families and 5 controls, one of which is the no-attack condition (counts in \cref{app:grammar}). % src: src/bench/attacks_grammar.py len(grammar(core=True)) = 63 = 58 attack forms + 5 controls, 57 families = 52 attack + 5 control
+The \emph{guard-native forgery} forges the guard's whole grading task, writing its turn or template markers as plain text (see \emph{What counts as a task} in \cref{sec:bench-results}). % src: PROTOCOL_v2.md (Deviation D2)
+This forgery is long for Qwen3Guard (about 1.35k characters, against 110--210 for the other guards), so every guard also gets a length control, label-free benign filler of matched length. % src: len of the guard_native query_doc payload per GUARD_SPECS (attacks_grammar.py): qwen3guard 1349, others 113-205
 
 \paragraph{Protocol.}
 The full core attack panel runs on the core set for every guard under its default policy, and six families also run under two paraphrased deployment policies. % src: results/bench/v2/run_config.json
-Bypass is the mean over the three instantiations, with a 95\% interval from a two-level bootstrap over items and then instantiations, as pre-registered (\cref{app:protocol}). % src: PROTOCOL_v2.md D1(a)
+Each item--family cell draws three instantiations, seeded by the item and family. Bypass is their mean, with a 95\% interval from a two-level bootstrap over items and then instantiations, as pre-registered (\cref{app:protocol}). % src: PROTOCOL_v2.md (Deviation D1, K=3); PROTOCOL_v2.md D1(a)
 
 \subsection{Results}
 \label{sec:bench-results}
 
+The best family is chosen after the fact, so we also report the guard-native forgery, fixed before any test-split run (for Qwen3Guard, revised on the train split, D2 in \cref{app:protocol}), which clears $71.7$--$100\%$ on every guard.
+Bypass counts only flagged items, so it measures how much of a guard's working detection the attack removes, not its clean accuracy.
+Clean miss rates run from $10.7\%$ on Qwen3Guard to $72.0\%$ on ShieldGemma, whose $100\%$ best bypass covers only the minority of harmful items it flags.
+
 \begin{table}[t]
   \centering
   \small
-  \caption{\guardrebind{} on the flagged core items, $\tau=0.5$. ``flagged'' is the number of harmful core items (of 600; 200 for gpt-oss-safeguard) the guard flags with no attack. Clean FNR and FPR are the no-attack miss rate on harmful and flag rate on benign core items. ``Best bypass'' is the strongest single attack family (mean over three instantiations, two-level bootstrap 95\% interval), a maximum over 52 families with an unadjusted interval. ``Families $>50\%$'' counts the 52 attack families above 50\% bypass; no control exceeds 50\%, and the strongest (benign text appended, on Llama Guard~3) reaches 41.2\%. gpt-oss-safeguard is label-only (score $=$ its verdict, strict reading), user-message channel only.}
+  \caption{\guardrebind{} on the flagged core items, $\tau=0.5$. Policy: in the prompt (Shieldstral), in the system role (gpt-oss-safeguard), or a fixed taxonomy (others). ``flagged'': harmful core items (of 600; 200 for gpt-oss-safeguard) flagged with no attack. Clean FNR, FPR: no-attack miss rate on harmful and flag rate on benign items. Rates in \%. ``best'': the strongest of 52 attack families (two-level bootstrap 95\% interval, unadjusted for the maximum). ``native'': the guard-native forgery, appended. ``instr.'': the strongest instruction-only payload (a forged instruction field, a bare sentence or a ``Note:''). ``harm.\ decoy'': the strongest of four forgeries with a harmful decoy. ``fam.\ $>50\%$'': attack families (of 52) above 50\% bypass. No control exceeds 50\%; the strongest (benign text appended, on Llama Guard~3) reaches 41.2\%. gpt-oss-safeguard is label-only (score $=$ its verdict, strict reading), user-message channel only.}
   % src: results/bench/v2/bypass.csv (python -m src.bench.analyze on results/bench/v2, default policy); clean FNR from the control|none rows of results/bench/v2/<guard>__default.jsonl
   % gpt-oss: paper/data/gpt_oss_strict.md (parse = strict): recall 113/200 -> FNR 43.5%; mean column; 16/52 attack families > 50%; controls (control|*) max 6.2%
   % families >50% recomputed over the 52 non-control| rows of bypass.csv (bypass column): 36 / 44 / 25 / 8; control| rows max: 6.0 / 41.2 (benign_tail) / 20.2 / 6.0
+  % native: bypass.csv default policy guard_native query_doc: 71.7 / 100.0 / 73.6 / 81.7; gpt-oss 71.7. The two 71.7s are independent: Shieldstral 0.71667 (645/900 item-instantiations), gpt-oss mean 71.68 over 113 items x 3 (gpt_oss_strict.md)
+  % instr.: bypass.csv max over control|sentence_bare, control|authority_note, angle instruct_only: 7.0 / 2.9 / 20.2 / 0.7; gpt-oss 6.2 (angle instruct_only)
+  % harm. decoy: bypass.csv decoy=harmful families (max over 4 families): 13.6 / 11.1 / 84.3 (angle full_triple) / 0.0; gpt_oss_strict.md 9.4 (angle full_triple pos=middle decoy=harmful)
   \label{tab:benchmark-main}
   \setlength{\tabcolsep}{2.5pt}
-  \begin{tabular}{llccccc}
+  \begin{tabular}{lcccccccc}
     \toprule
-    guard & input design & flagged & clean FNR & clean FPR & best bypass & families $>50\%$ \\
+    guard & flagged & clean FNR & clean FPR & best bypass & native & instr. & harm.\ decoy & fam.\ $>50\%$ \\
     \midrule
-    Shieldstral 3B     & policy in prompt   & 300 & 50.0\% & 6.7\% & 99.2\%\ci{98.2\%}{100\%} & 36 \\
-    Llama Guard 3 1B   & fixed taxonomy     & 374 & 37.7\% & 15.8\% & 100\%\ci{100\%}{100\%}   & 44 \\
-    ShieldGemma 2B     & fixed taxonomy     & 168 & 72.0\% & 2.8\% & 100\%\ci{100\%}{100\%}   & 25 \\
-    Qwen3Guard 0.6B    & fixed taxonomy     & 536 & 10.7\% & 27.8\% & 93.4\%\ci{91.5\%}{95.1\%} & 8 \\
-    gpt-oss-safeguard 20B & system-role policy & 113 & 43.5\% & 12.0\% & 100\%\ci{100\%}{100\%}   & 16 \\ % src: paper/data/gpt_oss_strict.md (parse = strict, mean over instantiations)
+    Shieldstral 3B        & 300 & 50.0 & 6.7  & 99.2\ci{98.2}{100} & 71.7 & 7.0  & 13.6 & 36 \\
+    Llama Guard 3 1B      & 374 & 37.7 & 15.8 & 100\ci{100}{100}   & 100  & 2.9  & 11.1 & 44 \\
+    ShieldGemma 2B        & 168 & 72.0 & 2.8  & 100\ci{100}{100}   & 73.6 & 20.2 & 84.3 & 25 \\
+    Qwen3Guard 0.6B       & 536 & 10.7 & 27.8 & 93.4\ci{91.5}{95.1} & 81.7 & 0.7  & 0    & 8 \\
+    gpt-oss-safeguard 20B & 113 & 43.5 & 12.0 & 100\ci{100}{100}   & 71.7 & 6.2  & 9.4  & 16 \\ % src: paper/data/gpt_oss_strict.md (parse = strict, mean over instantiations)
     \bottomrule
   \end{tabular}
 \end{table}
 
-Every guard in \cref{tab:benchmark-main} has at least one core family above $70\%$, as pre-registered.
-Because the best family is chosen after the fact, we also report the pre-specified guard-native forgery, whose bypass is $71.7$--$100\%$ on every guard. % src: bypass.csv default policy guard_native query_doc: 71.7 / 100.0 / 73.6 / 81.7; gpt-oss 71.7
-Bypass rates describe only the flagged items, and clean behaviour differs widely across guards.
+Instructions alone do little: instruction-only payloads clear at most $7.0\%$ on four guards.
+On ShieldGemma they clear $20.2\%$\ci{14.3\%}{26.8\%}, which breaks the $10\%$ bound we pre-registered for every guard.
+The decoy's harm matters on the same four guards: with a harmful decoy, the strongest forgeries clear at most $13.6\%$.
 
-Instruction-only payloads (a forged instruction field, a bare sentence or a ``Note:'') reach at most $7.0\%$ on Shieldstral, $2.9\%$ on Llama Guard~3, $0.7\%$ on Qwen3Guard and $6.2\%$ on gpt-oss-safeguard. % src: bypass.csv: max over control|sentence_bare, control|authority_note, angle instruct_only
-On ShieldGemma they reach $20.2\%$\ci{14.3\%}{26.8\%}, which breaks our pre-registered bound of $10\%$ on every guard.
-The structure that rebinds depends on the guard.
-On Llama Guard~3 every syntax works ($41$ of $52$ attack families at $\ge 70\%$), while on Qwen3Guard only the full-task forgery does and generic labels stay at or below $18.3\%$ (see ``What counts as a task'' below).
-The decoy's harm matters on four guards: with a harmful decoy the strongest forgeries pass $\le 13.6\%$ on Shieldstral, $\le 11.1\%$ on Llama Guard~3, $0\%$ on Qwen3Guard and $\le 9.4\%$ on gpt-oss-safeguard. % src: bypass.csv decoy=harmful families (max over 4 families); gpt_oss_strict.md
+The guard's format decides how cheap the attack is.
+On Llama Guard~3 a single forged pair with a benign decoy clears $84$--$100\%$ in every syntax and language we tried, and $41$ of $52$ attack families reach $70\%$ or more. % src: bypass.csv llama_guard_3_1b default, query_doc n=1 decoy=benign families min 84.0 (colon lang=fr), 41/52 families >= 0.70
+Qwen3Guard rebinds reliably only to a forgery of its full task, and generic labels stay at or below $18.3\%$.
+Its long template protects it against cheap forgeries, though not against the guard-native one (see \emph{What counts as a task} below).
 
 Two guards depart from the Shieldstral pattern.
-Llama Guard~3 is partly swayed by any trailing text: benign text appended with no forged pair clears it $41.2\%$\ci{36.1\%}{46.0\%} (Shieldstral $4.3\%$). Part of its bypass is recency, although the forged pair still adds up to $59$ points. % src: bypass.csv control|benign_tail
-On ShieldGemma bypass barely depends on the decoy (the forged triple of instruction, query and document clears $84.3\%$ with a harmful decoy and $83.3\%$ with a benign one), which is closer to generic evasion than to rebinding. % src: bypass.csv shieldgemma angle full_triple decoy=harmful 84.3 vs angle full_triple 83.3
-ShieldGemma's best family, like Qwen3Guard's, places the forgery in the middle position, inside benign filler; appended alone, the guard-native forgery reaches $73.6\%$ and $81.7\%$ on them.
+Llama Guard~3 is partly swayed by any trailing text: benign text appended with no forged pair clears it $41.2\%$\ci{36.1\%}{46.0\%}, against $4.3\%$ on Shieldstral. Part of its bypass is therefore recency, although the forged pair still adds up to $59$ points. % src: bypass.csv control|benign_tail
+Under the benchmark's looser flag rule, a forged document alone clears $25$--$37\%$ of Shieldstral's flagged items against $70$--$72\%$ for the matching pair, so there the query roughly doubles bypass; on Llama Guard~3 a lone document already clears $53$--$69\%$. % src: bypass.csv default, struct=doc_only vs query_doc n=1 benign q=exact, syntax angle/colon/bracket lang=en: shieldstral 37.2/35.2/24.7 vs 70.9/71.7/70.3; llama_guard_3_1b 69.4/53.2/57.0
+ShieldGemma barely responds to the decoy. The forged triple of instruction, query and document clears $84.3\%$ with a harmful decoy and $83.3\%$ with a benign one, which is closer to generic evasion than to rebinding. % src: bypass.csv shieldgemma angle full_triple decoy=harmful 84.3 vs angle full_triple 83.3
+ShieldGemma's best family, like Qwen3Guard's, is the guard-native forgery in the middle position, and it beats the same forgery appended ($100\%$ against $73.6\%$ on ShieldGemma). % src: bypass.csv shieldgemma_2b guard_native query_doc pos=middle 1.0 vs guard_native query_doc 0.736; qwen3guard_0_6b pos=middle 0.934 vs 0.817
 
-\paragraph{gpt-oss-safeguard.}
-The base guard is a weak detector on this data: it flags $56.5\%$\ci{49.6\%}{63.2\%} of harmful core items and $12.0\%$\ci{8.2\%}{17.2\%} of benign ones, and bypass is measured on the 113 it flags. % src: paper/data/gpt_oss_strict.md (parse = strict: recall 113/200, FPR 24/200)
-The forged triple clears $100\%$, but its instruction field is the directive $S$, and it therefore does not separate rebinding from persuasion.
-The guard-native forgery, with no instruction sentence, clears $71.7\%$\ci{65.2\%}{78.5\%} with one pair (multi-verdict replies are counted as flagged, \cref{app:extra}). % src: paper/data/gpt_oss_strict.md (parse = strict, mean column)
+\paragraph{A role boundary and a prompt without a developer policy.}
+\label{sec:crossmodel}
+A role boundary does not stop rebinding.
+The forged triple clears $100\%$, but its instruction field is the directive $S$, so it cannot separate rebinding from persuasion.
+The guard-native forgery, with no instruction sentence, clears $71.7\%$\ci{65.2\%}{78.5\%} with one pair (multi-verdict replies count as flagged, \cref{app:extra}). % src: paper/data/gpt_oss_strict.md (parse = strict, mean column)
+Before building the benchmark, we also checked whether the attack survives a role boundary (gpt-oss-safeguard) and a prompt with no developer-written policy (Llama Guard~4 12B), both label-only, on 30 AdvBench requests (rows 200--229), the source gpt-oss-safeguard flags most often.
+Forging each guard's own structure, the attack clears every flagged request on gpt-oss-safeguard (30/30, $100\%$\ci{89\%}{100\%}) and on Llama Guard~4 (29/29, $100\%$\ci{88\%}{100\%}), and a plain assertion that the content is safe clears none. % src: results/confirm_crossmodel.csv; src/crossmodel.py
+On gpt-oss-safeguard the decoy pattern of \cref{sec:groundtruth} recurs ($n=30$): forged structure with a benign decoy and no imperative text clears $93\%$\ci{79\%}{98\%}, and the same structure with a harmful decoy clears $0\%$.
+An imperative to answer ``0'', on its own, clears $20\%$\ci{10\%}{37\%}. % src: results/gpt_oss_mechanism_log.txt, results/confirm_gpt_oss_mechanism.csv
+For Llama Guard~4 we report only a bypass with plain assertion ruled out: we did not separate rebinding from the forged delimiter breaking the provider's chat template.
 
 \paragraph{What counts as a task.}
 \label{sec:request-unit}
 Our hypothesis, consistent with the results but not established causally, is that each guard grades the most recent complete \emph{grading task} in its input (the developer-written fields it answers, plus a document or conversation), and that its format sets what counts as complete.
 On Shieldstral a query--document pair is a complete task (\cref{tab:ablation}).
-On gpt-oss-safeguard a forged pair in a generic syntax gets through only $2$--$13\%$ of the time, far less often than the guard-native forgery, which opens new developer and user turns (above). % src: paper/data/gpt_oss_strict.md (parse = strict, mean column): generic query_doc 2.4-13.3; guard_native query_doc 71.7
-In an exploratory probe on 40 flagged train-split items of Qwen3Guard, forging only the conversation clears 5/40 ($13\%$\ci{5\%}{26\%}), while forging the whole task (the template's closing instruction tail, then a new task line, policy, category list and conversation) clears 40/40 ($100\%$\ci{91\%}{100\%}). % src: results/bench/explore/qwen3guard.md (conv_reopen 5/40; full_block_plain 40/40)
-With a harmful decoy the same block stays flagged (median $0.997$), and on the test core set the length-matched filler clears Qwen3Guard only $4.7\%$\ci{3.0\%}{6.5\%}. Length alone does not explain the effect. % src: results/bench/explore/qwen3guard.md; bypass.csv qwen3guard_0_6b control|len_control 4.7 [3.0,6.5]
-A defense must therefore protect the whole task (instruction, policy and content), not only the content delimiters or the conversation markers.
+On gpt-oss-safeguard a forged pair in a generic syntax clears only $2$--$13\%$, far less than the guard-native forgery, which opens new developer and user turns. % src: paper/data/gpt_oss_strict.md (parse = strict, mean column): generic query_doc 2.4-13.3; guard_native query_doc 71.7
+Qwen3Guard needs the most: in an exploratory probe on 40 of its flagged train-split items, forging only the conversation clears 5/40 ($13\%$\ci{5\%}{26\%}).
+Forging the whole task (the template's closing instructions, then a new task line, policy, category list and conversation) clears 40/40 ($100\%$\ci{91\%}{100\%}). % src: results/bench/explore/qwen3guard.md (conv_reopen 5/40; full_block_plain 40/40)
+With a harmful decoy the same block stays flagged (median $0.997$). On the test core set the length-matched filler clears Qwen3Guard only $4.7\%$\ci{3.0\%}{6.5\%}, so length does not explain the gap. % src: results/bench/explore/qwen3guard.md; bypass.csv qwen3guard_0_6b control|len_control 4.7 [3.0,6.5]
+The templates of Llama Guard~3 and Qwen3Guard ask for an assessment of the last user turn only, so on these guards rebinding is as much a gap in the task specification as a parsing failure.
+If the hypothesis holds beyond this probe, a defense has to protect every field the guard treats as part of its task, including the instruction and the policy.
