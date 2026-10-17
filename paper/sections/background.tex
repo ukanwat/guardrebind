@@ -1,64 +1,44 @@
-\section{Background and Threat Model}
+\section{Guards and Threat Model}
 \label{sec:background}
 
 \subsection{How guards receive content}
 
 \paragraph{Shieldstral.}
-Shieldstral-1.0-3B~\citep{calvi2026shieldstral} is a policy-adaptive guard trained to answer a yes/no question about a document.
-Its model card specifies a fixed system prompt and a user message with three labelled fields (\cref{lst:shieldstral}). % src: src/prompt.py (verbatim from the model card)
-The fields are plain text.
-The Shieldstral paper describes no special-token delimiters and contains no adversarial-robustness or prompt-injection evaluation (related-work review of the paper's HTML).
-We read the guard's score as $P(\text{yes})$ from the yes/no logits renormalised over the two answers, and say a document is \emph{flagged} if the score exceeds $\tau$ and \emph{cleared} otherwise.
-
-\begin{figure}[t]
-\begin{lstlisting}[caption={Shieldstral's input as specified on its model card. Only \texttt{\{document\}} is untrusted.},label={lst:shieldstral},captionpos=b]
-[system] Judge whether the Document meets the requirements based on the
-         Query and the Instruction provided. Note that the answer can only
-         be "yes" or "no".
-[user]   <Instruct>: {instruct}
-
-         <Query>: {query}
-
-         <Document>: {document}
-\end{lstlisting}
-\end{figure}
+Shieldstral-1.0-3B~\citep{calvi2026shieldstral} answers a yes/no question about a document.
+Its model card specifies a fixed system prompt and a user message with three plain-text fields, \texttt{<Instruct>}, \texttt{<Query>} and \texttt{<Document>} (\cref{fig:anatomy}); the developer writes the first two and interpolates the content into the third. % src: src/prompt.py (verbatim from the model card)
+The paper describes no special-token delimiters and reports no prompt-injection evaluation.
+We read the score as $P(\text{yes})$ from the yes/no logits renormalised over the two answers.
 
 \paragraph{Llama Guard.}
 Llama Guard~\citep{inan2023llama} and its successors~\citep{grattafiori2024llama,chi2024llama,meta2025llamaguard4} grade a conversation against a fixed category taxonomy (S1--S14 for Llama Guard~4).
-The provider's chat template wraps the conversation in \texttt{<BEGIN CONVERSATION>} and \texttt{<END CONVERSATION>} lines and the model emits \texttt{safe} or \texttt{unsafe} followed by a category.
-There is no policy in the prompt for content to override; the delimiters are again plain text.
-The Llama Guard~4 model card itself notes that the model ``may be susceptible to adversarial attacks or prompt injection attacks''~\citep{meta2025llamaguard4}.
+The chat template wraps the conversation in plain-text \texttt{<BEGIN CONVERSATION>} and \texttt{<END CONVERSATION>} lines, and the model emits \texttt{safe} or \texttt{unsafe} plus a category.
+There is no policy in the prompt for the content to override.
 
 \paragraph{gpt-oss-safeguard.}
-gpt-oss-safeguard-20B and -120B~\citep{openai2025gptosssafeguard} reason over a developer-provided policy placed in the system (or developer) role and were post-trained to follow an instruction hierarchy~\citep{wallace2024instruction}.
-The content is a separate user message.
-This is the design one would reach for as a mitigation: the policy is behind a role boundary that the content cannot cross.
-The vendor's report rates its prompt-injection robustness at 0.512 for the 20B model and describes injection robustness as less important for the intended internal use~\citep{openai2025gptosssafeguard}.
+gpt-oss-safeguard-20B and -120B~\citep{openai2025gptosssafeguard} reason over a developer-written policy placed in the system role and were post-trained to follow an instruction hierarchy~\citep{wallace2024instruction}; the content is a separate user message.
+This is the design one would choose as a mitigation: the policy sits behind a role boundary the content cannot cross.
 
 \subsection{Threat model}
 \label{sec:threat}
 
 \paragraph{Deployment.}
-A developer places a guard $G$ in front of a downstream system.
-The developer chooses the instruction, the grading question (or policy) and the format, and inserts untrusted content $c$ into the content slot.
+A developer places a guard $G$ in front of a downstream system, chooses the instruction, grading question (or policy) and format, and inserts untrusted content $c$ into the content slot.
 If $G$ clears $c$, $c$ is forwarded unchanged.
-We consider three channels by which $c$ arrives:
-(i) a user message in a chat deployment;
-(ii) a retrieved passage in retrieval-augmented generation; and
-(iii) a tool result in an agent loop, where clearing the guard may cause an action to run with no further model in the loop.
+Content arrives through one of four channels: (i)~a user message in a chat deployment; (ii)~a retrieved passage in retrieval-augmented generation; (iii)~a tool result in an agent loop, where clearing the guard may cause an action to run; and (iv)~an earlier turn of a multi-turn history.
 
 \paragraph{Attacker.}
-The attacker controls only the content $c$.
-They do not control the instruction, the grading question, the system prompt, the decoding or the threshold, and they do not see scores.
-We consider attackers with varying knowledge of the deployment's grading question, from exact knowledge to none (\cref{sec:query}).
-For \cref{sec:adaptive} we additionally grant white-box access to the defended model's weights and the boundary-token mechanism.
+The attacker controls only $c$.
+They do not control the instruction, the grading question, the system prompt, decoding or the threshold, and they do not see scores.
+For the attack and the measurement (\cref{sec:attack,sec:benchmark}) the attacker is black-box, with knowledge of the deployment's grading question ranging from exact to none (\cref{sec:robustness}).
+For the defense (\cref{sec:evaluation}) the attacker knows the defense: they have the defended weights, the boundary mechanism and the training recipe, and may optimise content with gradients.
 
-\paragraph{Goal.}
-The attacker wants a harmful payload $h$, which $G$ flags on its own, to be cleared while remaining present in the forwarded content.
-An attack that removes, paraphrases or obfuscates $h$ is out of scope; the downstream model must still be able to read and act on $h$.
-This distinguishes target rebinding from evasion attacks that hide harmful content from a classifier~\citep{hackett2025bypassing,mangaokar2024prp}.
+\paragraph{Goal and scope.}
+The attacker wants a harmful payload $h$, which $G$ flags on its own, to be cleared while remaining present and readable in the forwarded content.
+Attacks that remove, paraphrase or obfuscate $h$ are out of scope; this separates target rebinding from evasion that hides harmful content from a classifier~\citep{hackett2025bypassing,mangaokar2024prp}.
+Also out of scope: attackers who control the guard's prompt or weights, multimodal content, and denial of service by making benign content flagged (we measure the latter as over-refusal, not as an attack goal).
 
 \paragraph{Success criterion.}
-A screened document is one that the honest deployment flags ($G(h) > 0.9$ for Shieldstral; majority verdict \texttt{unsafe}/\texttt{1} for the label-only guards). % src: PROTOCOL.md, Fixed design
-An attack succeeds on $h$ if $G(h \oplus p) < \tau$, where $p$ is the attacker's appended payload and $\tau = 0.5$ unless stated. % src: PROTOCOL.md
-Bypass rate is the fraction of screened documents on which the attack succeeds.
+Only \emph{screened} payloads count: those the honest deployment flags with no attack.
+The screen is $G(h) > 0.9$ for the Shieldstral confirmatory study, a majority \texttt{unsafe} verdict over three samples for the label-only guards, and $G(h) \ge 0.5$ in \guardrebind{} and the defense evaluation. % src: PROTOCOL.md (v1), PROTOCOL_v2.md (Metrics)
+An attack succeeds on $h$ if $G(h \oplus p) < \tau$, where $p$ is the attacker's payload and $\tau = 0.5$ unless stated.
+The \emph{bypass rate} is the fraction of screened payloads on which the attack succeeds, reported with a Wilson 95\% interval.

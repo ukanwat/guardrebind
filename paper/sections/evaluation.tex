@@ -1,0 +1,82 @@
+\section{Evaluating the Defense}
+\label{sec:evaluation}
+
+\subsection{Setup}
+
+The main model is Shieldstral-3B, with generality checks on Qwen3Guard-4B and Llama Guard~3~\citep{zhao2025qwenguard,grattafiori2024llama}.
+We report four quantities.
+\emph{Bypass} is measured on attack families held out of training (whole grammar branches never seen: see \cref{app:grammar}) and, separately, on the training families, on the screened core set at $\tau=0.5$.
+\emph{Detection} is AUROC and recall at $\tau$ on the clean test split, pooled and per source over \tbd{N} benchmarks.
+\emph{Over-refusal} is the flag rate on XSTest-safe~\citep{rottger2023xstest}, OR-Bench-hard~\citep{cui2024orbench} and a structured-benign set, clean and with benign-content attacks applied.
+\emph{Calibration} is expected calibration error on the clean test split.
+Differences between conditions use a paired bootstrap over items (10k resamples); proportions use Wilson intervals. % src: PROTOCOL_v2.md (Metrics)
+
+\paragraph{Baselines.}
+The $2{\times}2$ (none/B/T/B$+$T) is compared against prompt-level defenses carried over from \cref{sec:attack} and the literature: the anti-injection directive~\citep{park2026policyguard}, label stripping, a fail-closed label detector, spotlighting/datamarking~\citep{hines2024defending}, and a mock-tool-call wrapper~\citep{gros2026evaluating}; a learned-soft-prompt baseline, DefensiveTokens~\citep{chen2025defending}; and naive adversarial training, a LoRA on attack examples with hard 0/1 labels, as the obvious strong competitor.
+The anti-injection directive and the normalisers were already measured against the attack: the directive leaves bypass unchanged (\cref{tab:fix-main}, consistent with no instruction being followed), and marker normalisation is syntax-specific, so deleting one label form clears the colon variant to $0\%$ while the bracket variant still clears $100\%$. % src: results/confirm_log.txt [mitigation]; results/supp_log.txt [B]
+
+\subsection{Main results}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Defense on Shieldstral, screened core set, $\tau=0.5$. Bypass on training and held-out attack families (lower is better); detection AUROC on the clean test split; over-refusal on benign sets (lower is better); ECE. Objective: \cref{eq:target}.}
+  \label{tab:fix-main}
+  \begin{tabular}{lccccc}
+    \toprule
+    condition & train-family bypass & held-out bypass & detection AUROC & over-refusal & ECE \\
+    \midrule
+    none (base)              & \tbd{} & \tbd{} & \tbd{} & \tbd{} & \tbd{} \\
+    anti-injection directive & \tbd{} & \tbd{} & \tbd{} & \tbd{} & \tbd{} \\
+    fail-closed detector     & \tbd{} & \tbd{} & \tbd{} & \tbd{} & \tbd{} \\
+    naive adv.\ training     & \tbd{} & \tbd{} & \tbd{} & \tbd{} & \tbd{} \\
+    B (boundary only)        & \tbd{} & \tbd{} & \tbd{} & \tbd{} & \tbd{} \\
+    T (training only)        & \tbd{} & \tbd{} & \tbd{} & \tbd{} & \tbd{} \\
+    B$+$T                    & \tbd{} & \tbd{} & \tbd{} & \tbd{} & \tbd{} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\Cref{tab:fix-main} reports the $2{\times}2$ and the baselines.
+B alone leaves held-out bypass at \tbd{X\%} and T alone at \tbd{Y\%}, while B$+$T reaches \tbd{Z\%}; the paired-bootstrap difference between T and B$+$T on held-out families is \tbd{$\Delta$} ($p = $ \tbd{p}).
+B$+$T changes detection AUROC by \tbd{$\Delta$} and recall at $\tau$ by \tbd{$\Delta$} points relative to the base guard, and its ECE is \tbd{value}.
+Over-refusal changes by \tbd{$\Delta$} points on XSTest-safe, \tbd{$\Delta$} on OR-Bench-hard and \tbd{$\Delta$} on the structured-benign set.
+Naive adversarial training reaches \tbd{X\%} train-family bypass but \tbd{Y\%} held-out bypass and \tbd{$\Delta$} over-refusal on structured benign, the cost B$+$T is designed to avoid.
+On Qwen3Guard-4B and Llama Guard~3, B$+$T changes held-out bypass to \tbd{X\%} and \tbd{Y\%}.
+
+\paragraph{Shortcut check.}
+A trained guard could learn ``score the first pair'' rather than ``treat the content as one document''~\citep{wang2025illusion}.
+On benign-first orderings, where a benign block precedes a harmful one inside the boundary, B$+$T flags \tbd{X\%}, against \tbd{Y\%} for a guard that keys on position.
+
+\subsection{Adaptive evaluation}
+\label{sec:adaptive}
+
+We grant the attacker the defended weights, the boundary mechanism and the training recipe, and follow the evaluation norms of \citet{carlini2019evaluating}.
+Because the content is tokenized with special-token parsing disabled, the content cannot produce the boundary ids: the attacker optimises the content text only, and every attack runs end to end on the full defended model, so no non-differentiable step hides a gradient.
+We report, per example, the worst case over all attacks (any attack succeeds), not the best single attack's average, and we run every attack against B-only and T-only as well as B$+$T.
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Adaptive attacks on the defended Shieldstral, 100 screened test items, per-item worst-case bypass. Each attack is run on base, B, T and B$+$T. Budgets in the last column; convergence is checked by doubling the budget (\cref{app:defense-impl}).}
+  \label{tab:adaptive}
+  \begin{tabular}{llcccc}
+    \toprule
+    attack & knowledge & base & B$+$T & naive adv.\ train & budget \\
+    \midrule
+    forged-boundary strings  & white-box & \tbd{} & \tbd{} & \tbd{} & text variants \\
+    GCG on the content       & white-box & \tbd{} & \tbd{} & \tbd{} & 20 tok, 500 steps \\
+    checkpoint-GCG           & white-box & \tbd{} & \tbd{} & \tbd{} & 500 steps/ckpt \\
+    structural search        & grey-box  & \tbd{} & \tbd{} & \tbd{} & full grammar \\
+    LLM attacker             & grey-box  & \tbd{} & \tbd{} & \tbd{} & 10 tries/item \\
+    composition (split harm) & white-box & \tbd{} & \tbd{} & \tbd{} & segment split \\
+    \midrule
+    \textbf{worst case (any attack)} & & \tbd{} & \tbd{} & \tbd{} & \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\Cref{tab:adaptive} gives the attacks and budgets.
+Forged-boundary strings and Unicode lookalikes test whether the boundary can be rebuilt from text; GCG~\citep{zou2023universal} and checkpoint-GCG~\citep{yang2025auditing} optimise a content suffix to minimise $P(\text{unsafe})$; a structural search enumerates the grammar with label mutations; an LLM attacker that sees the defense gets ten tries per item; and a composition attack splits harm across segments to test \cref{eq:target} directly~\citep{zhou2026prompt}.
+Sanity checks pass: each attack reaches at least \tbd{X\%} bypass on the undefended model, stronger attacks beat weaker ones, and bypass against B$+$T is flat within \tbd{$\Delta$} points as the GCG budget goes from 100 to 500 to 1000 steps, so the attacks have converged.
+The per-item worst case over all attacks leaves B$+$T at \tbd{Z\%}, against \tbd{X\%} for base and \tbd{Y\%} for naive adversarial training, while the detection and over-refusal of \cref{tab:fix-main} are retained.

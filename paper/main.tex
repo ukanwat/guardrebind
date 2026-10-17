@@ -21,6 +21,7 @@
 \newcommand{\tbd}[1]{\textcolor{red}{[TBD: #1]}}
 \newcommand{\guardrebind}{\textsc{GuardRebind}}
 \newcommand{\ci}[2]{\,[#1,\,#2]}
+\definecolor{attk}{HTML}{FBE3C8}% attacker-controlled text in Figure 1
 
 \lstset{
   basicstyle=\ttfamily\small,
@@ -32,9 +33,10 @@
   showstringspaces=false,
 }
 
-\title{Last Pair Wins: Safety Guards Grade Whatever Task They See Last}
+\title{Last Pair Wins: Forged Task Structure Rebinds LLM Safety Guards}
+% Not anonymised: the author's blog post is cited by name. Revisit for a double-blind venue.
 \author{Utkarsh Kanwat}
-\date{Draft, October 2026}
+\date{October 2026}
 
 \begin{document}
 
@@ -44,13 +46,12 @@
 \input{sections/introduction}
 \input{sections/background}
 \input{sections/attack}
-\input{sections/control_tokens}
-\input{sections/mechanism}
 \input{sections/benchmark}
-\input{sections/fix}
-\input{sections/adaptive}
+\input{sections/defense}
+\input{sections/evaluation}
 \input{sections/related}
-\input{sections/limitations}
+\input{sections/discussion}
+\input{sections/ethics}
 
 \bibliographystyle{plainnat}
 \bibliography{refs}

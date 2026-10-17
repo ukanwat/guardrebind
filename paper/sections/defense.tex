@@ -1,0 +1,39 @@
+\section{Defense: A Guard That Reads One Document}
+\label{sec:defense}
+
+Target rebinding has two preconditions: the content can produce the markers that delimit the document region, and the model treats a nested labelled pair as a new grading task.
+The defense addresses each.
+Part~B (boundary) makes the document region impossible to forge from content; part~T (training) teaches the model to grade everything inside that region as one document.
+We test whether each part is needed with a $2{\times}2$ over $\{$none, B, T, B$+$T$\}$ (\cref{sec:evaluation}).
+
+\paragraph{Part B: a boundary the content cannot produce.}
+The bounded format renders the stock template with an empty document slot, keeping the trusted prefix and suffix as they are.
+The content is tokenized on its own with special-token parsing disabled, so any control-token string inside it (\cref{sec:control}) becomes ordinary text tokens.
+The content's token ids are then wrapped in two reserved ids that are unused in pretraining and that no input text tokenizes to; they mark the open and the close of the document. % src: src/fix/inputs.py (bounded_ids, DOC_OPEN_ID/DOC_CLOSE_ID)
+Nothing is removed from the content: a literal \texttt{<Query>:} or \texttt{[/INST]} reaches the model as plain text inside the boundary.
+This is the parameterised-query idea from SQL injection, in the reserved-delimiter form of StruQ and SecAlign~\citep{chen2024struq,chen2024secalign}, applied to a classifier's content slot.
+Because the boundary ids are unused, their meaning has to be learned; B alone (bounded format, base weights) is the control that tests whether a boundary helps without training, and gpt-oss-safeguard's role boundary (\cref{sec:crossmodel}) suggests that it may not.
+
+\paragraph{Part T: segment-max self-distillation.}
+The training target makes the student score the whole content at least as high as its most harmful part.
+The teacher $T(\cdot)$ is the frozen base guard reading a text on its own, in the stock format, with no attack around it, and returning $P(\text{yes})$.
+For content $c$ with segments $S(c)$,
+\begin{equation}
+  \text{target}(c) \;=\; \max\!\Big(T(c),\ \max_{s \in S(c)} T(s)\Big).
+  \label{eq:target}
+\end{equation}
+For an attacked training example the segments are the original request and the decoy; clean content has no segments beyond itself, so it is distilled to the teacher's own score. % src: src/fix/distill.py (_variants, label_targets)
+Including the whole content $T(c)$ means the target is never below the teacher's reading of the full text, which bounds compositional harm that appears only in combination~\citep{zhou2026prompt}.
+The max is safety-conservative (content is unsafe if any part is) and needs no clean copy of the input.
+That is the difference from clean-context distillation~\citep{peng2026secopd,dhouib2026raised}, which assumes a known injection-free counterfactual; in a guard the counterfactual of nested untrusted content is not known in advance.
+The student reads the whole content through the chosen format and is trained with binary cross-entropy between the yes/no logit margin and the target.
+Training uses LoRA on the language model; in B$+$T only the two boundary embeddings are trained in addition, and T uses the stock format (\cref{app:defense-impl}).
+
+\paragraph{Hard negatives.}
+Training also includes benign text that carries label-like structure: FAQs, forms, \texttt{Q:}/\texttt{A:} logs and documents that quote \texttt{<Query>:}.
+Their targets come from the teacher, so the model learns that structure alone is not a reason to flag, in the spirit of NotInject/InjecGuard~\citep{li2024injecguard}. % src: src/fix/distill.py (structured_benign)
+
+\paragraph{Training data.}
+Segments are known at training time because the training attacks are generated: each train-split harmful or benign item is paired with three attacks sampled from the training attack families, plus a structured-benign set one quarter the size. % src: PROTOCOL_v2.md (Fixed training recipe); src/fix/distill.py (build)
+No test item and no held-out attack family is seen in training.
+At inference the defended guard needs no segmentation: it reads the bounded content once.
