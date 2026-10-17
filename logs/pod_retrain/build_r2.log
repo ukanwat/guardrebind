@@ -1,0 +1,105 @@
+Loading weights:   0%|          | 0/458 [00:00<?, ?it/s]Loading weights:   0%|          | 1/458 [00:00<00:56,  8.14it/s]Loading weights:   3%|▎         | 14/458 [00:00<00:06, 69.88it/s]Loading weights:   7%|▋         | 32/458 [00:00<00:03, 109.29it/s]Loading weights:  10%|█         | 47/458 [00:00<00:03, 117.81it/s]Loading weights:  14%|█▍        | 66/458 [00:00<00:02, 139.13it/s]Loading weights:  18%|█▊        | 81/458 [00:00<00:02, 136.64it/s]Loading weights:  21%|██        | 96/458 [00:00<00:02, 140.51it/s]Loading weights:  24%|██▍       | 111/458 [00:00<00:02, 143.25it/s]Loading weights:  28%|██▊       | 126/458 [00:00<00:02, 139.24it/s]Loading weights:  31%|███       | 141/458 [00:01<00:02, 140.09it/s]Loading weights:  34%|███▍      | 156/458 [00:01<00:02, 140.79it/s]Loading weights:  37%|███▋      | 171/458 [00:01<00:02, 133.49it/s]Loading weights:  40%|████      | 185/458 [00:01<00:02, 124.90it/s]Loading weights:  44%|████▍     | 202/458 [00:01<00:01, 131.71it/s]Loading weights:  48%|████▊     | 219/458 [00:01<00:01, 137.06it/s]Loading weights:  51%|█████     | 233/458 [00:01<00:01, 135.43it/s]Loading weights:  66%|██████▋   | 304/458 [00:01<00:00, 292.03it/s]Loading weights:  84%|████████▍ | 385/458 [00:02<00:00, 435.60it/s]Loading weights: 100%|██████████| 458/458 [00:02<00:00, 218.27it/s]
+cached 0, to score 16232
+scored 16/16232 segments 1s
+scored 176/16232 segments 2s
+scored 336/16232 segments 3s
+scored 496/16232 segments 4s
+scored 656/16232 segments 4s
+scored 816/16232 segments 5s
+scored 976/16232 segments 6s
+scored 1136/16232 segments 7s
+scored 1296/16232 segments 8s
+scored 1456/16232 segments 9s
+scored 1616/16232 segments 10s
+scored 1776/16232 segments 11s
+scored 1936/16232 segments 12s
+scored 2096/16232 segments 13s
+scored 2256/16232 segments 14s
+scored 2416/16232 segments 15s
+scored 2576/16232 segments 16s
+scored 2736/16232 segments 17s
+scored 2896/16232 segments 18s
+scored 3056/16232 segments 19s
+scored 3216/16232 segments 20s
+scored 3376/16232 segments 21s
+scored 3536/16232 segments 22s
+scored 3696/16232 segments 23s
+scored 3856/16232 segments 24s
+scored 4016/16232 segments 25s
+scored 4176/16232 segments 26s
+scored 4336/16232 segments 27s
+scored 4496/16232 segments 28s
+scored 4656/16232 segments 29s
+scored 4816/16232 segments 31s
+scored 4976/16232 segments 32s
+scored 5136/16232 segments 33s
+scored 5296/16232 segments 34s
+scored 5456/16232 segments 35s
+scored 5616/16232 segments 36s
+scored 5776/16232 segments 38s
+scored 5936/16232 segments 39s
+scored 6096/16232 segments 40s
+scored 6256/16232 segments 41s
+scored 6416/16232 segments 43s
+scored 6576/16232 segments 44s
+scored 6736/16232 segments 45s
+scored 6896/16232 segments 47s
+scored 7056/16232 segments 48s
+scored 7216/16232 segments 49s
+scored 7376/16232 segments 51s
+scored 7536/16232 segments 52s
+scored 7696/16232 segments 54s
+scored 7856/16232 segments 55s
+scored 8016/16232 segments 56s
+scored 8176/16232 segments 58s
+scored 8336/16232 segments 59s
+scored 8496/16232 segments 61s
+scored 8656/16232 segments 62s
+scored 8816/16232 segments 64s
+scored 8976/16232 segments 65s
+scored 9136/16232 segments 67s
+scored 9296/16232 segments 68s
+scored 9456/16232 segments 70s
+scored 9616/16232 segments 71s
+scored 9776/16232 segments 73s
+scored 9936/16232 segments 74s
+scored 10096/16232 segments 76s
+scored 10256/16232 segments 77s
+scored 10416/16232 segments 79s
+scored 10576/16232 segments 80s
+scored 10736/16232 segments 82s
+scored 10896/16232 segments 84s
+scored 11056/16232 segments 85s
+scored 11216/16232 segments 87s
+scored 11376/16232 segments 89s
+scored 11536/16232 segments 91s
+scored 11696/16232 segments 93s
+scored 11856/16232 segments 94s
+scored 12016/16232 segments 96s
+scored 12176/16232 segments 98s
+scored 12336/16232 segments 99s
+scored 12496/16232 segments 101s
+scored 12656/16232 segments 103s
+scored 12816/16232 segments 105s
+scored 12976/16232 segments 107s
+scored 13136/16232 segments 109s
+scored 13296/16232 segments 111s
+scored 13456/16232 segments 113s
+scored 13616/16232 segments 115s
+scored 13776/16232 segments 117s
+scored 13936/16232 segments 119s
+scored 14096/16232 segments 121s
+scored 14256/16232 segments 123s
+scored 14416/16232 segments 126s
+scored 14576/16232 segments 129s
+scored 14736/16232 segments 131s
+scored 14896/16232 segments 133s
+scored 15056/16232 segments 136s
+scored 15216/16232 segments 138s
+scored 15376/16232 segments 141s
+scored 15536/16232 segments 145s
+scored 15696/16232 segments 148s
+scored 15856/16232 segments 152s
+scored 16016/16232 segments 155s
+scored 16176/16232 segments 161s
+wrote 16250 examples (segment_max) -> data/fix/full_r2.jsonl

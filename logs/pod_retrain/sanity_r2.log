@@ -1,0 +1,11 @@
+total 16250 {'clean': 5000, 'attacked': 10000, 'hard_negative': 1250}
+attacked with a decoy 9630 distinct decoys 27
+decoy uses by split {'train': 9630} not in any pool 0
+top decoy share 0.106
+decoys by category {'benign': 20, 'borderline': 3, 'harmful': 4}
+distinct pool queries used 12 uses train 5647 uses heldout 0
+query uses per (category, idx) {('generic', 0): 689, ('generic', 1): 695, ('generic', 2): 735, ('generic', 3): 684, ('out_of_domain', 0): 344, ('out_of_domain', 1): 352, ('out_of_domain', 2): 359, ('out_of_domain', 3): 346, ('paraphrase', 0): 396, ('paraphrase', 1): 346, ('paraphrase', 2): 345, ('paraphrase', 3): 356}
+hard negatives 1250 splits {('train',): 1250}
+targets: min 0.0 max 1.0 mean 0.3457 unset(-1) 0 >=0.5 5527
+distinct attack families 253
+SANITY_OK
