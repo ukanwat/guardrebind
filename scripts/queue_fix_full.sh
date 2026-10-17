@@ -32,6 +32,15 @@ wait_free
 PY="uv run --frozen python"
 SEEDS="0 1 2"   # BT gets 3 seeds; T and AT get seeds 0,1 (compute, PROTOCOL_v2 D3)
 
+# 0. Mechanism, TEST split (the reported numbers; same settings as the dev runs) -- #
+M="uv run --frozen --with matplotlib python -m src.mech"
+R=results/mech
+[ -s $R/patching_test_n100.json ]          || run mech_test_patching $M.patching --split test --allow-test --n 100
+[ -s $R/similarity_test_n150.json ]        || run mech_test_similarity $M.similarity --split test --allow-test --n 150
+[ -s $R/probe_test_n150_train600.json ]    || run mech_test_probe $M.probe --split test --allow-test --n 150 --n-train 600
+[ -s $R/dose_response_test_n150_d40.json ] || run mech_test_dose $M.dose_response --split test --allow-test --n 150 \
+  --n-decoys 40 --pool 2000
+
 # 1. Build data -------------------------------------------------------------- #
 # Segment-max full set (the teacher cache lands next to it and is reused).
 [ -s data/fix/full.jsonl ] || \
@@ -102,5 +111,7 @@ m=$(missing $F/test_base.json $F/test_B.json $F/test_t_seed0.json $F/test_t_seed
   $F/test_at_seed1.json $F/test_bt_seed0.json $F/test_bt_seed1.json $F/test_bt_seed2.json \
   $F/adaptive_base_gcg.json $F/adaptive_base_structural.json $F/adaptive_B_gcg.json $F/adaptive_B_structural.json \
   $F/adaptive_t_seed0_gcg.json $F/adaptive_t_seed0_structural.json $F/adaptive_bt_seed0_gcg.json \
-  $F/adaptive_bt_seed0_structural.json $F/adaptive_bt_seed0_gcg500.json)
+  $F/adaptive_bt_seed0_structural.json $F/adaptive_bt_seed0_gcg500.json \
+  $R/patching_test_n100.json $R/similarity_test_n150.json $R/probe_test_n150_train600.json \
+  $R/dose_response_test_n150_d40.json)
 [ -z "$m" ] && echo "$(date '+%H:%M:%S') QUEUE_FIX done" >> $QLOG || { echo "fix missing: $m" >> $QLOG; exit 1; }
