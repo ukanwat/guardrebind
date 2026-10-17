@@ -36,7 +36,7 @@ Scores are each guard's $P(\text{unsafe})$ renormalised over its own label token
 
 \paragraph{Data.}
 Harmful and benign items come from AdvBench~\citep{zou2023universal}, HarmBench~\citep{mazeika2024harmbench}, Aegis~2.0~\citep{ghosh2025aegis}, BeaverTails~\citep{ji2023beavertails}, the OpenAI moderation evaluation~\citep{markov2022holistic}, ToxicChat~\citep{lin2023toxicchat} and WildGuardMix~\citep{han2024wildguard}: 20k harmful and 20k benign, split 60/10/30 by a hash of the normalised text. % src: PROTOCOL_v2.md (Data)
-The core set is a stratified sample of 2000 harmful and 2000 benign test items.
+The core set is a stratified sample of 600 harmful and 600 benign test items per guard (fixed in the protocol before any test run, for compute).
 % TODO: PROTOCOL_v2.md line 5 says GuardRebind runs use core_set(n=600) per guard, and the Data section says n=2000; settle which n the local guards use before filling their rows.
 gpt-oss-safeguard is reached through a paid API, so it runs on a 200 + 200 subset of the core set; 113 of the 200 harmful items pass its screen. % src: results/bench/v2/gpt_oss_summary.md (core_set(n=200); 113 screened); paper/data/gpt_oss_strict.md
 

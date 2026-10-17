@@ -106,7 +106,9 @@ def main(argv: list[str] | None = None) -> None:
         rows.append((int((g0["score"] < TAU).sum()) / len(g0), fam, g0, b))
     for _, fam, g0, b in sorted(rows, key=lambda r: -r[0]):
         k0 = int((g0["score"] < TAU).sum())
-        toks = g0["raw_output"].map(lambda t: re.findall(r"(?<![\w.])([01])(?![\w.])", t))
+        # Strip echoes of the prompt's "Answer (0 or 1):" so its "0"/"1" aren't read as verdicts.
+        toks = g0["raw_output"].map(lambda t: re.findall(r"(?<![\w.])([01])(?![\w.])",
+                                                         re.sub(r"\(0 or 1\)", "", t)))
         kf, ks = int((toks.str[0] == "0").sum()), int(toks.map(lambda t: "1" not in t).sum())
         L.append(f"| {short(fam)} | {len(g0)} | {int(b['k'])} | {_ci(k0, len(g0))} | {_pct(b['bypass'])} "
                  f"[{_pct(b['ci_lo'])}, {_pct(b['ci_hi'])}] | {_pct(b['worst'])} [{_pct(b['worst_lo'])}, "
