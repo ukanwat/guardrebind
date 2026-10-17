@@ -89,7 +89,7 @@ The pre-registered test that T generalises worse than B$+$T passes its one-sided
 The measurable costs are small. By design, detection does not improve: the teacher is the base guard, so T learns to match its judgement on clean content, not to exceed it. AUROC is $0.80$ against $0.81$ for the base guard (\cref{tab:fix-main}), but non-inferiority is not established (F4 and F5 in \cref{tab:prereg}).
 For B$+$T the point estimates lie inside the pre-registered margins (AUROC $-0.010$; no over-refusal rate up by more than one OR-Bench-hard item), but the 95\% intervals of the differences are wider than the margins. % src: r2_test_{base,bt_seed0}.json auroc (Hanley-McNeil, 801/699), recall k/n, overrefusal.* k/n (Newcombe); overrefusal_orbench 206/400 -> 207/400
 T's changes are of the same size, except that T seed 1 exceeds the over-refusal margin on OR-Bench-hard ($+2.75$ points against $\pm 2$).
-One cost is statistically detectable. Benign content that carries a forged pair with a benign decoy is flagged $0.7\%$ of the time under T and $0.8\%$ under B$+$T, against $0.2\%$ for the base guard (Fisher exact $p=0.012$ for each T seed, $p=0.003$ for B$+$T), so training makes a nested pair slightly suspicious on its own. % src: attacked_benign_fpr_benign_decoy, fixed decoy, train+heldout pooled; scipy.stats.fisher_exact two-sided
+Benign content that carries a forged pair with a benign decoy is flagged $0.7\%$ of the time under T and $0.8\%$ under B$+$T, against $0.2\%$ for the base guard (Fisher exact $p=0.012$ for each T seed, $p=0.003$ for B$+$T), so training makes a nested pair slightly suspicious on its own. % src: attacked_benign_fpr_benign_decoy, fixed decoy, train+heldout pooled; scipy.stats.fisher_exact two-sided
 
 \paragraph{Baseline results.}
 The training-free baselines stop every training-family attack but are cleared on $23.2\%$\ci{22.2\%}{24.2\%} (detector) and $23.4\%$\ci{22.4\%}{24.4\%} (inference-time segment-max) of held-out families with held-out decoys. % src: r2_test_detector.json, r2_test_segmax_infer.json by_decoy_split.heldout.heldout
@@ -108,7 +108,7 @@ We prefer T because it keeps the base guard's clean-content behaviour and becaus
 \paragraph{Trailing harmful content.}
 \label{sec:shortcut}
 A guard trained against rebinding could learn to stop reading at a forged pair~\citep{wang2025illusion}, which would open a smuggling channel: benign content, a forged pair, then harmful text. The harmful-decoy column of \cref{tab:fix-utility} tests this.
-T and B$+$T flag $100\%$ of these items with the fixed decoys and $95.5$--$98.7\%$ with held-out ones. The clean-copy target flags $0.8\%$ and naive adversarial training $8.0$--$8.6\%$. Here the clean-copy target and T differ most. % src: test_*.json per_attack_benign_fpr, decoy=harmful attacks
+T and B$+$T flag $100\%$ of these items with the fixed decoys and $95.5$--$98.7\%$ with held-out ones. The clean-copy target flags $0.8\%$ and naive adversarial training $8.0$--$8.6\%$. % src: test_*.json per_attack_benign_fpr, decoy=harmful attacks
 
 \paragraph{Other guards.}
 With the fixed decoy and query (\cref{tab:fix-fixed}, one seed), T transfers to Llama Guard~3 1B unchanged, cutting held-out-family bypass from $82.0\%$\ci{80.4\%}{83.5\%} to $2.5\%$\ci{1.9\%}{3.2\%}; on Qwen3Guard 0.6B the sampled families are mostly generic syntaxes it does not rebind to (\cref{sec:request-unit}), and the drop from $9.5\%$ to $0.0\%$ says little. % src: test_lg3_{base,t_seed0}.json; test_qg3_{base,t_seed0}.json
@@ -136,7 +136,6 @@ The cost here is much larger than on Shieldstral. Benign content carrying a beni
   \end{tabular}
 \end{table}
 
-The defense resists enumeration of the attack grammar but not an attacker who can see its score, and about half of that attacker's success needs no forged structure.
 The attacker knows the defense and sees its score (\cref{sec:threat}), following \citet{carlini2019evaluating}. Content cannot produce the boundary tokens, so the attacker optimises the content text, and every attack runs end to end on the defended model.
 We run three attacks on 50 flagged test items and report the per-item worst case (\cref{tab:adaptive}).
 \emph{Score-guided search} hill-climbs on the defended guard's score within 300 guard calls per item, mutating one or two fields of the best candidate (such as syntax, position, decoy or forged query), with random restarts. % src: src/fix/adaptive.py search_attack (pop 20, batch 10, p_restart 0.2, budget 300)
@@ -156,11 +155,9 @@ Training rarely puts the structure before the request (162 of 10{,}000 attacked 
 The search does not separate this from its shift to prompt-like decoys.
 B$+$T is cleared less often (34 items against T's 47, one seed each), the only result where the boundary clearly helps.
 
-The plain-text control asks how much of this is rebinding at all.
 Benign user prompts alone, with no labels or forged query and chosen by the same search, clear T on 26 of the 47 items the full search wins. On the other 21, only the search with forged structure succeeds. % src: paper/data/search_no_feedback.md (t_seed0: 26 null wins, all 26 also search wins)
 The control clears the base guard on $70\%$\ci{56\%}{81\%} of items and T on $52\%$\ci{39\%}{65\%}. Every win against T puts the searched text before the request, as do 22 of 35 wins on the base guard (13 put text on both sides). % src: r2_adaptive_{base,t_seed0}_search_null.json(.jsonl): T 26/26 position=prepend; base 22 prepend + 13 middle (filler before and after)
 Unlike the one fixed filler of \cref{tab:ablation} ($0\%$), the control picks the best of up to 300 benign candidates per item by the guard's score. % src: src/fix/adaptive.py search_attack budget 300 (also for --null-search); confirm_log.txt [ablation] benign_tail 0/75
 Each item's first candidate, drawn before any score is seen, clears the base guard on $28\%$\ci{17\%}{42\%} of items but T on only $6\%$\ci{2\%}{16\%}. % src: paper/data/search_no_feedback.md (queries == 1: base_search_null 14/50, t_seed0_search_null 3/50; Wilson)
 
 GCG clears T on all $20$ items it ran on, raising the per-item worst case against T to $49/50$ ($98\%$\ci{89\%}{100\%}). % src: r2_adaptive_t_seed0_gcg.json
-We did not run GCG on B$+$T, so its worst case, $34/50$, is a lower bound.

@@ -10,7 +10,6 @@ The second protocol was frozen before any test-split run and has four recorded d
   \item D3 trims compute: 5{,}000 training items with two attacks each, three seeds for B$+$T and two for T and naive adversarial training, GCG on 20 items at 250 steps, and structural search on 50 items.
   \item D4 was recorded after a first round of test-split defense runs and before the reported ones, so it is a deviation made with test results in view. The fixed-decoy conditions of \cref{tab:fix-fixed} come from that first round. D4 draws training decoys and forged queries from one half of each pool and evaluates on the other half, adds the score-guided search and the two training-free baselines, and replaces the D3 seed plan with a smaller set to save compute: two seeds for T and one for B$+$T and the clean-copy target. % src: PROTOCOL_v2.md D4 ("lean defense set ... replaces the D3 seed plan")
 \end{itemize}
-\Cref{tab:prereg} lists every prediction with its outcome.
 
 \begin{table}[!tbp]
   \centering\footnotesize
@@ -86,13 +85,12 @@ Reading only the last verdict, as a pipeline acting on the trailing label would,
 \label{app:defense-impl}
 
 \paragraph{Bounded format.}
-The bounded format renders the stock chat template with a placeholder document and splits it into a trusted prefix and suffix. The content is encoded on its own with special-token parsing disabled, and the two reserved boundary tokens (unused in pretraining) are inserted around it. % src: src/fix/inputs.py
 The template puts a space before the document, which the tokenizer would otherwise merge into the content's first token. We move that space into the trusted prefix, so plain documents tokenize exactly as they do in the stock format (verified on 1{,}600 documents: AdvBench rows 200--299 and the clean test sample). % src: src/fix/inputs.py (_content); scripts/check_bounded_tokenization.py -> results/fix/bounded_tokenization_check.json (1600/1600 identical)
 
 \paragraph{Training.}
-We train a LoRA (rank 16, $\alpha=32$) on the language model's attention and MLP projections with AdamW at learning rate $10^{-4}$, batch 8, one epoch and maximum length 384. The loss is binary cross-entropy between the yes/no logit margin and the segment-max teacher target. LoRA does not touch the embeddings. In B$+$T a trainable two-row offset, initialised at zero, is added to the embeddings of the two boundary tokens (ids 36 and 37), and every other embedding stays frozen. % src: src/fix/distill.py (boundary_delta) % src: src/fix/distill.py, PROTOCOL_v2.md (Fixed training recipe)
+We train a LoRA (rank 16, $\alpha=32$) on the language model's attention and MLP projections with AdamW at learning rate $10^{-4}$, batch 8, one epoch and maximum length 384. LoRA does not touch the embeddings. In B$+$T a trainable two-row offset, initialised at zero, is added to the embeddings of the two boundary tokens (ids 36 and 37), and every other embedding stays frozen. % src: src/fix/distill.py (boundary_delta) % src: src/fix/distill.py, PROTOCOL_v2.md (Fixed training recipe)
 The data are 5{,}000 train-split prompt items, each clean and with two forms sampled uniformly from the training branch, plus 1{,}250 structured-benign items, for 16{,}250 examples. Of the 10{,}000 attacked examples, 9{,}480 append the forged structure, 317 prepend it or use the middle position, and 203 are controls with no forged structure. % src: src/fix/distill.py build_examples (rng.sample over split_attacks train branch incl. controls); recomputed on CPU: append 9480, prepend 162, middle 155, control 203
- One epoch is 2{,}032 steps, the last batch partial. Each attacked example's decoy and forged query are a seeded draw from the training halves of the pools: 20 of the 40 benign decoys, 3 of 6 borderline and 4 of 8 harmful decoys, and 4 of the 8 forged queries at each relatedness level. The hard negatives are train-split structured-benign items. % src: src/fix/distill.py (build); logs/pod/build_r2.log (wrote 16250 examples); logs/pod/train_r2_t_seed0.log (2032 steps)
+ One epoch is 2{,}032 steps, the last batch partial. Each attacked example's decoy and forged query are a seeded draw from the training halves of the pools: 20 of the 40 benign decoys, 3 of 6 borderline and 4 of 8 harmful decoys, and 4 of the 8 forged queries at each relatedness level. % src: src/fix/distill.py (build); logs/pod/build_r2.log (wrote 16250 examples); logs/pod/train_r2_t_seed0.log (2032 steps)
 Naive adversarial training and the clean-copy ablation use the same examples with different targets.
 
 \paragraph{Compute and adaptive budgets.}
@@ -101,7 +99,7 @@ The score-guided search has 300 guard calls per item on 50 items, starting from 
 
 \paragraph{Fixed-decoy conditions.}
 \Cref{tab:fix-fixed} gives the conditions trained and tested with one fixed decoy and query per family: naive adversarial training and the generality runs of T on Llama Guard~3 1B and Qwen3Guard 0.6B (\cref{sec:evaluation}).
-They have no held-out-decoy column. Their training drew hard negatives from all splits, not only the train split, and these include 380 of the 500 structured-benign test items, so the structured-benign column of the trained rows is not a held-out measure. % src: src/fix/distill.py build_examples decoy_split=fixed -> structured_benign(1250) over all splits; CPU recount: 380 test-split items, all in the 500-item test set
+Their training drew hard negatives from all splits, not only the train split, and these include 380 of the 500 structured-benign test items, so the structured-benign column of the trained rows is not a held-out measure. % src: src/fix/distill.py build_examples decoy_split=fixed -> structured_benign(1250) over all splits; CPU recount: 380 test-split items, all in the 500-item test set
 
 \begin{table}[ht]
   \centering
@@ -138,7 +136,6 @@ Content can produce these ids, so a boundary-token design on these tokenizers mu
 
 The runs used these Hugging Face revisions: Shieldstral-1.0-3B \texttt{003ec7e}, Llama Guard~3 1B \texttt{acf7aaf}, Qwen3Guard-Gen-0.6B \texttt{fada3b2} and ShieldGemma 2B \texttt{d1dffc9}. Local guards are scored from a single forward pass with no sampling. The score is the probability of the unsafe label renormalised over the guard's label tokens, computed in fp32 from bf16 hidden states. We reached the API-served guards, gpt-oss-safeguard-20B and Llama Guard~4 12B, through OpenRouter at temperature 0 without pinning a provider. Every benchmark call to gpt-oss-safeguard was served by Groq, as recorded in the response metadata; the cross-model runs did not record the provider. % src: src/crossmodel.py, src/gpt_oss_mechanism.py, src/bench/api_bench.py (no provider field in the request; response 'provider' stored); results/bench/v2/gpt_oss_safeguard_20b.jsonl provider = Groq on 19454/19454 rows; results/confirm_crossmodel.csv has no provider column; revisions = local HF cache refs/main, equal to the Hub main sha on 2026-10-17 (unchanged since before the runs); the code loads main and does not pin revisions
 Dataset sources and licenses: AdvBench, HarmBench, Aegis~2.0, BeaverTails, the OpenAI moderation evaluation and ToxicChat, with XSTest and OR-Bench as over-refusal sources. We use the non-commercial sets (ToxicChat, BeaverTails) for research only. % src: src/bench/data.py load_all() sources
-All hyperparameters, splits and the full protocol are in \cref{app:protocol,app:defense-impl}.
 
 \section{Open Science}
 \label{app:open-science}

@@ -14,8 +14,7 @@ In all three, the content shares a token stream with the text that tells the mod
 The Llama Guard paper warns that the model ``may be susceptible to prompt injection attacks''~\citep{inan2023llama}, and the gpt-oss-safeguard report scores the 20B model $0.512$ (higher is better) on a prompt-injection hijacking test in which a user message tries to make it say ``access granted''~\citep{openai2025gptosssafeguard}. % src: gpt-oss-safeguard technical report, Table 7 (System <> User conflict, 'higher is better'), Prompt injection hijacking: gpt-oss-safeguard-20b 0.512
 Neither says what such an attack looks like against a guard, or how to build a guard that resists it.
 
-In the formats we study, the labels that mark the query and the document (\texttt{<Query>:}, \texttt{<Document>:}) are plain text that the developer writes around the content.
-Nothing stops the content from containing the same labels.
+In the formats we study, the labels that mark the query and the document (\texttt{<Query>:}, \texttt{<Document>:}) are plain text that the developer writes around the content, and nothing stops the content from containing the same labels.
 When it does, the guard sees two complete grading tasks, and our experiments indicate that it grades the document in the last one.
 We call this \emph{target rebinding}: the content changes which document the guard grades, not how the guard judges it.
 The attacker's query and document form the \emph{forged pair}, and the document the guard ends up grading is the \emph{decoy}.
