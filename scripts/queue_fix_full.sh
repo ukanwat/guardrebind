@@ -108,6 +108,21 @@ trained models/fix/bt_seed0 && adaptive BT bt_seed0 --adapter models/fix/bt_seed
   run adaptive_bt_seed0_gcg500 $PY -m src.fix.adaptive --cond BT --adapter models/fix/bt_seed0 --split test \
     --n 10 --attack gcg --steps 500 --batch 32 --out results/fix/adaptive_bt_seed0_gcg500.json
 
+# Generality: T (stock format, seed 0) on two more guards, each with its own teacher, template and labels.
+# Separate data and caches per guard (the teacher cache is keyed by text only).
+for pair in llama_guard_3_1b:lg3 qwen3guard_0_6b:qg3; do
+  G=${pair%%:*}; S=${pair##*:}
+  [ -s data/fix/full_$S.jsonl ] || run build_$S $PY -m src.fix.distill build --guard $G \
+    --out data/fix/full_$S.jsonl --max-items 5000 --per-item 2
+  trained models/fix/${S}_t_seed0 || run train_${S}_t_seed0 $PY -m src.fix.distill train --guard $G \
+    --data data/fix/full_$S.jsonl --fmt stock --seed 0 --out models/fix/${S}_t_seed0
+  [ -f results/fix/test_${S}_base.json ] || run eval_${S}_base $PY -m src.fix.evaluate --guard $G --cond base \
+    --split test --allow-test --out results/fix/test_${S}_base.json
+  ! trained models/fix/${S}_t_seed0 || [ -f results/fix/test_${S}_t_seed0.json ] || \
+    run eval_${S}_t_seed0 $PY -m src.fix.evaluate --guard $G --cond T --adapter models/fix/${S}_t_seed0 \
+      --split test --allow-test --out results/fix/test_${S}_t_seed0.json
+done
+
 # Extra seeds (PROTOCOL_v2 D3: BT 3 seeds, T and AT 2).
 train t  1 data/fix/full.jsonl     stock;   evalm t  1 T
 train bt 1 data/fix/full.jsonl     bounded; evalm bt 1 BT
@@ -122,5 +137,6 @@ m=$(missing $F/test_base.json $F/test_B.json $F/test_t_seed0.json $F/test_t_seed
   $F/adaptive_bt_seed0_structural.json $F/adaptive_bt_seed0_gcg500.json \
   $R/patching_test_n100.json $R/similarity_test_n150.json $R/probe_test_n150_train600.json \
   $R/dose_response_test_n150_d40.json $F/test_cc_seed0.json $F/forgery_controls_base.json \
-  $F/forgery_controls_t_seed0.json $F/forgery_controls_bt_seed0.json)
+  $F/forgery_controls_t_seed0.json $F/forgery_controls_bt_seed0.json \
+  $F/test_lg3_base.json $F/test_lg3_t_seed0.json $F/test_qg3_base.json $F/test_qg3_t_seed0.json)
 [ -z "$m" ] && echo "$(date '+%H:%M:%S') QUEUE_FIX done" >> $QLOG || { echo "fix missing: $m" >> $QLOG; exit 1; }
