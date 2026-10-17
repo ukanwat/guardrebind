@@ -25,7 +25,7 @@ The construction adapts to each format by forging that guard's own structure (\c
 It clears every screened document on all three designs (\cref{tab:crossmodel}), while a plain assertion that the content is safe clears none. % src: results/confirm_crossmodel.csv
 On gpt-oss-safeguard the same signature as \cref{sec:groundtruth} appears ($n=30$): forged structure with no imperative text and a benign trailing block clears $93\%$\ci{79\%}{98\%}, the same structure with a flagged trailing block clears $0\%$, and an ``answer 0'' imperative alone clears $20\%$\ci{10\%}{37\%}. % src: results/gpt_oss_mechanism_log.txt, results/confirm_gpt_oss_mechanism.csv
 \guardrebind{} repeats the gpt-oss-safeguard result on held-out test items: the forged triple clears every one of the 113 screened items in each of six label syntaxes and in Spanish, and the guard-native forgery with two or more pairs clears $99$--$100\%$ (\cref{sec:bench-results}). % src: paper/data/gpt_oss_strict.md (parse = strict)
-A role boundary around the policy therefore does not prevent rebinding, and since Llama Guard~4 has no policy in the prompt, policy-adaptivity is not a necessary condition.
+A role boundary around the policy therefore does not prevent rebinding, and since Llama Guard~4 has no policy in the prompt, policy-adaptivity is not a necessary condition; policy-conditioned detectors are also reported to change their verdicts little when the governing rule is deleted or swapped~\citep{sadhu2026compliance,sadhu2026verdict}.
 For Llama Guard~4 we did not separate rebinding from the forged delimiter breaking the provider's chat template, because the provider controls the template; we report a bypass with plain assertion ruled out.
 
 \subsection{Benchmark design}

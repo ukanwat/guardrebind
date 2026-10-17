@@ -32,6 +32,7 @@ The anti-injection directive and the normalisers were already measured against t
     naive adv.\ training     & \tbd{} & \tbd{} & \tbd{} & \tbd{} & \tbd{} \\
     B (boundary only)        & \tbd{} & \tbd{} & \tbd{} & \tbd{} & \tbd{} \\
     T (training only)        & \tbd{} & \tbd{} & \tbd{} & \tbd{} & \tbd{} \\
+    T, clean-copy target     & \tbd{} & \tbd{} & \tbd{} & \tbd{} & \tbd{} \\
     B$+$T                    & \tbd{} & \tbd{} & \tbd{} & \tbd{} & \tbd{} \\
     \bottomrule
   \end{tabular}
@@ -42,17 +43,22 @@ B alone leaves held-out bypass at \tbd{X\%} and T alone at \tbd{Y\%}, while B$+$
 B$+$T changes detection AUROC by \tbd{$\Delta$} and recall at $\tau$ by \tbd{$\Delta$} points relative to the base guard, and its ECE is \tbd{value}.
 Over-refusal changes by \tbd{$\Delta$} points on XSTest-safe, \tbd{$\Delta$} on OR-Bench-hard and \tbd{$\Delta$} on the structured-benign set.
 Naive adversarial training reaches \tbd{X\%} train-family bypass but \tbd{Y\%} held-out bypass and \tbd{$\Delta$} over-refusal on structured benign, the cost B$+$T is designed to avoid.
+Replacing the segment-max target with the clean-copy target (teacher on the original item only) changes held-out bypass by \tbd{$\Delta$} and structured-benign over-refusal by \tbd{$\Delta$}; on attacks with a decoy the teacher flags, where the two targets differ, bypass is \tbd{X\%} for segment-max and \tbd{Y\%} for the clean copy.
 On Qwen3Guard-4B and Llama Guard~3, B$+$T changes held-out bypass to \tbd{X\%} and \tbd{Y\%}.
 
 \paragraph{Shortcut check.}
 A trained guard could learn ``score the first pair'' rather than ``treat the content as one document''~\citep{wang2025illusion}.
 On benign-first orderings, where a benign block precedes a harmful one inside the boundary, B$+$T flags \tbd{X\%}, against \tbd{Y\%} for a guard that keys on position.
 
+\paragraph{Forged verdicts and split payloads.}
+On the exploratory controls of \cref{sec:verdict-vs-task}, T and B$+$T (seed 0) leave the forged pair at \tbd{X\%} and \tbd{Y\%} and the strongest verdict forgery at \tbd{X\%} and \tbd{Y\%}.
+The split payload, a pattern absent from training, clears \tbd{X\%} and \tbd{Y\%}.
+
 \subsection{Adaptive evaluation}
 \label{sec:adaptive}
 
 We grant the attacker the defended weights, the boundary mechanism and the training recipe, and follow the evaluation norms of \citet{carlini2019evaluating}.
-Because the content is tokenized with special-token parsing disabled, the content cannot produce the boundary ids: the attacker optimises the content text only, and every attack runs end to end on the full defended model, so no non-differentiable step hides a gradient.
+Because the content is tokenized with special-token parsing disabled, and no added or special id is reachable from content on Shieldstral (\cref{app:content-tokens}), the content cannot produce the boundary ids: the attacker optimises the content text only, and every attack runs end to end on the full defended model, so no non-differentiable step hides a gradient.
 We report, per example, the worst case over all attacks (any attack succeeds), not the best single attack's average, and we run every attack against B-only and T-only as well as B$+$T.
 
 \begin{table}[t]

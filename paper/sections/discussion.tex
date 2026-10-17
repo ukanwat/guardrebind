@@ -4,7 +4,7 @@
 \subsection{Recommendations for deployers}
 
 Target rebinding is a property of how a guard's input is assembled, not of any one model, so most of the fix is available to deployers today.
-First, do not interpolate untrusted content into a plain-text template: give the content region a boundary the content cannot reproduce, and tokenize the content with special-token parsing disabled so that control-token strings in it stay inert (\cref{sec:defense}).
+First, do not interpolate untrusted content into a plain-text template: give the content region a boundary the content cannot reproduce, and tokenize the content with special-token parsing disabled so that control-token strings in it stay inert, after checking that the tokenizer has no added tokens outside the special set, which that setting leaves atomic~\citep{zhan2026samebytes,yang2026nameless} (\cref{sec:defense,app:content-tokens}).
 Second, treat a guard verdict as a filter, not an authorization: a cleared verdict means ``no policy violation was detected in what was graded'', which is not the same as ``this exact content is safe'', and in an agent loop an action should not run on a guard verdict alone.
 Third, do not rely on prompt-level mitigations: an anti-injection directive and syntax-specific marker stripping did not stop the attack (\cref{tab:fix-main}), and a fail-closed detector trades bypass for over-refusal.
 A role boundary around the policy (\cref{sec:crossmodel}) and larger models are not sufficient on their own.

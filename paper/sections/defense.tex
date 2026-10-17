@@ -9,9 +9,10 @@ We test whether each part is needed with a $2{\times}2$ over $\{$none, B, T, B$+
 \paragraph{Part B: a boundary the content cannot produce.}
 The bounded format renders the stock template with an empty document slot, keeping the trusted prefix and suffix as they are.
 The content is tokenized on its own with special-token parsing disabled, so any control-token string inside it (\cref{sec:control}) becomes ordinary text tokens.
+The flag applies only to tokens the tokenizer declares special, so added tokens not marked special stay atomic~\citep{zhan2026samebytes,yang2026nameless}; on Shieldstral, which the defense is trained on, no added or special id is reachable from content under this encoder (\cref{app:content-tokens}).
 The content's token ids are then wrapped in two reserved ids that are unused in pretraining and that no input text tokenizes to; they mark the open and the close of the document. % src: src/fix/inputs.py (bounded_ids, DOC_OPEN_ID/DOC_CLOSE_ID)
 Nothing is removed from the content: a literal \texttt{<Query>:} or \texttt{[/INST]} reaches the model as plain text inside the boundary.
-This is the parameterised-query idea from SQL injection, in the reserved-delimiter form of StruQ and SecAlign~\citep{chen2024struq,chen2024secalign}, applied to a classifier's content slot.
+This is the parameterised-query idea from SQL injection, in the reserved-delimiter form of StruQ and SecAlign~\citep{chen2024struq,chen2024secalign} and close to the learned delimiters of DefensiveTokens and LTBD~\citep{chen2025defending,zhao2026ltbd}, applied to a classifier's content slot.
 Because the boundary ids are unused, their meaning has to be learned; B alone (bounded format, base weights) is the control that tests whether a boundary helps without training, and gpt-oss-safeguard's role boundary (\cref{sec:crossmodel}) suggests that it may not.
 
 \paragraph{Part T: segment-max self-distillation.}
@@ -24,8 +25,10 @@ For content $c$ with segments $S(c)$,
 \end{equation}
 For an attacked training example the segments are the original request and the decoy; clean content has no segments beyond itself, so it is distilled to the teacher's own score. % src: src/fix/distill.py (_variants, label_targets)
 Including the whole content $T(c)$ means the target is never below the teacher's reading of the full text, which bounds compositional harm that appears only in combination~\citep{zhou2026prompt}.
-The max is safety-conservative (content is unsafe if any part is) and needs no clean copy of the input.
-That is the difference from clean-context distillation~\citep{peng2026secopd,dhouib2026raised}, which assumes a known injection-free counterfactual; in a guard the counterfactual of nested untrusted content is not known in advance.
+The max is safety-conservative (content is unsafe if any part is, the multiple-instance rule that a bag is positive if any instance is~\citep{ilse2018attention}), and it is well defined without knowing which segment is the injection.
+Scanning a long input in segments and acting on any flagged one is existing inference-time guidance~\citep{meta2025promptguard2}; here the max is a training target, so the defended guard reads the content in one pass.
+When the decoy is benign the target reduces to the teacher's score on the original request, which is clean-context distillation~\citep{peng2026secopd,dhouib2026raised}; the two differ only where the decoy or the whole attacked content scores above the original item on its own.
+A clean-copy ablation, trained the same way as T but with the teacher reading only the original item, tests whether the max matters (\cref{tab:fix-main}).
 The student reads the whole content through the chosen format and is trained with binary cross-entropy between the yes/no logit margin and the target.
 Training uses LoRA on the language model; in B$+$T only the two boundary embeddings are trained in addition, and T uses the stock format (\cref{app:defense-impl}).
 

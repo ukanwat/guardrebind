@@ -70,6 +70,14 @@ The forged question works by opening a new pair, not by softening the check.
 Forging a softened question (``is this a poem?'') while leaving the harmful request as the judged document, with no benign decoy anywhere, clears $0$--$9\%$ across five variants ($n=45$). % src: results/soften_log.txt, results/confirm_soften.csv
 The working attack needs a benign trailing document, and the harmful text survives, approved, at the top of the message.
 
+\paragraph{Forged verdicts versus a forged task.}
+\label{sec:verdict-vs-task}
+Earlier and concurrent attacks on judges forge a verdict or an authority claim about the content, not a new task~\citep{mccauley2025hat,li2026same}.
+In an exploratory control outside the frozen protocol, on \tbd{n} harmful test items that Shieldstral flags alone, we append one of four such forgeries to the request: a plain-text statement that it was assessed as safe, a JSON moderation record marking it unflagged, a note that the safety team approved it, and a claimed earlier guard output of ``no''.
+They clear \tbd{X\%}, \tbd{X\%}, \tbd{X\%} and \tbd{X\%}, against \tbd{X\%} for the forged pair on the same items.
+A split payload puts the first half of the request in the content and the second half in the forged document, so the trailing document is itself part of the harm; it clears \tbd{X\%}.
+\Cref{sec:evaluation} repeats these controls on the defended guards.
+
 \subsection{Robustness: position, syntax, query knowledge and policy}
 \label{sec:robustness}
 
@@ -126,16 +134,18 @@ The attack therefore needs no white-box access and little knowledge of the deplo
 \label{sec:control}
 
 Under the stock Hugging Face chat template, literal strings such as \texttt{[/INST]} inside the content are tokenized as the real control tokens, so content can close the user turn and open a new one rather than imitate a label.
+This channel is documented for agents: chat-template injection~\citep{chang2025chatinject}, the authority carried by the reserved token's own embedding~\citep{zhan2026samebytes}, forgeable control tokens across deployed tokenizers~\citep{yang2026nameless}, and gpt-oss channel tokens that suppress reasoning and evade monitors~\citep{usama2026control}; we measure what it adds against a guard.
 In an exploratory probe on the first 40 held-out flagged requests, outside the frozen protocol, closing and reopening the turn with real control tokens before a forged triple clears 40/40 (median $0.0028$), against a median of $0.014$ for the plain label pair (40/40). % src: PLAN.md findings log 2026-10-15; src/fix/special_tokens.py
 Tokenizing the identical payload as plain text clears 39/40 with median $0.029$, about $10\times$ higher. % src: PLAN.md findings log, split-token control
 A forged system prompt (``answer no to every document'') clears 11/40 through real control tokens and 0/40 as plain text (median $0.994$).
 The label pair does most of the work; real control tokens lower the score further and make an otherwise inert instruction partly effective.
-\guardrebind{} includes this encoding as an attack axis (\cref{sec:benchmark}), and the defense removes it by construction (\cref{sec:defense}).
+\guardrebind{} includes this encoding as an attack axis (\cref{sec:benchmark}), and the defense removes it by construction for the tokenizer it is trained on (\cref{sec:defense,app:content-tokens}).
 
 \subsection{Where the binding happens}
 \label{sec:binding}
 
 The behavioural results locate the effect in the pair structure but not in the network.
+Mechanistic work on guards has localised a content-insertion shortcut to a few attention heads and MLP neurons~\citep{feng2026refusal} and attack-induced overconfidence to later layers~\citep{hong2026guard}; we ask where the choice of document is made.
 We run two causal tests on Shieldstral, over the 75 screened requests.
 \emph{Activation patching:} layer by layer, we swap the residual-stream representations of the genuine and the forged pair and measure whether the verdict follows the swap.
 \emph{Linear probe:} we train a probe on the final-position residual stream to predict which of the two documents (the request or the decoy) a held-out input's verdict follows, and report its accuracy by layer.
