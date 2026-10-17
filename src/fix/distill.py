@@ -50,13 +50,22 @@ class Example:
 
 # --- building -----------------------------------------------------------------
 
-def _variants(item, attacks, guard, rng: random.Random, k: int) -> list[Example]:
+BUILD_MODES = ("segment_max", "naive_at")
+
+
+def _variants(item, attacks, guard, rng: random.Random, k: int, mode: str = "segment_max") -> list[Example]:
     out = [Example(f"{item.id}|clean", item.text, [item.text])]
     for attack in rng.sample(attacks, min(k, len(attacks))):
         document = attack.apply(item.text, guard)
         decoy = attack.params.get("decoy_text")
         segments = [document, item.text] + ([decoy] if decoy else [])
         out.append(Example(f"{item.id}|{attack.name}", document, segments, variant=attack.name))
+    if mode == "naive_at":
+        # Hard labels (PROTOCOL_v2 F6): the item's ground-truth label for every
+        # variant of it (clean or attacked), so attacked-harmful and clean-harmful
+        # target 1.0 and clean-benign and attacked-benign target 0.0. No teacher.
+        for ex in out:
+            ex.target = float(item.label)
     return out
 
 
@@ -86,8 +95,11 @@ def label_targets(examples: list[Example], guard, cache_path: Path, batch: int =
         ex.target = max(cache[seg] for seg in ex.segments)
 
 
-def build(out: Path, per_item: int = 3, max_items: int | None = None, seed: int = 0,
-          max_chars: int = 1200) -> None:
+def build_examples(per_item: int, max_items: int | None, seed: int, max_chars: int,
+                   mode: str) -> list[Example]:
+    """Construct the (unlabeled for segment_max, hard-labeled for naive_at)
+    examples. No model is loaded here; segment_max targets are filled later by
+    label_targets. Identical example structure across modes (checked in tests)."""
     from ..bench.attacks_grammar import grammar, split_attacks
     from ..bench.data import load_all, structured_benign
     from ..bench.attacks_grammar import GUARD_SPECS
@@ -104,19 +116,35 @@ def build(out: Path, per_item: int = 3, max_items: int | None = None, seed: int 
 
     examples: list[Example] = []
     for item in items:
-        examples += _variants(item, train_attacks, GUARD_SPECS["shieldstral"], rng, per_item)
+        examples += _variants(item, train_attacks, GUARD_SPECS["shieldstral"], rng, per_item, mode)
     for j, sb in enumerate(structured_benign(len(items) // 4)):
         text = sb.text
-        examples.append(Example(f"structured_benign:{j}", text, [text], variant="hard_negative"))
+        ex = Example(f"structured_benign:{j}", text, [text], variant="hard_negative")
+        if mode == "naive_at":
+            ex.target = 0.0  # structured benign is a hard negative
+        examples.append(ex)
+    return examples
 
-    from ..bench.guards import load_guard
 
-    label_targets(examples, load_guard("shieldstral", batch_size=16), out.with_suffix(".teacher_cache.jsonl"), batch=16)
+def build(out: Path, per_item: int = 3, max_items: int | None = None, seed: int = 0,
+          max_chars: int = 1200, mode: str = "segment_max") -> None:
+    if mode not in BUILD_MODES:
+        raise ValueError(f"mode must be one of {BUILD_MODES}")
+    examples = build_examples(per_item, max_items, seed, max_chars, mode)
+
+    if mode == "segment_max":
+        from ..bench.guards import load_guard
+        # Teacher scores live in a shared cache so naive_at and segment_max runs
+        # that share examples reuse each other's forward passes.
+        label_targets(examples, load_guard("shieldstral", batch_size=16),
+                      out.with_suffix(".teacher_cache.jsonl"), batch=16)
+    # naive_at targets are hard labels, already set in build_examples (no teacher).
+
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w") as f:
         for ex in examples:
             f.write(json.dumps(asdict(ex)) + "\n")
-    print(f"wrote {len(examples)} examples -> {out}")
+    print(f"wrote {len(examples)} examples ({mode}) -> {out}")
 
 
 # --- training -----------------------------------------------------------------
@@ -142,6 +170,10 @@ def _batches(rows, tokenizer, fmt, batch: int, max_len: int, rng):
 def train(data: Path, fmt: str, out: Path, epochs: int = 1, batch: int = 8, lr: float = 1e-4,
           rank: int = 16, max_len: int = 384, seed: int = 0) -> None:
     from peft import LoraConfig, get_peft_model
+
+    # Reproducible per seed: torch (init/dropout/shuffle) and python RNG.
+    torch.manual_seed(seed)
+    random.seed(seed)
 
     rows = [json.loads(line) for line in data.open()]
     scorer = ShieldstralScorer()
@@ -203,6 +235,8 @@ def main() -> None:
     b.add_argument("--out", type=Path, required=True)
     b.add_argument("--per-item", type=int, default=3)
     b.add_argument("--max-items", type=int)
+    b.add_argument("--mode", choices=list(BUILD_MODES), default="segment_max",
+                   help="segment_max (self-distillation) or naive_at (hard labels, PROTOCOL_v2 F6)")
     t = sub.add_parser("train")
     t.add_argument("--data", type=Path, required=True)
     t.add_argument("--fmt", choices=list(FORMATS), required=True)
@@ -210,11 +244,12 @@ def main() -> None:
     t.add_argument("--epochs", type=int, default=1)
     t.add_argument("--batch", type=int, default=8)
     t.add_argument("--lr", type=float, default=1e-4)
+    t.add_argument("--seed", type=int, default=0)
     a = ap.parse_args()
     if a.cmd == "build":
-        build(a.out, a.per_item, a.max_items)
+        build(a.out, a.per_item, a.max_items, mode=a.mode)
     else:
-        train(a.data, a.fmt, a.out, a.epochs, a.batch, a.lr)
+        train(a.data, a.fmt, a.out, a.epochs, a.batch, a.lr, seed=a.seed)
 
 
 if __name__ == "__main__":

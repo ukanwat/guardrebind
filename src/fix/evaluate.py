@@ -49,7 +49,12 @@ def main() -> None:
     ap.add_argument("--n-attack-items", type=int, default=300)
     ap.add_argument("--n-attacks", type=int, default=12, help="per family")
     ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--allow-test", action="store_true",
+                    help="required to touch the test split (PROTOCOL_v2: confirmatory runs only)")
     a = ap.parse_args()
+
+    if a.split == "test" and not a.allow_test:
+        raise SystemExit("refusing to run on the test split without --allow-test (PROTOCOL_v2)")
 
     rng = random.Random(0)
     items = [it for it in load_all() if it.split == a.split]
