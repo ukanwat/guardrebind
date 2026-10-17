@@ -7,7 +7,7 @@ L=logs/queue
 mkdir -p $L models/fix results/fix results/bench/core
 # Be a good neighbour: low CPU priority and a cap on how much unified memory MPS may take,
 # so the Mac stays usable and other jobs keep running.
-export PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.5
+export PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.75
 run() { name=$1; shift; echo "$(date '+%H:%M:%S') START $name" >> $L/queue.log
   nice -n 10 "$@" > $L/$name.log 2>&1; echo "$(date '+%H:%M:%S') END $name exit=$?" >> $L/queue.log; }
 
