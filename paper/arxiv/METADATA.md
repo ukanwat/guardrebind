@@ -12,10 +12,10 @@ Utkarsh Kanwat
 
 ## Abstract
 
-(Plain text, no LaTeX, 1038 characters; the arXiv limit is 1920.)
+(Plain text, no LaTeX, 1278 characters; the arXiv limit is 1920.)
 
 ```
-Safety guards check content against a policy before an LLM application acts on it. Most guards paste content into a plain-text prompt, so content that imitates the prompt can open a second grading task, which the guard grades instead. We call this target rebinding: the guard grades the last complete task in its input, here a harmless decoy, and the harmful request passes unchanged. In a pre-registered test, an appended forged query and decoy let all 75 held-out AdvBench requests that Shieldstral-1.0-3B flags pass; on our GuardRebind benchmark, some attack family passes at least 93% of flagged items on all five guards. Training the guard to score content no lower than its most harmful part cuts bypass from 75% to 0.8-1.6% on attack families, decoys and forged queries that were held out of training (all appended after the content), with AUROC within 0.01. This closes the appended channel, but adaptive score-guided search still gets past the trained guard on 94% of items, mostly by placing forged structure before the request.
+Safety guards check content before an LLM application acts on it, and most paste that content into a plain-text prompt. Content that imitates the prompt can append a second task, and the guard answers that one instead. We call this target rebinding: the guard grades the last complete task in its input, here a harmless decoy, and the harmful request goes through unchanged. In a pre-registered test, an appended forged query and decoy clear all 75 held-out AdvBench requests that Shieldstral-1.0-3B flags. The guard is not persuaded: a directive to ignore the text above clears none of them, and a harmful decoy stops the attack. On our GuardRebind benchmark, the strongest of 52 attack families clears at least 93% of flagged items on each of five guards. Training the guard to score content no lower than its most harmful part cuts attack success from 75% to 0.8-1.6% on attack families, decoys and forged queries held out of training (all appended after the content). AUROC stays within 0.01, though non-inferiority is not established. An adaptive score-guided search still clears the trained guard on 94% of items, usually by placing forged structure before the request. On about half of them, benign text with no forged structure, found by the same search, also clears it.
 ```
 
 ## Comments
