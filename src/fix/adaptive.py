@@ -83,12 +83,16 @@ class Payload:
     tail_text: str         # the chat-template suffix after the content (generation prompt)
 
 
+NO_PAIR = False  # set by --no-pair: GCG control with the suffix right after the item, no forged pair
+
+
 def _baseline_payload(guard: ShieldstralFixed, item_text: str) -> Payload:
     """The core-panel baseline attack (guard_native, query_doc, benign decoy,
-    exact query), with the 20-token suffix slot at the end of the Document."""
+    exact query), with the 20-token suffix slot at the end of the Document.
+    With NO_PAIR the forged pair is left out (plain adversarial-suffix control)."""
     spec = GUARD_SPECS["shieldstral"]
     decoy = "The library will close early on Friday for scheduled maintenance."
-    tail = spec.forge_native(decoy, spec.default_query)  # "\n\n<Query>: ...\n\n<Document>: <decoy>"
+    tail = "" if NO_PAIR else spec.forge_native(decoy, spec.default_query)  # "\n\n<Query>: ...\n\n<Document>: <decoy>"
     document = item_text + tail + " "  # trailing space: the suffix tokens follow the decoy
     from .inputs import _content, _render
 
@@ -410,7 +414,10 @@ def main() -> None:
     ap.add_argument("--device")
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--no-sanity", action="store_true", help="skip the base sanity check")
+    ap.add_argument("--no-pair", action="store_true", help="GCG control: suffix right after the item, no forged pair")
     a = ap.parse_args()
+    global NO_PAIR
+    NO_PAIR = a.no_pair
 
     guard = build_guard(a.cond, a.adapter, a.device)
     screened = screen_items(guard, a.split, a.n)
