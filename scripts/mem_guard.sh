@@ -6,7 +6,7 @@
 # Paused jobs lose nothing.
 LOW=${LOW:-15}
 HIGH=${HIGH:-30}
-BATT_MIN=${BATT_MIN:-40}
+BATT_MIN=${BATT_MIN:-0}   # 0 = off (the person, 2026-10-16: run on battery too)
 LOG=$(dirname "$0")/../logs/queue/mem_guard.log
 paused=0
 while true; do
