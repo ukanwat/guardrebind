@@ -167,6 +167,9 @@ def _batches(rows, tokenizer, fmt, batch: int, max_len: int, rng):
         yield ids, mask, last, target
 
 
+CKPT_EVERY = int(__import__("os").environ.get("CKPT_EVERY", 50))
+
+
 def train(data: Path, fmt: str, out: Path, epochs: int = 1, batch: int = 8, lr: float = 1e-4,
           rank: int = 16, max_len: int = 384, seed: int = 0) -> None:
     from peft import LoraConfig, get_peft_model
@@ -199,17 +202,54 @@ def train(data: Path, fmt: str, out: Path, epochs: int = 1, batch: int = 8, lr: 
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / 50) * max(0.0, 1 - s / steps))
     yes, no = scorer.yes_ids, scorer.no_ids
     device = scorer.device
+    decoder = model.get_base_model().get_decoder()
+    head = model.get_base_model().get_output_embeddings()
+    cand = torch.tensor(list(yes) + list(no), device=device)
     rng = random.Random(seed)
     out.mkdir(parents=True, exist_ok=True)
     log = (out / "train_log.jsonl").open("a")
 
+    # Resumable: a checkpoint every CKPT_EVERY steps holds the LoRA weights, the
+    # boundary rows, optimizer and scheduler state. On restart, the same seeded
+    # shuffle is replayed and the batches already trained on are skipped.
+    from peft import get_peft_model_state_dict, set_peft_model_state_dict
+
+    ckpt_path = out / "ckpt.pt"
+    done = 0
+    if ckpt_path.exists():
+        ck = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+        set_peft_model_state_dict(model, ck["lora"])
+        if fmt == "bounded":
+            with torch.no_grad():
+                emb = model.get_input_embeddings().weight
+                emb[[36, 37]] = ck["boundary"].to(emb.device, emb.dtype)
+        opt.load_state_dict(ck["opt"])
+        sched.load_state_dict(ck["sched"])
+        done = ck["step"]
+        print(f"resumed from step {done}", flush=True)
+
+    def save_ckpt(at: int) -> None:
+        tmp = out / "ckpt.tmp"
+        torch.save({
+            "lora": get_peft_model_state_dict(model), "opt": opt.state_dict(), "sched": sched.state_dict(),
+            "step": at,
+            "boundary": model.get_input_embeddings().weight[[36, 37]].detach().cpu() if fmt == "bounded" else None,
+        }, tmp)
+        tmp.replace(ckpt_path)
+
     step, t0 = 0, time.time()
     for epoch in range(epochs):
         for ids, mask, last, target in _batches(rows, scorer.tokenizer, fmt, batch, max_len, rng):
+            if step < done:
+                step += 1
+                continue
             ids, mask, target = ids.to(device), mask.to(device), target.to(device)
-            logits = model(input_ids=ids, attention_mask=mask).logits
-            final = logits[torch.arange(len(last)), last.to(device)].float()
-            margin = torch.logsumexp(final[:, yes], -1) - torch.logsumexp(final[:, no], -1)
+            # Only the last real position and only the yes/no rows of the output layer are
+            # needed. Full-vocab logits for every position cost ~0.8GB per batch on MPS.
+            hidden = decoder(input_ids=ids, attention_mask=mask).last_hidden_state
+            h = hidden[torch.arange(len(last), device=device), last.to(device)]
+            final = (h @ head.weight[cand].T).float()
+            margin = torch.logsumexp(final[:, :len(yes)], -1) - torch.logsumexp(final[:, len(yes):], -1)
             loss = torch.nn.functional.binary_cross_entropy_with_logits(margin, target)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(params, 1.0)
@@ -222,6 +262,8 @@ def train(data: Path, fmt: str, out: Path, epochs: int = 1, batch: int = 8, lr: 
                 log.write(json.dumps(rec) + "\n")
                 log.flush()
                 print(rec, flush=True)
+            if step % CKPT_EVERY == 0:
+                save_ckpt(step)
     model.save_pretrained(out)
     if fmt == "bounded":
         torch.save(model.get_input_embeddings().weight[[36, 37]].detach().cpu(), out / "boundary_embeddings.pt")
