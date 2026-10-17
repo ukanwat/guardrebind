@@ -2,30 +2,28 @@
 \label{sec:discussion}\label{sec:limitations}
 
 \paragraph{External validity.}
-The confirmatory results (\cref{sec:attack}) cover one guard and one corpus (AdvBench rows 200--299), in English, on short text-only documents, and on the broader benchmark corpus the same pair clears Shieldstral less often (\cref{sec:core}).
+The confirmatory study (\cref{sec:attack}) covers one guard, one English corpus (AdvBench rows 200--299) and short text-only documents. On the broader benchmark corpus the same pair clears Shieldstral less often (\cref{sec:core}).
 The cross-model results are label-only and use 30 AdvBench requests, and for Llama Guard~4 we did not separate rebinding from a malformed chat template (\cref{sec:crossmodel}).
-gpt-oss-safeguard's bypass rates cover the 113 items it catches, one unpinned API route (OpenRouter, served by Groq) and the user-message channel, and we cannot observe how the provider tokenizes turn markers sent as text. % src: paper/data/gpt_oss_strict.md (parse = strict, recall 113/200); results/bench/v2/gpt_oss_summary.md (provider Groq)
-Every bypass rate is conditional on the items the guard flags with no attack, and Shieldstral's clean recall is $47\%$ on the test split, with a miss rate of $50\%$ on the benchmark core set. % src: r2_test_base.json recall 0.471; benchmark Table clean FNR 50.0
-The templates of Llama Guard~3 and Qwen3Guard ask for an assessment of the last user turn only, and on these guards rebinding is as much a gap in the task specification as a parsing failure.
+For gpt-oss-safeguard we see only the 113 items it catches, through one unpinned API route (OpenRouter, served by Groq) and the user-message channel, and we cannot observe how the provider tokenizes turn markers sent as text. % src: paper/data/gpt_oss_strict.md (parse = strict, recall 113/200); results/bench/v2/gpt_oss_summary.md (provider Groq)
+Every bypass rate is conditional on the items the guard flags with no attack. Shieldstral already misses about half of harmful items without any attack (clean recall $47\%$ on the test split, miss rate $50\%$ on the benchmark core set). % src: r2_test_base.json recall 0.471; benchmark Table clean FNR 50.0
+On Llama Guard~3 and Qwen3Guard, rebinding is partly a gap in the task specification (\cref{sec:request-unit}).
 We did not measure whether a downstream model acts on the forwarded request, so bypass is an upper bound on end-to-end harm.
 Retrieval, tool-result and multi-turn channels were not measured, and model size was not varied within a series.
 
 \paragraph{Evidence strength.}
-The Qwen3Guard probe of what counts as a task is exploratory (40 train-split items, one decoy), and the activation patching (\cref{app:extra}) shows where the verdict is not carried but not which components choose the graded document.
+The Qwen3Guard probe of what counts as a task is exploratory (40 train-split items, one decoy). Activation patching (\cref{app:extra}) shows where the verdict is not carried, not which components choose the graded document.
 T has two seeds on Shieldstral, while B$+$T, the clean-copy target, the adaptive attacks and the smaller guards have one.
 The adaptive attacks use 50 items (20 for GCG), GCG was not run on B$+$T, and we did not run the pre-registered LLM-based attacker.
 The smaller guards and naive adversarial training were evaluated only with one fixed decoy and query per family, so the comparison of naive adversarial training with T does not use the held-out-decoy measure.
 
 \paragraph{What the defense does not cover.}
-Our held-out results cover appended forms only.
-Training closed the appended channel, and the score-guided search found a prepended one, although the search does not separate prepended structure from its decoy distribution (\cref{sec:adaptive}).
-The defense does nothing against the benign prompts of the plain-text control.
+Our held-out results cover appended forms only. Training closed that channel, and the score-guided search found the one training did not cover, before the request (\cref{sec:adaptive}). The defense also does nothing against searched benign prompts, which by themselves account for about half of the adaptive break.
 On the smaller guards it raises over-refusal on benign content carrying forged structure to $22$--$26\%$.
-Segment-max can miss harm that exists only when benign segments are combined. Scoring the whole content as one more segment reduces this risk without removing it; we ran no composition attack, and the harmful-decoy test covers only the orderings our grammar and search generate.
+Segment-max can miss harm that exists only when benign segments are combined. Scoring the whole content as one more segment reduces this risk without removing it. We ran no composition attack, and the harmful-decoy test covers only the orderings our grammar and search generate.
 We do not claim general prompt-injection robustness, which \citet{pant2026inseparability} argue is unattainable in shared-embedding models without enforced separation.
 
 \paragraph{Conclusion.}
-Guards that read content through the plain-text channel that states their task grade the last complete task they see, so content that forges one gets a harmful request approved.
-Training the guard against the maximum over the content's parts closes this channel for held-out appended attacks but not against an adaptive attacker, whose score-guided search still gets through.
-Deployers should give the content region a boundary the content cannot reproduce, tokenized with special-token parsing disabled and no added tokens outside the special set~\citep{zhan2026samebytes,yang2026nameless}, and should not let an agent act on a guard verdict alone.
-Researchers who build defenses against rebinding should report the plain-text control alongside them.
+A guard that receives its task and the content in one plain-text stream grades the last complete task it sees. Content that forges a task can therefore get a harmful request approved without changing a word of it.
+Training the guard to score content at least as high as its most harmful part closes this channel for held-out appended attacks and keeps the base guard's judgement elsewhere. It does not stop an adaptive attacker with score access, and part of what that attacker exploits is not rebinding at all.
+For deployers, the training is what matters. A content boundary the content cannot reproduce (tokenized with special-token parsing disabled~\citep{zhan2026samebytes,yang2026nameless}) is cheap and may help, but our evidence for it is one single-seed adaptive result. No agent should act on a guard verdict alone.
+For researchers, a defense against rebinding should be tested against prepended structure and reported next to a plain-text control, so that the share of an attack that is rebinding is visible.
