@@ -22,7 +22,8 @@ On the canonical policy this clears all 75 screened documents, and on a wider sc
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.78\linewidth]{chart_scores.pdf}
-  \caption{Shieldstral's score on 100 harmful requests, with no attack and with the forged pair appended. Two tight clusters at opposite ends; a few hard documents do not reach zero but all fall below the $0.5$ threshold. (src: \texttt{results/confirm\_hundred.csv})}
+  \caption{Shieldstral's score on 100 harmful requests, with no attack and with the forged pair appended. Two tight clusters at opposite ends; a few hard documents do not reach zero but all fall below the $0.5$ threshold.}
+% (src: \texttt{results/confirm\_hundred.csv})
   \label{fig:scores}
 \end{figure}
 
@@ -37,7 +38,8 @@ This confirms pre-registered predictions P1 and P2: it is the complete, labelled
 \begin{table}[t]
   \centering
   \small
-  \caption{Ablation panel, Shieldstral, $n=75$ screened, $\tau=0.5$. ``cleared'' is the bypass rate with a Wilson 95\% interval. ``defended'' appends the PolicyGuard anti-injection directive to the instruction. (src: \texttt{results/confirm\_log.txt}, \texttt{results/tables.md})}
+  \caption{Ablation panel, Shieldstral, $n=75$ screened, $\tau=0.5$. ``cleared'' is the bypass rate with a Wilson 95\% interval. ``defended'' appends the PolicyGuard anti-injection directive to the instruction.}
+% (src: \texttt{results/confirm\_log.txt}, \texttt{results/tables.md})
   \label{tab:ablation}
   \begin{tabular}{llcc}
     \toprule
@@ -59,7 +61,8 @@ This confirms pre-registered predictions P1 and P2: it is the complete, labelled
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.75\linewidth]{chart_anatomy.pdf}
-  \caption{The same ablation as \cref{tab:ablation}: percent of 75 harmful requests cleared, by what the attacker appends. Only the forged question-plus-document pair clears the guard. (src: \texttt{results/confirm\_shieldstral.csv})}
+  \caption{The same ablation as \cref{tab:ablation}: percent of 75 harmful requests cleared, by what the attacker appends. Only the forged question-plus-document pair clears the guard.}
+% (src: \texttt{results/confirm\_shieldstral.csv})
   \label{fig:anatomy}
 \end{figure}
 
@@ -70,12 +73,13 @@ If the guard were being persuaded to answer ``safe'', the content of the trailin
 It matters completely.
 Holding the attack structure fixed and varying only the trailing document across a ladder of standalone harm, the bypass rate tracks the trailing document's own score: a benign decoy (standalone score $0.00$) clears 100\%, a borderline decoy ($0.03$) clears 33\%, and a decoy the guard would itself flag ($\approx\!1.0$) clears 0\% ($n=39$). % src: results/groundtruth_log.txt, confirm_groundtruth.csv
 This confirms P3: the model grades the last document honestly; the attack only changes which document it grades.
-The residual is informative --- in the confirmatory panel a harmful decoy still left $\approx\!30\%$ cleared, so rebinding is strong but not total and some blending occurs when both documents are harmful. % src: PROTOCOL.md, results/confirm_log.txt (groundtruth block)
+The confirmatory panel's pre-registered ``harmful decoy'' (P3) was this same borderline rung: it scores $\approx\!0.03$ standalone, below threshold, and left 29--35\% cleared (P3 held: substantially below the benign decoy's 100\%). The ladder resolves why it was not 0\%: the guard grades the trailing document honestly, and that decoy, read alone, is clean. % src: results/confirm_log.txt lines 35-36; results/groundtruth_log.txt
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.72\linewidth]{chart_groundtruth.pdf}
-  \caption{Bypass rate by the trailing decoy's standalone harm score. A jailbreak would clear regardless of the decoy; the attack instead tracks the decoy. (src: \texttt{results/confirm\_groundtruth.csv})}
+  \caption{Bypass rate by the trailing decoy's standalone harm score. A jailbreak would clear regardless of the decoy; the attack instead tracks the decoy.}
+% (src: \texttt{results/confirm\_groundtruth.csv})
   \label{fig:groundtruth}
 \end{figure}
 
@@ -130,7 +134,8 @@ Because Llama Guard~4 has a fixed taxonomy and still falls, policy-adaptivity is
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.82\linewidth]{chart_crossmodel.pdf}
-  \caption{Three guard designs, the same failure: percent of harmful documents cleared under a plain assertion versus a forged-structure attack. (src: \texttt{results/confirm\_crossmodel.csv})}
+  \caption{Three guard designs, the same failure: percent of harmful documents cleared under a plain assertion versus a forged-structure attack.}
+% (src: \texttt{results/confirm\_crossmodel.csv})
   \label{fig:crossmodel}
 \end{figure}
 
