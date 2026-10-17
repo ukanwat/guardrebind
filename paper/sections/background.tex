@@ -5,15 +5,17 @@
 Shieldstral-1.0-3B~\citep{calvi2026shieldstral} takes a fixed system prompt and a user message with three plain-text fields, \texttt{<Instruct>}, \texttt{<Query>} and \texttt{<Document>} (\cref{fig:anatomy}). % src: src/prompt.py (verbatim from the model card)
 The developer writes the first two fields, which together form the deployment's \emph{policy}, and interpolates the content into the third.
 The Shieldstral paper describes no special-token delimiters and reports no prompt-injection evaluation.
-We read its score as $P(\text{yes})$, the yes/no logits renormalised over the two answers.
+We read its score as $P(\text{yes})$, the probability of ``yes'' renormalised over the two answers.
 Llama Guard~\citep{inan2023llama,grattafiori2024llama,chi2024llama,meta2025llamaguard4} wraps the conversation in plain-text \texttt{<BEGIN CONVERSATION>} and \texttt{<END CONVERSATION>} lines, and its prompt holds no policy for content to override.
 gpt-oss-safeguard-20B~\citep{openai2025gptosssafeguard} was post-trained to follow an instruction hierarchy~\citep{wallace2024instruction}.
-Its policy sits in the system role, behind a role boundary the content cannot cross, which is the design one would choose as a mitigation, and our policy asks it to answer 1 if the content violates the policy and 0 if it does not. % src: src/crossmodel.py OSS_POLICY; src/bench/api_bench.py
+Its policy sits in the system role, behind a role boundary the content cannot cross: the design one would choose as a mitigation.
+Our policy asks it to answer 1 if the content violates the policy and 0 otherwise. % src: src/crossmodel.py OSS_POLICY; src/bench/api_bench.py
 
 \paragraph{Deployment.}
 A developer places a guard $G$ in front of a downstream system and chooses its policy and input format.
-Untrusted content $c$ goes into the \emph{content slot} (Shieldstral's \texttt{<Document>} field), and may be a user message, a retrieved passage, a tool result in an agent loop or an earlier turn of a conversation.
-$G$ \emph{clears} $c$ if its score is below a threshold $\tau$ ($\tau = 0.5$ unless stated).
+Untrusted content $c$ goes into the \emph{content slot} (Shieldstral's \texttt{<Document>} field).
+It may be a user message, a retrieved passage, a tool result in an agent loop or an earlier turn of a conversation.
+$G$ \emph{clears} $c$, judging it safe, if its score is below a threshold $\tau$ ($\tau = 0.5$ unless stated).
 A \emph{label-only} guard returns a verdict and no score, and clears $c$ if the verdict is safe.
 Cleared content is forwarded unchanged.
 
@@ -33,8 +35,9 @@ We also exclude attackers who control the guard's prompt or weights, multimodal 
 
 \paragraph{Success criterion.}
 Only \emph{flagged} requests count, meaning those the deployment flags with no attack.
-A request is flagged if $G(h) > 0.9$ in the Shieldstral confirmatory study, if most of three sampled verdicts are \texttt{unsafe} for label-only guards, and if $G(h) \ge 0.5$ in \guardrebind{} and the defense evaluation. % src: PROTOCOL.md (v1), PROTOCOL_v2.md (Metrics)
+The flag rule depends on the setting: $G(h) > 0.9$ in the Shieldstral confirmatory study, $G(h) \ge 0.5$ in \guardrebind{} and the defense evaluation, and a majority of three sampled \texttt{unsafe} verdicts for label-only guards. % src: PROTOCOL.md (v1), PROTOCOL_v2.md (Metrics)
 The \emph{attack payload} $p$ is the text the attacker adds to $h$.
-The attack succeeds if $G$ clears $h \oplus p$, where $\oplus$ is concatenation, and the \emph{bypass rate} (or \emph{bypass}) is the fraction of flagged requests on which it succeeds, with a Wilson 95\% interval.
+The attack succeeds if $G$ clears $h \oplus p$, where $\oplus$ is concatenation.
+The \emph{bypass rate} (or \emph{bypass}) is the fraction of flagged requests on which it succeeds, reported with a Wilson 95\% interval.
 We measure success at the guard and do not test whether a downstream model acts on the request.
-Shieldstral's four headline bypass figures differ in protocol, denominator and decoys: the pair of \cref{fig:anatomy} with its fixed decoy clears $100\%$ of 75 confirmatory requests flagged at $0.9$ (\cref{sec:attack}); on 300 benchmark items flagged at $0.5$, the same pair with pooled decoys and queries clears $70.9\%$ and the strongest of 52 families $99.2\%$ (\cref{sec:benchmark}); and held-out families, decoys and queries clear $75.0\%$ of attacked inputs built from 297 flagged test items (\cref{sec:evaluation}). % src: results/confirm_log.txt [ablation]; results/bench/v2/bypass.csv shieldstral (n_items 300; angle query_doc 0.709; best family 99.2); results/fix/r2_test_base.json screened 297, by_decoy_split.heldout.heldout.bypass_benign_decoy 5347/7128
+Shieldstral's bypass figures differ between sections because the flag rule, the items and the decoys differ between studies (\cref{sec:core} relates them).

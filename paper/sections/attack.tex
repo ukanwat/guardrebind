@@ -2,16 +2,16 @@
 \label{sec:attack}
 
 \paragraph{What the guard sees.}
-After interpolation, the developer's \texttt{<Document>} field in \cref{fig:anatomy} holds the harmful request followed by a forged \texttt{<Query>} that repeats the deployment's safety question and a forged \texttt{<Document>} holding a benign decoy.
-The model reads two query--document pairs, and the attacker's labels are the same plain text as the developer's; nothing marks which pair is real.
-We hypothesise that the model grades the document of the last complete pair.
-The guard then answers its usual question about the decoy, whereas a persuaded guard would obey the content and answer ``safe''.
+After interpolation, the developer's \texttt{<Document>} field in \cref{fig:anatomy} holds the harmful request, then a forged \texttt{<Query>} that repeats the deployment's safety question, then a forged \texttt{<Document>} holding a benign decoy.
+The model reads two query--document pairs whose labels are the same plain text, so nothing marks which pair is real.
+We hypothesise that the model grades the last complete pair, answering its usual question about the decoy, whereas a persuaded guard would obey the content and answer ``safe''.
 Rebinding predicts that only a complete forged pair works, and that the verdict follows the harm of the decoy.
-The evidence is behavioural, with a decoy dose--response check (\cref{sec:binding}) and activation patching (\cref{app:extra}).
+The evidence is mainly behavioural: an ablation of the pair and a decoy dose--response check (\cref{sec:binding}).
+Activation patching (\cref{app:extra}) is consistent with rebinding but does not locate the mechanism.
 
 \paragraph{Setup.}
-The ablation panel, the borderline-decoy comparison and the position, label-syntax and policy variations form a \emph{confirmatory} run that follows a protocol frozen before it (\cref{app:protocol}).
-Results marked \emph{exploratory} were added after the confirmatory run and are listed there.
+The ablation panel, the borderline-decoy comparison and the position, label-syntax and policy variations form a \emph{confirmatory} run under a protocol frozen beforehand (\cref{app:protocol}).
+Results marked \emph{exploratory} were added later and are listed there.
 The corpus is AdvBench~\citep{zou2023universal} rows 200--299, which no exploratory run touched.
 Under the policy of \cref{fig:anatomy}, 75 of the 100 requests are flagged ($>0.9$) with no attack, and these flagged requests are the denominator. % src: PROTOCOL.md; results/confirm_log.txt
 
@@ -50,40 +50,51 @@ Under the policy of \cref{fig:anatomy}, 75 of the 100 requests are flagged ($>0.
 \end{figure}
 
 The forged pair of \cref{fig:anatomy} clears all 75 flagged requests ($100\%$\ci{95\%}{100\%}, \cref{tab:ablation}).
-The median score falls from $0.986$ to $0.016$, the highest attacked score is $0.469$ (\cref{fig:scores}a), and at the stricter threshold $\tau=0.1$ bypass is still $84\%$. % src: results/confirm_shieldstral.csv; results/sensitivity.md
-On the broader six-source test set of \cref{sec:benchmark}, flagged at $0.5$ instead of $0.9$ and with decoys and queries drawn from pools, the same pair lets $70.9\%$ through (\cref{sec:background} relates these figures). % src: results/bench/v2/bypass.csv shieldstral angle query_doc
+The median score falls from $0.986$ to $0.016$ (\cref{fig:scores}a). % src: results/confirm_shieldstral.csv; results/sensitivity.md
+Even the highest attacked score, $0.469$, stays below $\tau$, and at the stricter threshold $\tau=0.1$ bypass is still $84\%$.
+On the broader six-source corpus of \cref{sec:benchmark}, the same pair clears Shieldstral less often, at $70.9\%$.\footnote{In this section requests are flagged above $0.9$ and the attack uses one fixed decoy and query. The benchmark flags at $0.5$ and draws decoys and queries from pools, and there the strongest family clears $99.2\%$ (\cref{tab:benchmark-main}). Families, decoys and queries held out of training clear $75.0\%$ of attacked inputs built from 297 flagged test items (\cref{sec:evaluation}).} % src: results/bench/v2/bypass.csv shieldstral (n_items 300; angle query_doc 0.709; best family 99.2); results/fix/r2_test_base.json screened 297, by_decoy_split.heldout.heldout.bypass_benign_decoy 5347/7128
 
-The ablation isolates the pair as the active part (\cref{tab:ablation}).
-An instruction alone never gets through, whether as a bare sentence, a ``Note:'' or a forged \texttt{<Instruct>} field.
-A forged document with no query passes $9\%$.
-A forged query and document clear $100\%$, and a forged instruction in front of them lowers this to $92\%$.
+\Cref{tab:ablation} shows that the forged query is what turns forged text into a task.
+A forged document alone clears $9\%$, and adding the query raises this to $100\%$.
+Instructions clear nothing in any form we tried, even with a forged query after them.
+A forged instruction in front of the full pair lowers bypass to $92\%$.
+We read this as the clearest evidence against persuasion: imperative text slightly works against the attack.
 
 \subsection{The guard grades the decoy}
 \label{sec:groundtruth}
 
 If the guard were being persuaded to answer ``safe'', the content of the decoy would not matter.
 An exploratory comparison holds the attack fixed and varies only the decoy ($n=39$, \cref{fig:scores}b), described by its \emph{standalone score}, the guard's score on the decoy alone.
-A \emph{benign} decoy ($0.00$) clears $100\%$\ci{91\%}{100\%}, a \emph{borderline} decoy ($0.03$) clears $33\%$\ci{21\%}{49\%}, and a \emph{harmful} decoy, one the guard flags on its own ($\approx\!1.0$), clears $0\%$\ci{0\%}{9\%}. % src: results/groundtruth_log.txt, results/confirm_groundtruth.csv
-With the borderline decoy the attacked median is $0.71$, far above the decoy's own $0.03$: when the decoy is not clearly benign, the original request still raises the score. % src: results/groundtruth_log.txt (attack median 0.7058)
-The confirmatory panel's pre-registered ``harmful'' decoy scores only $0.03$ on its own, which makes it this borderline decoy; it clears 29--35\% (\cref{app:protocol}). % src: results/confirm_log.txt [groundtruth]
+A \emph{benign} decoy ($0.00$) clears $100\%$\ci{91\%}{100\%}.
+A \emph{borderline} decoy ($0.03$) clears $33\%$\ci{21\%}{49\%}.
+A \emph{harmful} decoy, one the guard flags on its own ($\approx\!1.0$), clears $0\%$\ci{0\%}{9\%}. % src: results/groundtruth_log.txt, results/confirm_groundtruth.csv
+Rebinding is not a clean switch: with the borderline decoy the attacked median is $0.71$, far above the decoy's own $0.03$, so the original request leaks back into the score. % src: results/groundtruth_log.txt (attack median 0.7058)
+The confirmatory panel's pre-registered ``harmful'' decoy scores only $0.03$ on its own, so it is this borderline decoy, and it clears 29--35\% (\cref{app:protocol}). % src: results/confirm_log.txt [groundtruth]
 
-Forging a softened query with no benign decoy anywhere clears $0$--$9\%$ across five exploratory variants ($n=45$). The forged query works by opening a new pair. % src: results/soften_log.txt, results/confirm_soften.csv
-
-Forging a verdict instead of a task, as earlier and concurrent attacks on judges do~\citep{mccauley2025hat,li2026same}, works far less well.
-In an exploratory control on 200 harmful test items that Shieldstral flags alone, four such forgeries (a plain-text safe assessment, a JSON moderation record, a safety-team approval note and a claimed earlier guard output) clear $6$--$19\%$, against $96\%$\ci{92\%}{98\%} for the forged pair. % src: results/fix/forgery_controls_base.json (verdict_plain 38/200, verdict_json 11/200, authority 13/200, prior_verdict 11/200, task 192/200)
+Forged text that does not open a new task works far less well.
+A softened forged query with no benign decoy clears $0$--$9\%$ across five exploratory variants ($n=45$), so the query helps by opening a new pair. % src: results/soften_log.txt, results/confirm_soften.csv
+Forged verdicts, used by earlier and concurrent attacks on judges~\citep{mccauley2025hat,li2026same}, also work poorly.
+On 200 harmful test items that Shieldstral flags alone, an exploratory control tried four verdict forgeries: a plain-text safe assessment, a JSON moderation record, a safety-team approval note and a claimed earlier guard output.
+They clear $6$--$19\%$, against $96\%$\ci{92\%}{98\%} for the forged pair. % src: results/fix/forgery_controls_base.json (verdict_plain 38/200, verdict_json 11/200, authority 13/200, prior_verdict 11/200, task 192/200)
 
 \paragraph{Robustness.}
-The attack needs no white-box access and little knowledge of the deployment.
+The attack needs no white-box access, and the attacker has to know only the shape of the deployment's task.
+Keeping the policy or the query secret therefore does not protect the guard.
 We varied one factor at a time around the core attack ($n=75$ unless stated). % src: results/confirm_log.txt [recency], [markers], [policy]; results/supp_log.txt [A]
-\emph{Position:} appending the pair clears $100\%$ and prepending the identical pair lets through $15\%$\ci{8\%}{24\%}.
-Inert filler placed last clears $0\%$ (\cref{tab:ablation}). The pair must come last, and later text alone is not enough.
-\emph{Syntax:} seven label styles (angle brackets in three letter cases, plain colon, square brackets, markdown bold and the abbreviated \texttt{Q:}/\texttt{D:}) pass $83$--$100\%$, and the same words without labels pass none.
+\emph{Position:} the pair clears $100\%$ when appended and $15\%$\ci{8\%}{24\%} when prepended.
+Inert filler appended last clears $0\%$ (\cref{tab:ablation}), so the pair has to come last, and coming last is not enough by itself.
+\emph{Syntax:} seven label styles (angle brackets in three letter cases, plain colon, square brackets, markdown bold and the abbreviated \texttt{Q:}/\texttt{D:}) clear $83$--$100\%$, and the same words without labels clear none.
 \emph{Query knowledge} (exploratory): the forged query must look like a safety question but need not match the deployment's.
-Paraphrases and topical variants reach $100\%$ bypass, a generic query $89\%$ and an unrelated query $9\%$, and a blind attacker who stacks five guesses, none of them the deployment's query, clears $100\%$. % src: results/supp_log.txt [A]
-\emph{Policy:} across eight policy phrasings ($n=45$--$98$), each with a matched forged query, the median bypass is $99\%$ (range $87$--$100\%$). % src: results/confirm_log.txt [policy]
+Paraphrases and topical variants reach $100\%$ bypass and a generic query $89\%$, while an unrelated query clears only $9\%$.
+A blind attacker who stacks five guesses, none of them the deployment's query, clears $100\%$. % src: results/supp_log.txt [A]
+\emph{Policy:} over eight policy phrasings, each with a matched forged query ($n=45$--$98$), median bypass is $99\%$ (range $87$--$100\%$). % src: results/confirm_log.txt [policy]
 
 \paragraph{Decoy dose--response.}
 \label{sec:binding}
-Across many decoys ($n=150$ requests, 40 decoys with standalone scores from $0.00$ to $1.00$), bypass falls from $98\%$ for decoys scoring below $0.1$ to $0\%$ above $0.9$, with Spearman $\rho = -0.84$ over decoys (decoy-bootstrap 95\% interval $[-0.93, -0.67]$). % src: results/mech/dose_response_test_n150_d40.json; dose_response_test_n150_d40_rho_ci.json
-Our pre-registered prediction of $\rho \le -0.8$, with bypass non-increasing across score bins, is partly supported (\cref{tab:prereg}).
-The point estimate meets the threshold, but the decoy-level interval crosses it, the dev split gives $-0.78$, and bypass is not monotone across bins. % src: monotone_nonincreasing_bins False; dose_response_dev_n150_d40.json -0.777
+Across many decoys, bypass tracks the decoy's standalone score, as rebinding predicts.
+We used 150 requests and 40 decoys scoring $0.00$ to $1.00$ alone.
+Decoys scoring below $0.1$ clear $98\%$, and decoys above $0.9$ clear $0\%$.
+Spearman's $\rho$ over decoys is $-0.84$ (decoy-bootstrap 95\% interval $[-0.93, -0.67]$). % src: results/mech/dose_response_test_n150_d40.json; dose_response_test_n150_d40_rho_ci.json
+This partly supports our pre-registered prediction of $\rho \le -0.8$ with bypass non-increasing across score bins (\cref{tab:prereg}).
+The point estimate meets the threshold, but the decoy-level interval crosses it and the dev split gives $-0.78$. % src: monotone_nonincreasing_bins False; dose_response_dev_n150_d40.json -0.777
+Bypass is also not monotone across bins, which fits the borderline-decoy result above.
