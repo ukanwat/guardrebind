@@ -137,7 +137,13 @@ def build_examples(per_item: int, max_items: int | None, seed: int, max_chars: i
     examples: list[Example] = []
     for item in items:
         examples += _variants(item, train_attacks, GUARD_SPECS[guard], rng, per_item, mode, decoy_split)
-    for j, sb in enumerate(structured_benign(len(items) // 4)):
+    if decoy_split == "fixed":
+        hard_negatives = structured_benign(len(items) // 4)
+    else:
+        # Train-split hard negatives only, drawn from the same n=5000 generation the evaluation uses, so no
+        # evaluated structured-benign item is ever a training example.
+        hard_negatives = [sb for sb in structured_benign(5000) if sb.split == "train"][: len(items) // 4]
+    for j, sb in enumerate(hard_negatives):
         text = sb.text
         ex = Example(f"structured_benign:{j}", text, [text], variant="hard_negative")
         if mode == "naive_at":
