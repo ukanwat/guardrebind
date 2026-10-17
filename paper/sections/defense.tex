@@ -1,16 +1,14 @@
-\section{Defense: A Guard That Reads One Document}
+\section{Defense: Boundary Tokens and Segment-Max Training}
 \label{sec:defense}
 
 Target rebinding needs the content to produce the labels that delimit the document and the model to treat a nested labelled pair as a new grading task.
-Our defense removes each precondition.
-Part~B (boundary) marks the document with tokens that content cannot produce.
-Part~T (training) teaches the guard to grade everything inside that region as one document and to score it at least as high as its most harmful part.
+Our defense removes both preconditions: Part~B (boundary) marks the document with tokens that content cannot produce, and Part~T (training) teaches the guard to grade everything inside that region as one document and to score it at least as high as its most harmful part.
 We compare $\{$none, B, T, B$+$T$\}$ with training-free baselines (\cref{sec:evaluation}).
 
 \paragraph{Part B: a boundary the content cannot produce.}
-We build the \emph{bounded format} by rendering the guard's \emph{stock format}, its unmodified chat template, with an empty document slot, so the trusted prefix and suffix stay as they are.
+We build the \emph{bounded format} by rendering the guard's \emph{stock format}, its unmodified chat template, with an empty document slot, which leaves the trusted prefix and suffix as they are.
 We tokenize the content on its own with special-token parsing disabled, and any control-token string inside it becomes ordinary text tokens.
-The flag covers only tokens the tokenizer declares special, so added tokens not marked special stay atomic~\citep{zhan2026samebytes,yang2026nameless}.
+Disabling special-token parsing affects only tokens marked special, and an added token that is not marked special is still emitted as one id~\citep{zhan2026samebytes,yang2026nameless}.
 On Shieldstral, the guard we train the defense on, no added or special id is reachable from content under this encoder (\cref{app:defense-impl}).
 We then wrap the content's token ids in two reserved \emph{boundary tokens} that open and close the document.
 Both ids are unused in pretraining, and no input text tokenizes to them. % src: src/fix/inputs.py (bounded_ids, DOC_OPEN_ID/DOC_CLOSE_ID)
@@ -27,10 +25,10 @@ For content $c$ with segments $S(c)$,
   \label{eq:target}
 \end{equation}
 In an attacked training example the segments are the original request and the decoy.
-Clean content has no segments beyond itself, so its target is the teacher's own score. % src: src/fix/distill.py (_variants, label_targets)
-The whole-content term $f_0(c)$ bounds compositional harm that appears only in combination~\citep{zhou2026prompt}, and the max is defined without knowing which segment is the injection.
+Clean content has no segments beyond itself, and its target is the teacher's own score. % src: src/fix/distill.py (_variants, label_targets)
+The whole-content term keeps the target at least as high as the base guard's score on the whole content, which covers harm that appears only in combination when the base guard sees it~\citep{zhou2026prompt}. The max is defined without knowing which segment is the injection.
 Existing guidance already scans long inputs in segments at inference~\citep{meta2025promptguard2}, and we run that as a baseline (\cref{sec:evaluation}).
-Here the max is a training target, so the defended guard reads the content in one pass and needs no segmenter.
+Here the max is a training target: the defended guard reads the content in one pass and needs no segmenter.
 When the decoy is benign, the target reduces to clean-context distillation~\citep{peng2026secopd,dhouib2026raised}.
 A \emph{clean-copy target}, in which the teacher reads only the original item, is an ablation that tests whether the max matters.
 The student reads the whole content through the chosen format, and we train it with binary cross-entropy between its yes/no logit margin and the target.
@@ -38,10 +36,10 @@ We use low-rank adaptation (LoRA) on the attention and multilayer-perceptron (ML
 In B$+$T we also train the two boundary-token embedding rows jointly, and T alone uses the stock format (\cref{app:defense-impl}).
 
 \paragraph{Training data.}
-We generate the training attacks, so we know their segments.
+We generate the training attacks and therefore know their segments.
 Each of 5{,}000 train-split harmful or benign items appears once clean and twice with attacks sampled from the training attack families, and 1{,}250 \emph{structured-benign} items, benign text with label-like structure, bring the total to 16{,}250 examples. % src: PROTOCOL_v2.md (Fixed training recipe, D3: 5000 items x 2 attacks); src/fix/distill.py (build --decoy-split train)
 Each attack draws its decoy and forged query, per example, from the training half of the matching pool (\cref{app:defense-impl}). % src: src/bench/attacks_grammar.py POOL_SPLIT, draw_split
 The structured-benign items are \emph{hard negatives}, generated from nine templates (FAQs, forms, chat logs, markdown, JSON and others) filled with benign train-split text.
-Their targets come from the teacher, so the model learns that structure alone is not a reason to flag, in the spirit of NotInject/InjecGuard~\citep{li2024injecguard}. % src: src/fix/distill.py (structured_benign); src/bench/data.py TEMPLATES
-The structured-benign test set uses the same templates with test-split fill text, so over-refusal on it measures new content in familiar templates.
+Their targets come from the teacher, and the model learns from them that structure alone is not a reason to flag, in the spirit of NotInject/InjecGuard~\citep{li2024injecguard}. % src: src/fix/distill.py (structured_benign); src/bench/data.py TEMPLATES
+The structured-benign test set uses the same templates with test-split fill text. Over-refusal on it measures new content in familiar templates.
 Training sees no test item, no held-out attack family (\cref{app:grammar}) and no decoy or forged query from the held-out halves of the pools.

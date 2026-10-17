@@ -12,16 +12,16 @@ Utkarsh Kanwat
 
 ## Abstract
 
-(Plain text, no LaTeX, 1061 characters; the arXiv limit is 1920.)
+(Plain text, no LaTeX, 1038 characters; the arXiv limit is 1920.)
 
 ```
-We make LLM safety guards grade a harmless decoy instead of the content they review, so harmful requests pass unchanged. Most guards paste content into a plain-text prompt, and content that imitates it opens a second grading task (target rebinding). An appended forged query-document pair clears Shieldstral-1.0-3B on all 75 pre-registered held-out AdvBench requests it flags, adapted versions clear 30/30 on gpt-oss-safeguard-20B and 29/29 on Llama Guard 4, and on our GuardRebind benchmark the best of 52 attack families clears 93-100% of flagged items on five guards. Training the guard to score content no lower than its most harmful part cuts the bypass rate on appended attack families, decoys and queries held out of training from 75% to 0.8-1.6%, while AUROC moves under 0.01 and flags on benign content with a forged pair rise from 0.2% to 0.7%. Adaptive attacks win: score-guided search clears the trained guard on 94% of items (98% per-item worst case with GCG), and benign user prompts placed before the request, without forged structure, clear 52%.
+Safety guards check content against a policy before an LLM application acts on it. Most guards paste content into a plain-text prompt, so content that imitates the prompt can open a second grading task, which the guard grades instead. We call this target rebinding: the guard grades the last complete task in its input, here a harmless decoy, and the harmful request passes unchanged. In a pre-registered test, an appended forged query and decoy let all 75 held-out AdvBench requests that Shieldstral-1.0-3B flags pass; on our GuardRebind benchmark, some attack family passes at least 93% of flagged items on all five guards. Training the guard to score content no lower than its most harmful part cuts bypass from 75% to 0.8-1.6% on attack families, decoys and forged queries that were held out of training (all appended after the content), with AUROC within 0.01. This closes the appended channel, but adaptive score-guided search still gets past the trained guard on 94% of items, mostly by placing forged structure before the request.
 ```
 
 ## Comments
 
 ```
-20 pages (13 main body), 2 figures, 7 tables
+21 pages (13 main body), 2 figures, 7 tables
 ```
 
 ## Categories

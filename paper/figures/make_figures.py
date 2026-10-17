@@ -75,7 +75,7 @@ def fig_scores() -> None:
     pair = abl[abl.condition == "query_doc"].score.to_numpy()
     # Decoy ladder: 39 screened rows, three trailing documents.
     g = pd.read_csv(RESULTS / "confirm_groundtruth.csv")
-    rungs = [("benign", "benign"), ("mild (old decoy)", "borderline"), ("flagging", "flagged")]
+    rungs = [("benign", "benign"), ("mild (old decoy)", "borderline"), ("flagging", "harmful")]
 
     fig, (a, b) = plt.subplots(1, 2, figsize=(6.3, 2.35), gridspec_kw={"width_ratios": [2, 3], "wspace": 0.32})
 

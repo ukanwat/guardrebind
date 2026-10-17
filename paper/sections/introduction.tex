@@ -1,10 +1,11 @@
 \section{Introduction}
 \label{sec:intro}
 
-A harmful request can pass a safety guard unedited if the attacker follows it with a few lines that imitate the guard's own prompt.
-The guard then grades a harmless sentence the attacker supplies, and the downstream model receives the request with the guard's approval.
 Safety guards are small models trained to decide whether a piece of text violates a policy, and large language model (LLM) applications place them in front of chat assistants, retrieval pipelines and agent tool calls.
-Their verdict acts as a control: cleared content is passed on, and in an agent loop an action may run without further review.
+Their verdict acts as a control: content the guard \emph{clears} (judges safe) is passed on, and in an agent loop an action may run without further review.
+A harmful request can pass a guard unedited if the attacker follows it with a few lines that imitate the guard's own prompt.
+The guard then grades a harmless sentence the attacker supplies, and the downstream model receives the request with the guard's approval.
+We measure this with the \emph{bypass rate}: the share of \emph{flagged} requests (those the guard flags with no attack) that it clears once the attack is added.
 
 Recent guards also take the policy as an input.
 In Shieldstral~\citep{calvi2026shieldstral,mistral2026shieldstralblog}, the developer writes an \emph{instruction} (how strict to be) and a \emph{query} (a yes/no safety question), the untrusted content goes in as the \emph{document}, and the guard answers whether the document is unsafe with respect to the query (\cref{fig:anatomy}).
@@ -35,20 +36,18 @@ The forged query and document form a \emph{forged pair}, and the forged document
   \begin{tabular}{@{}lll@{}}
     guard score $P(\text{yes})$: & harmful request alone \textbf{0.999} (flagged) & with the forged pair \textbf{0.023} (cleared) \\
   \end{tabular}
-  \caption{Target rebinding on Shieldstral. The developer writes everything outside the shaded region, which holds the untrusted content and is interpolated verbatim. The content is a held-out AdvBench request followed by a forged \texttt{<Query>}/\texttt{<Document>} pair whose document is a benign decoy. The guard grades the last pair, so the request is cleared and forwarded unchanged. Scores are this document's rows in the confirmatory run (\cref{sec:attack}).}
+  \caption{Target rebinding on Shieldstral. The developer writes everything outside the shaded region, which holds the untrusted content and is interpolated verbatim. The content is a held-out AdvBench request followed by a forged \texttt{<Query>}/\texttt{<Document>} pair with a benign decoy. The guard grades the last pair, so the request is cleared and forwarded unchanged. Scores are this request's values in the confirmatory run (\cref{sec:attack}).}
   % src: results/confirm_shieldstral.csv, first document, conditions none and query_doc; strings from src/prompt.py and src/confirm.py
   \label{fig:anatomy}
 \end{figure}
 
 Forging a completed task followed by a new one is a known prompt-injection pattern~\citep{liu2024formalizing}, and forged template, conversation and judge-output structure has been used against agents, chat models and LLM judges (\cref{sec:related}).
 An informal version of our attack appeared in an earlier blog post~\citep{kanwat2026blog}.
-We do not claim a new class of injection.
-What has been missing is a measurement specific to guards: whether the failure is rebinding or persuasion, how widely it occurs across guard designs, and whether a guard can be trained to resist it.
-We answer each in turn:
+We measure it on guards: whether the failure is rebinding or persuasion, how widely it occurs across guard designs, and whether a guard can be trained to resist it.
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt]
-  \item[\textbf{C1}] \textbf{The guard grades the decoy.} On Shieldstral only a complete forged pair clears the guard, and \emph{bypass}, the share of flagged requests the attack clears, falls as the decoy itself becomes more harmful (\cref{sec:attack}).
-  \item[\textbf{C2}] \textbf{The attack is widespread.} Adapted to their formats, it clears gpt-oss-safeguard, which keeps the policy behind a role boundary, and Llama Guard~4, which has no policy in its prompt. On our benchmark, \guardrebind{}, some attack family exceeds $93\%$ bypass on each of five guards (\cref{sec:benchmark}).
-  \item[\textbf{C3}] \textbf{A defense and its limits.} We train the guard to score the whole content at least as high as its most harmful part, with each part scored alone by the frozen base guard (\emph{segment-max self-distillation}). The trained guard resists appended attacks whose families, decoys and forged queries were held out of training, but a search guided by its score still breaks it, and more than half of the search's wins need no forged structure (\cref{sec:defense,sec:evaluation}).
+  \item[\textbf{C1}] On Shieldstral the guard grades the decoy: only a complete forged pair clears the guard, and bypass falls as the decoy itself becomes more harmful (\cref{sec:attack}).
+  \item[\textbf{C2}] Adapted to their formats, the attack clears gpt-oss-safeguard, which keeps the policy behind a role boundary, and Llama Guard~4, which has no policy in its prompt. On our benchmark, \guardrebind{}, some attack family exceeds $93\%$ bypass on each of five guards (\cref{sec:benchmark}).
+  \item[\textbf{C3}] We train the guard to score the whole content at least as high as its most harmful part, with each part scored alone by the frozen base guard (\emph{segment-max self-distillation}). This closes the appended channel for attack families, decoys and forged queries held out of training, but not against an adaptive attacker: a search guided by its score clears it on 47 of 50 items, 34 of them with forged structure placed before the request, and on 26 of those 47 items benign user prompts with no forged structure, chosen by the same search, also clear it (\cref{sec:defense,sec:evaluation}). % src: paper/data/search_no_feedback.md (T: 47 search wins, 34 prepend; 26 plain-text-control wins, all 26 also search wins)
 \end{itemize}
 Predictions were pre-registered, and \cref{app:protocol} lists each one with its outcome.
 % ADAPTERS: pending author decision

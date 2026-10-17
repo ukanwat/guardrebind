@@ -1,4 +1,4 @@
-\begin{thebibliography}{52}
+\begin{thebibliography}{51}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -240,12 +240,6 @@ Nishit~V. Pandya, Andrey Labunets, Sicun Gao, and Earlence Fernandes.
 Dewank Pant, Shruti Lohani, and Avijit Kumar.
 \newblock {On the Inseparability of Instructions and Data in Shared-Embedding
   Sequence Models}, 2026.
-
-\bibitem[Park et~al.(2026)Park, Kim, and Shim]{park2026policyguard}
-Kyutae Park, Jungwon Kim, and Daeyeol Shim.
-\newblock {PolicyGuard: Prompt-Configurable Semantic DLP for LLM Coding
-  Agents}, 2026.
-\newblock arXiv:2608.02687v1; withdrawn 5 Aug 2026.
 
 \bibitem[Peng et~al.(2026)Peng, Lian, Wagner, and Chen]{peng2026secopd}
 Yibo Peng, Long Lian, David Wagner, and Sizhe Chen.
